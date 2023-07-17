@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<section name="info_book.integratedscripting.section.main">
+    <section name="info_book.integratedscripting.introduction">
+        <paragraph>info_book.integratedscripting.introduction.text1</paragraph>
+        <paragraph>info_book.integratedscripting.introduction.text2</paragraph>
+        <paragraph>info_book.integratedscripting.introduction.text3</paragraph>
+    </section>
+</section>

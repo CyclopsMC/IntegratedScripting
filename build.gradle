@@ -1,0 +1,374 @@
+// For those who want the bleeding edge
+buildscript {
+    repositories {
+        mavenCentral()
+        maven { url = 'https://maven.minecraftforge.net' }
+    }
+    dependencies {
+        classpath group: 'net.minecraftforge.gradle', name: 'ForgeGradle', version: '5.1.+', changing: true
+    }
+}
+
+plugins {
+    id 'com.matthewprenger.cursegradle' version '1.4.0'
+	id 'com.github.kt3k.coveralls' version '2.12.0'
+    id 'com.diffplug.spotless' version '5.14.3'
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+	id 'com.modrinth.minotaur' version '2.+'
+}
+
+apply plugin: 'net.minecraftforge.gradle'
+apply plugin: 'idea'
+apply plugin: 'maven-publish'
+apply plugin: 'jacoco'
+
+import net.minecraftforge.gradle.common.tasks.SignJar
+
+// Determine build number
+String build_number = "DEV" // this will be referenced as simply build_number from now on.
+if (System.getenv().BUILD_NUMBER)
+    build_number = System.getenv().BUILD_NUMBER
+if (System.getenv().TRAVIS_BUILD_NUMBER)
+    build_number = System.getenv().TRAVIS_BUILD_NUMBER
+if (System.getenv().GITHUB_RUN_ID)
+    build_number = System.getenv().GITHUB_RUN_NUMBER
+if (System.getenv().RELEASE || System.getenv().TRAVIS_TAG)
+    build_number = "RELEASE"
+logger.lifecycle "BUILDING VERSION: " + build_number
+
+// Set mod details
+version = project.mod_version
+group = "org.cyclops.integratedscripting"
+archivesBaseName = "IntegratedScripting"
+
+// Set Java details
+java.toolchain.languageVersion = JavaLanguageVersion.of(17)
+compileJava.options.compilerArgs << "-Xmaxerrs" << "9999"
+println('Java: ' + System.getProperty('java.version') + ' JVM: ' + System.getProperty('java.vm.version') + '(' + System.getProperty('java.vendor') + ') Arch: ' + System.getProperty('os.arch'))
+
+// Load secrets
+def getSecrets() {
+    Properties props = new Properties()
+    if (file('./secrets.properties').exists()) {
+        props.load(new FileInputStream(file('./secrets.properties')))
+    }
+    return props
+}
+Properties secrets = getSecrets();
+
+sourceSets {
+    main
+    test
+}
+
+configurations {
+    shadow.setTransitive(false);
+
+    modLib
+    implementation.extendsFrom modLib
+}
+
+test {
+    testLogging {
+        exceptionFormat = 'full'
+    }
+}
+
+repositories {
+    mavenCentral()
+	mavenLocal()
+    maven {
+        name "Cyclops Repo"
+        url "https://maven.pkg.github.com/CyclopsMC/packages"
+        credentials {
+            username = project.findProperty("gpr.user") ?: System.getenv("MAVEN_USERNAME")
+            password = project.findProperty("gpr.key") ?: System.getenv("MAVEN_KEY")
+        }
+    }
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:${project.minecraft_version}-${project.forge_version}"
+
+    // Add something like 'cyclopscore_version_local=0.1.0-DEV' to your secrets.properties if you want to use a custom local CyclopsCore version.
+    if(secrets.cyclopscore_version_local) {
+        implementation "org.cyclops.cyclopscore:cyclopscore:${project.minecraft_version}-${secrets.cyclopscore_version_local}:deobf"
+    } else {
+        implementation "org.cyclops.cyclopscore:cyclopscore:${project.minecraft_version}-${project.cyclopscore_version}:deobf"
+    }
+	
+    // Add something like 'integrateddynamics_version_local=0.1.0-DEV' to your secrets.properties if you want to use a custom local Integrated Tunnels Compat version.
+    if(secrets.integrateddynamics_version_local) {
+        implementation "org.cyclops.integrateddynamics:integrateddynamics:${secrets.integrateddynamics_version_local}:deobf"
+    } else {
+        implementation "org.cyclops.integrateddynamics:integrateddynamics:${project.integrateddynamics_version}:deobf"
+    }
+
+    if(secrets.commoncapabilities_version_local) {
+        implementation "org.cyclops.commoncapabilities:commoncapabilities:${secrets.commoncapabilities_version_local}:deobf"
+    } else {
+        implementation fg.deobf("org.cyclops.commoncapabilities:commoncapabilities:${project.commoncapabilities_version}") { // https://dl.bintray.com/cyclopsmc/dev/org/cyclops/commoncapabilities/CommonCapabilities/
+            transitive = false
+        }
+    }
+
+    modLib "com.google.re2j:re2j:1.1"
+
+    // modLib ("io.netty:netty-codec-http:4.1.77.Final") {
+    //     transitive = false
+    // }
+    // shadow "io.netty:netty-codec-http:4.1.77.Final"
+
+    // Project lombok
+	compileOnly 'org.projectlombok:lombok:1.18.22'
+	annotationProcessor 'org.projectlombok:lombok:1.18.22'
+	testCompileOnly 'org.projectlombok:lombok:1.18.22'
+	testAnnotationProcessor 'org.projectlombok:lombok:1.18.22'
+	
+	testImplementation "junit:junit:4.12"
+}
+
+minecraft {
+    mappings channel: "official", version: "${project.minecraft_version}"
+
+    runs {
+        client {
+            workingDirectory project.file('run')
+            //property 'forge.logging.markers', 'REGISTRIES,REGISTRYDUMP'
+            property 'forge.logging.console.level', 'debug'
+            mods {
+                integratedscripting {
+                    source sourceSets.main
+                }
+            }
+
+            lazyToken('minecraft_classpath') {
+                configurations.modLib.copyRecursive().resolve().collect { it.absolutePath }.join(File.pathSeparator)
+            }
+        }
+
+        server {
+            workingDirectory project.file('run')
+            property 'forge.logging.console.level', 'debug'
+            mods {
+                integratedscripting {
+                    source sourceSets.main
+                }
+            }
+
+            lazyToken('minecraft_classpath') {
+                configurations.modLib.copyRecursive().resolve().collect { it.absolutePath }.join(File.pathSeparator)
+            }
+        }
+
+        data {
+            workingDirectory project.file('run')
+            property 'forge.logging.console.level', 'debug'
+            args '--mod', 'integratedscripting', '--all', '--output', file('src/generated/resources/')
+            mods {
+                integratedscripting {
+                    source sourceSets.main
+                }
+            }
+
+            lazyToken('minecraft_classpath') {
+                configurations.modLib.copyRecursive().resolve().collect { it.absolutePath }.join(File.pathSeparator)
+            }
+        }
+    }
+}
+
+if (build_number.equals("RELEASE"))
+    version = "${project.minecraft_version}-${project.mod_version}"
+else
+    version = "${project.minecraft_version}-${project.mod_version}-${build_number}"
+
+jar {
+    manifest {
+        attributes([
+                "Specification-Title": "${project.name}",
+                "Specification-Vendor": "rubensworks",
+                "Specification-Version": "${project.mod_version}",
+                "Implementation-Title": "${project.name}",
+                "Implementation-Version": "${project.mod_version}",
+                "Implementation-Vendor" :"rubensworks",
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+}
+jar.finalizedBy('reobfShadowJar')
+
+task signJar(type: SignJar, dependsOn: jar) {
+    onlyIf {
+        System.getenv().SIGN_KEYSTORE
+    }
+
+    keyStore = System.getenv().SIGN_KEYSTORE
+    alias = System.getenv().SIGN_ALIAS
+    storePass = System.getenv().SIGN_STOREPASS
+    keyPass = System.getenv().SIGN_KEYPASS
+    inputFile = jar.archivePath
+    outputFile = jar.archivePath
+}
+build.dependsOn signJar
+
+task deobfJar(type: Jar) {
+    from sourceSets.main.output
+    classifier = 'deobf'
+    manifest {
+        attributes([
+                "Specification-Title": "${project.name}",
+                "Specification-Vendor": "rubensworks",
+                "Specification-Version": "${project.mod_version}",
+                "Implementation-Title": "${project.name}",
+                "Implementation-Version": "${project.mod_version}",
+                "Implementation-Vendor" :"rubensworks",
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+        ])
+    }
+}
+
+task sourcesJar(type: Jar) {
+    duplicatesStrategy(DuplicatesStrategy.FAIL)
+    archiveClassifier.set('sources')
+    from sourceSets.main.allJava
+}
+
+task javadocJar(type: Jar, dependsOn: javadoc) {
+    duplicatesStrategy(DuplicatesStrategy.FAIL)
+    archiveClassifier.set('javadoc')
+    from javadoc.destinationDir
+}
+
+shadowJar {
+    configurations = [project.configurations.shadow]
+    classifier '' // Replace the default JAR
+}
+
+reobf {
+    shadowJar {} // Reobfuscate the shadowed JAR
+}
+
+artifacts {
+    archives deobfJar
+    archives sourcesJar
+    archives javadocJar
+}
+
+curseforge {
+    if(project.hasProperty("curseforge_key")) {
+        apiKey = project.curseforge_key
+    } else if((System.getenv().TRAVIS || System.getenv().GITHUB_ACTIONS) && System.getenv().CURSEFORGE_KEY_SECRET) {
+        apiKey = System.getenv().CURSEFORGE_KEY_SECRET
+    }
+
+    project {
+        id = "889785" // my project url is http://minecraft.curseforge.com/mc-mods/889785/
+        releaseType = project.project.release_type
+		addGameVersion project.minecraft_version
+        mainArtifact(jar) {
+            relations {
+                requiredDependency 'cyclops-core'
+                requiredDependency 'integrated-dynamics'
+            }
+        }
+
+        changelog = ""
+        if (new File("resources/changelog/${project.version}.txt").exists()) {
+            changelog = new File("resources/changelog/${project.version}.txt").text
+        }
+
+        addArtifact deobfJar
+        addArtifact sourcesJar
+        addArtifact javadocJar
+    }
+}
+
+modrinth {
+    if(secrets.modrinth_key) {
+        token = secrets.modrinth_key
+    } else if(System.getenv().GITHUB_ACTIONS && System.getenv().MODRINTH_KEY_SECRET) {
+        token = System.getenv().MODRINTH_KEY_SECRET
+    } else {
+        token = "DUMMY"
+    }
+    projectId = "uDJkuFRe"
+    versionNumber = project.minecraft_version + '-' + project.mod_version
+    versionType = project.release_type
+    uploadFile = jar
+    gameVersions = [ project.minecraft_version ]
+    changelog = ""
+    if (new File("resources/changelog/${project.version}.txt").exists()) {
+        changelog = new File("resources/changelog/${project.version}.txt").text
+    }
+    dependencies { // A special DSL for creating dependencies
+      required.project "Z9DM0LJ4" // Cyclops Core
+      required.project "yYzdQHJI" // Integrated Dynamics
+    }
+}
+
+publishing {
+    repositories {
+        if (project.hasProperty("filesmaven_url")) {
+            logger.info('Publishing to files server')
+            maven {
+                url project.filesmaven_url
+                credentials {
+                    username = project.filesmaven_username
+                    password = project.filesmaven_key
+                }
+            }
+        } else if (System.getenv("MAVEN_URL")) {
+            logger.info('Publishing to files server')
+            maven {
+                url System.getenv("MAVEN_URL")
+                credentials {
+                    username = System.getenv("MAVEN_USERNAME")
+                    password = System.getenv("MAVEN_KEY")
+                }
+            }
+        } else {
+            logger.error('No maven repo was set!')
+        }
+    }
+
+    publications { PublicationContainer publicationContainer ->
+        publicationContainer.register("maven", MavenPublication) { MavenPublication publication ->
+            publication.artifacts = [jar, javadocJar, deobfJar, sourcesJar]
+            publication.artifactId = project.archivesBaseName.toLowerCase() // GH can't handle uppercase...
+        }
+    }
+}
+
+idea {
+    module {
+        for (String excludeDirName in ["run", "out", "logs", "gradle"]) {
+            File excludeDir = new File(projectDir, excludeDirName)
+            excludeDirs.add(excludeDir)
+        }
+    }
+}
+
+jacocoTestReport {
+    reports {
+        xml.enabled = true
+        html.enabled = true
+    }
+}
+
+spotless {
+    java {
+        target 'src/*/java/org/cyclops/**/*.java'
+
+        endWithNewline()
+        trimTrailingWhitespace()
+        removeUnusedImports()
+        indentWithSpaces()
+    }
+}
+
+tasks.register('updateGitHooks', Copy) {
+    from './scripts/pre-commit'
+    into './.git/hooks'
+}
+compileJava.dependsOn updateGitHooks
