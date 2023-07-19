@@ -62,8 +62,6 @@ sourceSets {
 }
 
 configurations {
-    shadow.setTransitive(false);
-
     modLib
     implementation.extendsFrom modLib
 }
@@ -114,10 +112,11 @@ dependencies {
 
     modLib "com.google.re2j:re2j:1.1"
 
-    // modLib ("io.netty:netty-codec-http:4.1.77.Final") {
-    //     transitive = false
-    // }
-    // shadow "io.netty:netty-codec-http:4.1.77.Final"
+    modLib "org.graalvm.sdk:graal-sdk:22.3.2"
+    shadow "org.graalvm.sdk:graal-sdk:22.3.2"
+    modLib "org.graalvm.js:js:22.3.2"
+    shadow "org.graalvm.js:js:22.3.2"
+
 
     // Project lombok
 	compileOnly 'org.projectlombok:lombok:1.18.22'
@@ -241,8 +240,13 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
 }
 
 shadowJar {
+    mergeServiceFiles() // To fix graal issue: https://github.com/oracle/graaljs/issues/125
     configurations = [project.configurations.shadow]
     classifier '' // Replace the default JAR
+    // To avoid clashes with other mods
+    relocate 'org.graalvm', 'org.cyclops.integratedscripting.vendors.org.graalvm'
+    relocate 'com.oracle', 'org.cyclops.integratedscripting.vendors.com.oracle'
+    relocate 'com.ibm', 'org.cyclops.integratedscripting.vendors.com.ibm'
 }
 
 reobf {

@@ -1,11 +1,12 @@
 package org.cyclops.integratedscripting;
 
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Items;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.Level;
@@ -17,6 +18,7 @@ import org.cyclops.cyclopscore.proxy.IClientProxy;
 import org.cyclops.cyclopscore.proxy.ICommonProxy;
 import org.cyclops.integrateddynamics.IntegratedDynamics;
 import org.cyclops.integrateddynamics.infobook.OnTheDynamicsOfIntegrationBook;
+import org.cyclops.integratedscripting.command.CommandTestScript;
 import org.cyclops.integratedscripting.proxy.ClientProxy;
 import org.cyclops.integratedscripting.proxy.CommonProxy;
 
@@ -26,26 +28,26 @@ import org.cyclops.integratedscripting.proxy.CommonProxy;
  *
  */
 @Mod(Reference.MOD_ID)
-public class IntegratedRest extends ModBaseVersionable<IntegratedRest> {
+public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting> {
 
-    public static IntegratedRest _instance;
+    public static IntegratedScripting _instance;
 
-    public IntegratedRest() {
+    public IntegratedScripting() {
         super(Reference.MOD_ID, (instance) -> _instance = instance);
 
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::afterSetup);
     }
 
     @Override
-    protected void setup(FMLCommonSetupEvent event) {
-        super.setup(event);
+    protected LiteralArgumentBuilder<CommandSourceStack> constructBaseCommand() {
+        LiteralArgumentBuilder<CommandSourceStack> root = super.constructBaseCommand();
 
-        // Registries
-        // TODO
+        root.then(CommandTestScript.make());
+
+        return root;
     }
 
     protected void afterSetup(FMLLoadCompleteEvent event) {
-
         // Initialize info book
         IntegratedDynamics._instance.getRegistryManager().getRegistry(IInfoBookRegistry.class)
                 .registerSection(this,
@@ -89,7 +91,7 @@ public class IntegratedRest extends ModBaseVersionable<IntegratedRest> {
      * @param message The message to show.
      */
     public static void clog(Level level, String message) {
-        IntegratedRest._instance.getLoggerHelper().log(level, message);
+        IntegratedScripting._instance.getLoggerHelper().log(level, message);
     }
 
 }

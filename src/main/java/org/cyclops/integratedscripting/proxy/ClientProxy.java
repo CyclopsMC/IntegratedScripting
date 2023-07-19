@@ -2,7 +2,7 @@ package org.cyclops.integratedscripting.proxy;
 
 import org.cyclops.cyclopscore.init.ModBase;
 import org.cyclops.cyclopscore.proxy.ClientProxyComponent;
-import org.cyclops.integratedscripting.IntegratedRest;
+import org.cyclops.integratedscripting.IntegratedScripting;
 
 /**
  * Proxy for the client side.
@@ -18,7 +18,7 @@ public class ClientProxy extends ClientProxyComponent {
 
     @Override
     public ModBase getMod() {
-        return IntegratedRest._instance;
+        return IntegratedScripting._instance;
     }
 
 }

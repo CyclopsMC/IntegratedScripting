@@ -33,3 +33,4 @@ This mod uses [Project Lombok](http://projectlombok.org/) -- an annotation proce
 
 ### License
 All code and images are licenced under the [MIT License](https://github.com/CyclopsMC/IntegratedScripting/blob/master-1.19-lts/LICENSE.txt)
+This project makes use of GraalVM (graal-sdk, js, js-scriptengine).

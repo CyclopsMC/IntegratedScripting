@@ -15,13 +15,13 @@ public class GeneralConfig extends DummyConfig {
     public static boolean versionChecker = true;
 
     public GeneralConfig() {
-        super(IntegratedRest._instance, "general");
+        super(IntegratedScripting._instance, "general");
     }
 
     @Override
     public void onRegistered() {
         if(versionChecker) {
-            Versions.registerMod(getMod(), IntegratedRest._instance, Reference.VERSION_URL);
+            Versions.registerMod(getMod(), IntegratedScripting._instance, Reference.VERSION_URL);
         }
     }
 }
