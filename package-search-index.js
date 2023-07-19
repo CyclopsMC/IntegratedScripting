@@ -1,1 +1,1 @@
-packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"org.cyclops.integratedscripting"},{"l":"org.cyclops.integratedscripting.proxy"}];updateSearchResults();
+packageSearchIndex = [{"l":"All Packages","u":"allpackages-index.html"},{"l":"org.cyclops.integratedscripting"},{"l":"org.cyclops.integratedscripting.command"},{"l":"org.cyclops.integratedscripting.proxy"}];updateSearchResults();
