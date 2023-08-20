@@ -1,6 +1,5 @@
 package org.cyclops.integratedscripting.evaluate.translation.translator;
 
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import net.minecraft.nbt.*;
 import net.minecraft.network.chat.Component;
@@ -16,17 +15,11 @@ import org.graalvm.polyglot.Value;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author rubensworks
  */
 public class ValueTranslatorNbt implements IValueTranslator<ValueTypeNbt.ValueNbt> {
-
-    public static final Map<String, Boolean> NBT_END = Maps.newHashMap();
-    static {
-        NBT_END.put("nbt_end", true);
-    }
 
     @Override
     public boolean canHandleValueType(IValueType<?> valueType) {

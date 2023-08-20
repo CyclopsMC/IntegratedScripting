@@ -1,9 +1,18 @@
 package org.cyclops.integratedscripting.evaluate.translation;
 
 import com.google.common.collect.Sets;
+import net.minecraft.DetectedVersion;
+import net.minecraft.SharedConstants;
+import net.minecraft.core.Registry;
 import net.minecraft.nbt.*;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.Bootstrap;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.material.Fluids;
+import net.minecraftforge.fluids.FluidStack;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
@@ -30,6 +39,12 @@ import static org.junit.Assert.assertThat;
  * @author rubensworks
  */
 public class ValueTranslatorsJavaScriptTests {
+
+    static {
+        SharedConstants.setVersion(DetectedVersion.BUILT_IN);
+        Bootstrap.bootStrap();
+        Registry.ITEM.unfreeze();
+    }
 
     private static Engine ENGINE = null;
     private static Context CTX = null;
@@ -330,5 +345,66 @@ public class ValueTranslatorsJavaScriptTests {
         assertThat(list.getArrayElement(1).asLong(), equalTo(2L));
         assertThat(list.getArrayElement(2).asLong(), equalTo(3L));
     }
+
+    @Test
+    public void testObjectBlock() throws EvaluationException {
+        assertThat(ValueTranslators.REGISTRY.translateFromGraal(CTX, getJsValue("exports = { id_block: { Name: 'minecraft:stone' } }")), equalTo(ValueObjectTypeBlock.ValueBlock.of(Blocks.STONE.defaultBlockState())));
+
+        Value translated = ValueTranslators.REGISTRY.translateToGraal(CTX, ValueObjectTypeBlock.ValueBlock.of(Blocks.STONE.defaultBlockState()));
+        assertThat(translated.hasMembers(), is(true));
+        assertThat(translated.getMemberKeys(), equalTo(Sets.newHashSet("id_block")));
+        assertThat(translated.getMember("id_block").hasMembers(), is(true));
+        assertThat(translated.getMember("id_block").getMemberKeys(), equalTo(Sets.newHashSet("Name")));
+        assertThat(translated.getMember("id_block").getMember("Name").asString(), equalTo("minecraft:stone"));
+    }
+
+    @Test
+    public void testObjectBlockProperties() throws EvaluationException {
+        assertThat(ValueTranslators.REGISTRY.translateFromGraal(CTX, getJsValue("exports = { id_block: { Name: 'minecraft:acacia_leaves', Properties: { waterlogged: false, distance: 7, persistent: false } } }")), equalTo(ValueObjectTypeBlock.ValueBlock.of(Blocks.ACACIA_LEAVES.defaultBlockState())));
+
+        Value translated = ValueTranslators.REGISTRY.translateToGraal(CTX, ValueObjectTypeBlock.ValueBlock.of(Blocks.ACACIA_LEAVES.defaultBlockState()));
+        assertThat(translated.hasMembers(), is(true));
+        assertThat(translated.getMemberKeys(), equalTo(Sets.newHashSet("id_block")));
+        assertThat(translated.getMember("id_block").hasMembers(), is(true));
+        assertThat(translated.getMember("id_block").getMemberKeys(), equalTo(Sets.newHashSet("Name", "Properties")));
+        assertThat(translated.getMember("id_block").getMember("Name").asString(), equalTo("minecraft:acacia_leaves"));
+        assertThat(translated.getMember("id_block").getMember("Properties").hasMembers(), is(true));
+        assertThat(translated.getMember("id_block").getMember("Properties").getMember("waterlogged").asString(), is("false"));
+        assertThat(translated.getMember("id_block").getMember("Properties").getMember("distance").asString(), is("7"));
+        assertThat(translated.getMember("id_block").getMember("Properties").getMember("persistent").asString(), is("false"));
+    }
+
+    @Test
+    public void testObjectBlockUnknown() throws EvaluationException {
+        assertThat(ValueTranslators.REGISTRY.translateFromGraal(CTX, getJsValue("exports = { id_block: { Name: 'minecraft:unknown_thing' } }")), equalTo(ValueObjectTypeBlock.ValueBlock.of(Blocks.AIR.defaultBlockState())));
+    }
+
+    @Test
+    public void testObjectItem() throws EvaluationException {
+        assertThat(ValueTranslators.REGISTRY.translateFromGraal(CTX, getJsValue("exports = { id_item: { id: 'minecraft:arrow', Count: 1 } }")), equalTo(ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.ARROW))));
+
+        Value translated = ValueTranslators.REGISTRY.translateToGraal(CTX, ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.ARROW)));
+        assertThat(translated.hasMembers(), is(true));
+        assertThat(translated.getMemberKeys(), equalTo(Sets.newHashSet("id_item")));
+        assertThat(translated.getMember("id_item").hasMembers(), is(true));
+        assertThat(translated.getMember("id_item").getMemberKeys(), equalTo(Sets.newHashSet("id", "Count")));
+        assertThat(translated.getMember("id_item").getMember("id").asString(), equalTo("minecraft:arrow"));
+        assertThat(translated.getMember("id_item").getMember("Count").asInt(), equalTo(1));
+    }
+
+    @Test
+    public void testObjectFluid() throws EvaluationException {
+        assertThat(ValueTranslators.REGISTRY.translateFromGraal(CTX, getJsValue("exports = { id_fluid: { FluidName: 'minecraft:water', Amount: 1000 } }")), equalTo(ValueObjectTypeFluidStack.ValueFluidStack.of(new FluidStack(Fluids.WATER, 1000))));
+
+        Value translated = ValueTranslators.REGISTRY.translateToGraal(CTX, ValueObjectTypeFluidStack.ValueFluidStack.of(new FluidStack(Fluids.WATER, 1000)));
+        assertThat(translated.hasMembers(), is(true));
+        assertThat(translated.getMemberKeys(), equalTo(Sets.newHashSet("id_fluid")));
+        assertThat(translated.getMember("id_fluid").hasMembers(), is(true));
+        assertThat(translated.getMember("id_fluid").getMemberKeys(), equalTo(Sets.newHashSet("FluidName", "Amount")));
+        assertThat(translated.getMember("id_fluid").getMember("FluidName").asString(), equalTo("minecraft:water"));
+        assertThat(translated.getMember("id_fluid").getMember("Amount").asInt(), equalTo(1000));
+    }
+
+    // Entity, ingredients, and recipe are not easily testable
 
 }

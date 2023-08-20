@@ -1,15 +1,9 @@
 package org.cyclops.integratedscripting.evaluate.translation;
 
 import org.cyclops.cyclopscore.helper.MinecraftHelpers;
+import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypes;
 import org.cyclops.integratedscripting.IntegratedScripting;
-import org.cyclops.integratedscripting.evaluate.translation.translator.ValueTranslatorBoolean;
-import org.cyclops.integratedscripting.evaluate.translation.translator.ValueTranslatorDouble;
-import org.cyclops.integratedscripting.evaluate.translation.translator.ValueTranslatorInteger;
-import org.cyclops.integratedscripting.evaluate.translation.translator.ValueTranslatorList;
-import org.cyclops.integratedscripting.evaluate.translation.translator.ValueTranslatorLong;
-import org.cyclops.integratedscripting.evaluate.translation.translator.ValueTranslatorNbt;
-import org.cyclops.integratedscripting.evaluate.translation.translator.ValueTranslatorOperator;
-import org.cyclops.integratedscripting.evaluate.translation.translator.ValueTranslatorString;
+import org.cyclops.integratedscripting.evaluate.translation.translator.*;
 
 /**
  * @author rubensworks
@@ -36,10 +30,17 @@ public class ValueTranslators {
         REGISTRY.register(new ValueTranslatorString());
         REGISTRY.register(new ValueTranslatorList());
         REGISTRY.register(new ValueTranslatorOperator());
-        REGISTRY.register(new ValueTranslatorNbt());
 
         // Object types
-        // TODO
+        REGISTRY.register(new ValueTranslatorObjectAdapter<>("id_block", ValueTypes.OBJECT_BLOCK));
+        REGISTRY.register(new ValueTranslatorObjectAdapter<>("id_item", ValueTypes.OBJECT_ITEMSTACK));
+        REGISTRY.register(new ValueTranslatorObjectAdapter<>("id_entity", ValueTypes.OBJECT_ENTITY));
+        REGISTRY.register(new ValueTranslatorObjectAdapter<>("id_fluid", ValueTypes.OBJECT_FLUIDSTACK));
+        REGISTRY.register(new ValueTranslatorObjectAdapter<>("id_ingredients", ValueTypes.OBJECT_INGREDIENTS));
+        REGISTRY.register(new ValueTranslatorObjectAdapter<>("id_recipe", ValueTypes.OBJECT_RECIPE));
+
+        // NBT has last priority
+        REGISTRY.register(new ValueTranslatorNbt());
     }
 
 }
