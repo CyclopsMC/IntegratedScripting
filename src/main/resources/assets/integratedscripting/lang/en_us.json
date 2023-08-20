@@ -2,6 +2,13 @@
   "_comment": "General",
   "itemGroup.integratedscripting": "Integrated Scripting",
 
+  "valuetype.integratedscripting.error.translation.unknown_to_graal": "Could not find a translator from %s values to Graal.",
+  "valuetype.integratedscripting.error.translation.unknown_to_graal_nbt": "Could not find a translator from %s values to Graal during NBT translation.",
+  "valuetype.integratedscripting.error.translation.unknown_from_graal": "Could not find a translator from %s Graal values.",
+  "valuetype.integratedscripting.error.translation.list_infinite": "Can not translate an infinite list into a scripting language.",
+  "valuetype.integratedscripting.error.translation.nbt_unknown": "Can not translate NBT members of type %s.",
+  "valuetype.integratedscripting.error.translation.nbt_unmatched": "Could not interpret the field %s as NBT.",
+
   "_comment": "------ On the Dynamics of Integration contents ------",
 
   "info_book.integratedscripting.section.main": "Scripting",
@@ -9,5 +16,5 @@
   "info_book.integratedscripting.introduction": "Introduction",
   "info_book.integratedscripting.introduction.text1": "TODO",
   "info_book.integratedscripting.introduction.text2": "TODO",
-  "info_book.integratedscripting.introduction.text3": "TODO",
+  "info_book.integratedscripting.introduction.text3": "TODO"
 }

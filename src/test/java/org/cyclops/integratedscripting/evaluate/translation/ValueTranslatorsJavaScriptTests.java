@@ -1,0 +1,334 @@
+package org.cyclops.integratedscripting.evaluate.translation;
+
+import com.google.common.collect.Sets;
+import net.minecraft.nbt.*;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
+import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
+import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
+import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
+import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
+import org.cyclops.integrateddynamics.api.evaluate.variable.IValueTypeListProxy;
+import org.cyclops.integrateddynamics.core.evaluate.operator.Operators;
+import org.cyclops.integrateddynamics.core.evaluate.variable.*;
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Engine;
+import org.graalvm.polyglot.Source;
+import org.graalvm.polyglot.Value;
+import org.jetbrains.annotations.NotNull;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
+import java.io.IOException;
+import java.util.Iterator;
+
+import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
+
+/**
+ * @author rubensworks
+ */
+public class ValueTranslatorsJavaScriptTests {
+
+    private static Engine ENGINE = null;
+    private static Context CTX = null;
+
+    @BeforeClass
+    public static void beforeAll() {
+        ValueTypeListProxyFactories.load();
+        Operators.load();
+        ValueTranslators.load();
+
+        ENGINE = Engine.newBuilder()
+                .option("engine.WarnInterpreterOnly", "false")
+                .build();
+        CTX = Context.newBuilder().engine(ENGINE).allowAllAccess(true).build();
+    }
+
+    public static Value getJsValue(String jsString) {
+        return CTX.eval("js", jsString);
+    }
+
+    @Test(expected = EvaluationException.class)
+    public void testUnknownValueToGraal() throws EvaluationException {
+        ValueTranslators.REGISTRY.translateToGraal(CTX, DummyValueType.DummyValue.of());
+    }
+
+    @Test(expected = EvaluationException.class)
+    public void testUnknownValueToGraalNbt() throws EvaluationException {
+        ValueTranslators.REGISTRY.translateToNbt(CTX, DummyValueType.DummyValue.of());
+    }
+
+// Untestable
+//    @Test(expected = EvaluationException.class)
+//    public void testUnknownValueFromGraal() throws EvaluationException {
+//        ValueTranslators.REGISTRY.translate(CTX, getJsValue("?"));
+//    }
+
+    @Test
+    public void testInteger() throws EvaluationException {
+        assertThat(ValueTranslators.REGISTRY.translateFromGraal(CTX, getJsValue("10")), equalTo(ValueTypeInteger.ValueInteger.of(10)));
+        assertThat(ValueTranslators.REGISTRY.translateFromGraal(CTX, getJsValue("1.0")), equalTo(ValueTypeInteger.ValueInteger.of(1)));
+        assertThat(ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeInteger.ValueInteger.of(10)), equalTo(getJsValue("10")));
+    }
+
+    @Test
+    public void testBoolean() throws EvaluationException {
+        assertThat(ValueTranslators.REGISTRY.translateFromGraal(CTX, getJsValue("true")), equalTo(ValueTypeBoolean.ValueBoolean.of(true)));
+        assertThat(ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeBoolean.ValueBoolean.of(true)), equalTo(getJsValue("true")));
+    }
+
+    @Test
+    public void testDouble() throws EvaluationException {
+        assertThat(ValueTranslators.REGISTRY.translateFromGraal(CTX, getJsValue("1.1")), equalTo(ValueTypeDouble.ValueDouble.of(1.1D)));
+
+        assertThat(ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeDouble.ValueDouble.of(1.1D)).asDouble(), equalTo(getJsValue("1.1").asDouble()));
+        assertThat(ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeDouble.ValueDouble.of(1.0D)).asDouble(), equalTo(getJsValue("1.0").asDouble()));
+    }
+
+    @Test
+    public void testLong() throws EvaluationException {
+        assertThat(ValueTranslators.REGISTRY.translateFromGraal(CTX, getJsValue("2147483648")), equalTo(ValueTypeLong.ValueLong.of(2147483648L)));
+        assertThat(ValueTranslators.REGISTRY.translateFromGraal(CTX, getJsValue("BigInt('2147483648')")), equalTo(ValueTypeLong.ValueLong.of(2147483648L)));
+
+        assertThat(ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeLong.ValueLong.of(2147483648L)).asLong(), equalTo(getJsValue("2147483648").asLong()));
+    }
+
+    @Test
+    public void testString() throws EvaluationException {
+        assertThat(ValueTranslators.REGISTRY.translateFromGraal(CTX, getJsValue("'abc'")), equalTo(ValueTypeString.ValueString.of("abc")));
+        assertThat(ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeString.ValueString.of("abc")).asString(), equalTo(getJsValue("'abc'").asString()));
+    }
+
+    @Test
+    public void testList() throws EvaluationException {
+        assertThat(ValueTranslators.REGISTRY.translateFromGraal(CTX, getJsValue("['abc', 'def', 'ghi']")), equalTo(ValueTypeList.ValueList.ofAll(
+                ValueTypeString.ValueString.of("abc"),
+                ValueTypeString.ValueString.of("def"),
+                ValueTypeString.ValueString.of("ghi")
+        )));
+        assertThat(ValueTranslators.REGISTRY.translateFromGraal(CTX, getJsValue("['abc', 123, 'ghi']")), equalTo(ValueTypeList.ValueList.ofAll(
+                ValueTypeString.ValueString.of("abc"),
+                ValueTypeInteger.ValueInteger.of(123),
+                ValueTypeString.ValueString.of("ghi")
+        )));
+
+        Value translated = ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeList.ValueList.ofAll(
+                ValueTypeString.ValueString.of("abc"),
+                ValueTypeString.ValueString.of("def"),
+                ValueTypeString.ValueString.of("ghi")
+        ));
+        assertThat(translated.hasArrayElements(), is(true));
+        assertThat(translated.getArrayElement(0).asString(), equalTo(getJsValue("'abc'").asString()));
+        assertThat(translated.getArrayElement(1).asString(), equalTo(getJsValue("'def'").asString()));
+        assertThat(translated.getArrayElement(2).asString(), equalTo(getJsValue("'ghi'").asString()));
+
+        Value translatedMixed = ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeList.ValueList.ofAll(
+                ValueTypeString.ValueString.of("abc"),
+                ValueTypeInteger.ValueInteger.of(123),
+                ValueTypeString.ValueString.of("ghi")
+        ));
+        assertThat(translatedMixed.hasArrayElements(), is(true));
+        assertThat(translatedMixed.getArrayElement(0).asString(), equalTo(getJsValue("'abc'").asString()));
+        assertThat(translatedMixed.getArrayElement(1).asInt(), equalTo(getJsValue("123").asInt()));
+        assertThat(translatedMixed.getArrayElement(2).asString(), equalTo(getJsValue("'ghi'").asString()));
+    }
+
+    @Test(expected = EvaluationException.class)
+    public void testListInfinity() throws EvaluationException {
+        ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeList.ValueList.ofFactory(new IValueTypeListProxy() {
+            @Override
+            public int getLength() throws EvaluationException {
+                return 0;
+            }
+
+            @Override
+            public IValue get(int index) throws EvaluationException {
+                return null;
+            }
+
+            @Override
+            public IValueType<? extends IValue> getValueType() {
+                return null;
+            }
+
+            @Override
+            public ResourceLocation getName() {
+                return null;
+            }
+
+            @Override
+            public MutableComponent toCompactString() {
+                return null;
+            }
+
+            @Override
+            public boolean isInfinite() {
+                return true;
+            }
+
+            @NotNull
+            @Override
+            public Iterator<IValue> iterator() {
+                return null;
+            }
+        }));
+    }
+
+    @Test
+    public void testOperator() throws EvaluationException {
+        IValue operatorValueJs = ValueTranslators.REGISTRY.translateFromGraal(CTX, getJsValue("() => true"));
+        assertThat(operatorValueJs.getType(), equalTo(ValueTypes.OPERATOR));
+
+        Value operatorValueJava = ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeOperator.ValueOperator.of(Operators.ARITHMETIC_ADDITION));
+        assertThat(operatorValueJava.canExecute(), equalTo(true));
+    }
+
+    @Test
+    public void testOperatorExecuteJavaInJs() throws EvaluationException, IOException {
+        Source source = Source.newBuilder("js", "function myFunc(arg0, arg1, arg2) { return arg0(arg1, arg2); }", "src.js").build();
+        CTX.eval(source);
+        Value myFunc = CTX.getBindings("js").getMember("myFunc");
+        Value myFuncRet = myFunc.execute(
+                ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeOperator.ValueOperator.of(Operators.ARITHMETIC_ADDITION)),
+                ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeInteger.ValueInteger.of(1)),
+                ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeInteger.ValueInteger.of(2))
+        );
+        assertThat(myFuncRet, equalTo(CTX.asValue(3)));
+    }
+
+    @Test
+    public void testOperatorExecuteJsInJava() throws EvaluationException {
+        IValue operatorValueJs = ValueTranslators.REGISTRY.translateFromGraal(CTX, getJsValue("(arg0, arg1) => arg0 + arg1"));
+        IOperator operator = ((ValueTypeOperator.ValueOperator) operatorValueJs).getRawValue();
+        IValue value = operator.evaluate(
+                new Variable(ValueTypeInteger.ValueInteger.of(1)),
+                new Variable(ValueTypeInteger.ValueInteger.of(2))
+        );
+        assertThat(value, equalTo(ValueTypeInteger.ValueInteger.of(3)));
+    }
+
+    @Test
+    public void testNbtEnd() throws EvaluationException {
+        assertThat(ValueTranslators.REGISTRY.translateFromGraal(CTX, getJsValue("exports = { 'nbt_end': true }")), equalTo(ValueTypeNbt.ValueNbt.of(EndTag.INSTANCE)));
+
+        Value translated = ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeNbt.ValueNbt.of(EndTag.INSTANCE));
+        assertThat(translated.hasMembers(), is(true));
+        assertThat(translated.getMemberKeys(), equalTo(Sets.newHashSet("nbt_end")));
+        assertThat(translated.getMember("nbt_end"), equalTo(CTX.asValue(true)));
+    }
+
+    @Test
+    public void testNbtByte() throws EvaluationException {
+        assertThat(ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeNbt.ValueNbt.of(ByteTag.valueOf((byte)2))).asByte(), equalTo(getJsValue("2").asByte()));
+    }
+
+    @Test
+    public void testNbtShort() throws EvaluationException {
+        assertThat(ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeNbt.ValueNbt.of(ShortTag.valueOf((short) 2))).asShort(), equalTo(getJsValue("2").asShort()));
+    }
+
+    @Test
+    public void testNbtInt() throws EvaluationException {
+        assertThat(ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeNbt.ValueNbt.of(IntTag.valueOf(2))).asInt(), equalTo(getJsValue("2").asInt()));
+    }
+
+    @Test
+    public void testNbtLong() throws EvaluationException {
+        assertThat(ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeNbt.ValueNbt.of(LongTag.valueOf(2))).asLong(), equalTo(getJsValue("2").asLong()));
+    }
+
+    @Test
+    public void testNbtFloat() throws EvaluationException {
+        assertThat(ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeNbt.ValueNbt.of(FloatTag.valueOf(2f))).asFloat(), equalTo(getJsValue("2").asFloat()));
+    }
+
+    @Test
+    public void testNbtDouble() throws EvaluationException {
+        assertThat(ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeNbt.ValueNbt.of(DoubleTag.valueOf(2.2))).asDouble(), equalTo(getJsValue("2.2").asDouble()));
+    }
+
+    @Test
+    public void testNbtByteArray() throws EvaluationException {
+        Value list = ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeNbt.ValueNbt.of(new ByteArrayTag(new byte[]{1, 2, 3})));
+
+        assertThat(list.hasArrayElements(), is(true));
+        assertThat(list.getArrayElement(0).asInt(), equalTo(1));
+        assertThat(list.getArrayElement(1).asInt(), equalTo(2));
+        assertThat(list.getArrayElement(2).asInt(), equalTo(3));
+    }
+
+    @Test
+    public void testNbtString() throws EvaluationException {
+        assertThat(ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeNbt.ValueNbt.of(StringTag.valueOf("abc"))).asString(), equalTo(getJsValue("'abc'").asString()));
+    }
+
+    @Test
+    public void testNbtList() throws EvaluationException {
+        ListTag listTag = new ListTag();
+        listTag.add(StringTag.valueOf("abc"));
+        listTag.add(StringTag.valueOf("def"));
+        Value list = ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeNbt.ValueNbt.of(listTag));
+
+        assertThat(list.hasArrayElements(), is(true));
+        assertThat(list.getArrayElement(0).asString(), equalTo("abc"));
+        assertThat(list.getArrayElement(1).asString(), equalTo("def"));
+    }
+
+    @Test
+    public void testNbtListNested() throws EvaluationException {
+        ListTag listTag = new ListTag();
+        ListTag listTagInner1 = new ListTag();
+        listTagInner1.add(StringTag.valueOf("abc"));
+        listTag.add(listTagInner1);
+        ListTag listTagInner2 = new ListTag();
+        listTagInner2.add(StringTag.valueOf("def"));
+        listTag.add(listTagInner2);
+        Value list = ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeNbt.ValueNbt.of(listTag));
+
+        assertThat(list.hasArrayElements(), is(true));
+        assertThat(list.getArrayElement(0).hasArrayElements(), equalTo(true));
+        assertThat(list.getArrayElement(0).getArrayElement(0).asString(), equalTo("abc"));
+        assertThat(list.getArrayElement(1).hasArrayElements(), equalTo(true));
+        assertThat(list.getArrayElement(1).getArrayElement(0).asString(), equalTo("def"));
+    }
+
+    @Test
+    public void testNbtCompound() throws EvaluationException {
+        CompoundTag compoundTag = new CompoundTag();
+        CompoundTag compoundTagSub = new CompoundTag();
+        compoundTag.put("a", StringTag.valueOf("bla"));
+        compoundTag.put("b", compoundTagSub);
+        compoundTagSub.put("c", IntTag.valueOf(123));
+        assertThat(ValueTranslators.REGISTRY.translateFromGraal(CTX, getJsValue("exports = { 'a': 'bla', 'b': { 'c': 123 } }")), equalTo(ValueTypeNbt.ValueNbt.of(compoundTag)));
+
+        Value translated = ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeNbt.ValueNbt.of(compoundTag));
+        assertThat(translated.hasMembers(), is(true));
+        assertThat(translated.getMemberKeys(), equalTo(Sets.newHashSet("a", "b")));
+        assertThat(translated.getMember("a").asString(), equalTo(CTX.asValue("bla").asString()));
+        Value translatedSub = translated.getMember("b");
+        assertThat(translatedSub.getMember("c"), equalTo(CTX.asValue(123)));
+    }
+
+    @Test
+    public void testNbtIntArray() throws EvaluationException {
+        Value list = ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeNbt.ValueNbt.of(new IntArrayTag(new int[]{1, 2, 3})));
+
+        assertThat(list.hasArrayElements(), is(true));
+        assertThat(list.getArrayElement(0).asInt(), equalTo(1));
+        assertThat(list.getArrayElement(1).asInt(), equalTo(2));
+        assertThat(list.getArrayElement(2).asInt(), equalTo(3));
+    }
+
+    @Test
+    public void testNbtLongArray() throws EvaluationException {
+        Value list = ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeNbt.ValueNbt.of(new LongArrayTag(new long[]{1, 2, 3})));
+
+        assertThat(list.hasArrayElements(), is(true));
+        assertThat(list.getArrayElement(0).asLong(), equalTo(1L));
+        assertThat(list.getArrayElement(1).asLong(), equalTo(2L));
+        assertThat(list.getArrayElement(2).asLong(), equalTo(3L));
+    }
+
+}

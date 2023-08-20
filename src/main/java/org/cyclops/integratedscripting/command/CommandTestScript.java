@@ -6,6 +6,13 @@ import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
+import net.minecraft.nbt.ByteArrayTag;
+import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
+import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeBoolean;
+import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeInteger;
+import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeList;
+import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeNbt;
+import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.Source;
@@ -30,25 +37,38 @@ public class CommandTestScript implements Command<CommandSourceStack> {
         }
 
         try {
-            Source source = Source.newBuilder("js", "function testFunction() { console.log('Hello World!'); }", "src.js").build();
-            try (Context context = Context.newBuilder().engine(ENGINE).build()) {
-                long timeStart = System.currentTimeMillis();
-                for (int i = 0; i < 100; i++) {
-                    context.eval(source);
-                    Value primesMain = context.getBindings("js").getMember("testFunction");
-                    primesMain.execute();
-                }
-                System.out.println("Exec time with re-eval (ms): " + (System.currentTimeMillis() - timeStart)); // 1931 ms
+            Source source = Source.newBuilder("js", "function testFunction(a, b, c, d) { console.log('Args: ' + JSON.stringify(a) + JSON.stringify(b) + JSON.stringify(c) + JSON.stringify(d)); console.log(typeof d); return 10; }", "src.js").build();
+            try (Context context = Context.newBuilder().engine(ENGINE).allowAllAccess(true).build()) {
+//                long timeStart = System.currentTimeMillis();
+//                for (int i = 0; i < 100; i++) {
+//                    context.eval(source);
+//                    Value primesMain = context.getBindings("js").getMember("testFunction");
+//                    primesMain.execute();
+//                }
+//                System.out.println("Exec time with re-eval (ms): " + (System.currentTimeMillis() - timeStart)); // 1931 ms
 
-                long timeStart2 = System.currentTimeMillis();
+//                long timeStart2 = System.currentTimeMillis();
+//                context.eval(source);
+//                Value primesMain = context.getBindings("js").getMember("testFunction");
+//                for (int i = 0; i < 100; i++) {
+//                    primesMain.execute();
+//                }
+//                System.out.println("Exec time with cached eval (ms): " + (System.currentTimeMillis() - timeStart2)); // 10 ms
+
                 context.eval(source);
                 Value primesMain = context.getBindings("js").getMember("testFunction");
-                for (int i = 0; i < 100; i++) {
-                    primesMain.execute();
-                }
-                System.out.println("Exec time with cached eval (ms): " + (System.currentTimeMillis() - timeStart2)); // 10 ms
+                Value ret = primesMain.execute(
+                        ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeInteger.ValueInteger.of(10)),
+                        ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeBoolean.ValueBoolean.of(true)),
+                        ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeList.ValueList.ofAll(
+                                ValueTypeInteger.ValueInteger.of(10),
+                                ValueTypeBoolean.ValueBoolean.of(true)
+                        )),
+                        ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeNbt.ValueNbt.of(new ByteArrayTag(new byte[]{1, 2, 3})))
+                );
+                System.out.println(ValueTranslators.REGISTRY.translateFromGraal(context, ret).toString()); // TODO
             }
-        } catch (IOException e) {
+        } catch (IOException | EvaluationException | RuntimeException e) {
             e.printStackTrace();
         }
 

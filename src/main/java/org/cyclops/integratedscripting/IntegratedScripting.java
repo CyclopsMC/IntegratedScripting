@@ -7,6 +7,7 @@ import net.minecraft.world.item.Items;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.apache.logging.log4j.Level;
@@ -19,6 +20,9 @@ import org.cyclops.cyclopscore.proxy.ICommonProxy;
 import org.cyclops.integrateddynamics.IntegratedDynamics;
 import org.cyclops.integrateddynamics.infobook.OnTheDynamicsOfIntegrationBook;
 import org.cyclops.integratedscripting.command.CommandTestScript;
+import org.cyclops.integratedscripting.evaluate.translation.IValueTranslatorRegistry;
+import org.cyclops.integratedscripting.evaluate.translation.ValueTranslatorRegistry;
+import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
 import org.cyclops.integratedscripting.proxy.ClientProxy;
 import org.cyclops.integratedscripting.proxy.CommonProxy;
 
@@ -35,6 +39,8 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
     public IntegratedScripting() {
         super(Reference.MOD_ID, (instance) -> _instance = instance);
 
+        getRegistryManager().addRegistry(IValueTranslatorRegistry.class, ValueTranslatorRegistry.getInstance());
+
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::afterSetup);
     }
 
@@ -45,6 +51,13 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
         root.then(CommandTestScript.make());
 
         return root;
+    }
+
+    @Override
+    protected void setup(FMLCommonSetupEvent event) {
+        super.setup(event);
+
+        ValueTranslators.load();
     }
 
     protected void afterSetup(FMLLoadCompleteEvent event) {
