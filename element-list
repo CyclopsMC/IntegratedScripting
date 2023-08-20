@@ -1,3 +1,5 @@
 org.cyclops.integratedscripting
 org.cyclops.integratedscripting.command
+org.cyclops.integratedscripting.evaluate.translation
+org.cyclops.integratedscripting.evaluate.translation.translator
 org.cyclops.integratedscripting.proxy
