@@ -20,8 +20,8 @@ import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValueTypeListProxy;
 import org.cyclops.integrateddynamics.core.evaluate.operator.Operators;
 import org.cyclops.integrateddynamics.core.evaluate.variable.*;
+import org.cyclops.integratedscripting.evaluate.ScriptHelpers;
 import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +46,6 @@ public class ValueTranslatorsJavaScriptTests {
         Registry.ITEM.unfreeze();
     }
 
-    private static Engine ENGINE = null;
     private static Context CTX = null;
 
     @BeforeClass
@@ -55,10 +54,11 @@ public class ValueTranslatorsJavaScriptTests {
         Operators.load();
         ValueTranslators.load();
 
-        ENGINE = Engine.newBuilder()
-                .option("engine.WarnInterpreterOnly", "false")
-                .build();
-        CTX = Context.newBuilder().engine(ENGINE).allowAllAccess(true).build();
+        try {
+            CTX = ScriptHelpers.createPopulatedContext();
+        } catch (EvaluationException e) {
+            e.printStackTrace();
+        }
     }
 
     public static Value getJsValue(String jsString) {
@@ -380,6 +380,12 @@ public class ValueTranslatorsJavaScriptTests {
     }
 
     @Test
+    public void testObjectBlockMethods() throws EvaluationException {
+        assertThat(ValueTranslators.REGISTRY.translateToGraal(CTX, ValueObjectTypeBlock.ValueBlock.of(Blocks.GLASS.defaultBlockState())).invokeMember("isOpaque").asBoolean(), is(false));
+        assertThat(ValueTranslators.REGISTRY.translateToGraal(CTX, ValueObjectTypeBlock.ValueBlock.of(Blocks.STONE.defaultBlockState())).invokeMember("isOpaque").asBoolean(), is(true));
+    }
+
+    @Test
     public void testObjectItem() throws EvaluationException {
         assertThat(ValueTranslators.REGISTRY.translateFromGraal(CTX, getJsValue("exports = { id_item: { id: 'minecraft:arrow', Count: 1 } }")), equalTo(ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.ARROW))));
 
@@ -390,6 +396,18 @@ public class ValueTranslatorsJavaScriptTests {
         assertThat(translated.getMember("id_item").getMemberKeys(), equalTo(Sets.newHashSet("id", "Count")));
         assertThat(translated.getMember("id_item").getMember("id").asString(), equalTo("minecraft:arrow"));
         assertThat(translated.getMember("id_item").getMember("Count").asInt(), equalTo(1));
+    }
+
+    @Test
+    public void testObjectItemMethods() throws EvaluationException {
+        assertThat(ValueTranslators.REGISTRY.translateToGraal(CTX, ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.ARROW))).invokeMember("canBurn").asBoolean(), is(false));
+
+        assertThat(ValueTranslators.REGISTRY.translateToGraal(CTX, ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.ACACIA_SAPLING))).invokeMember("block").invokeMember("isPlantable").asBoolean(), is(true));
+
+        assertThat(ValueTranslators.REGISTRY.translateToGraal(CTX, ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.ACACIA_SAPLING, 1)))
+                .invokeMember("equals", ValueTranslators.REGISTRY.translateToGraal(CTX, ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.ACACIA_SAPLING, 2)))).asBoolean(), is(false));
+        assertThat(ValueTranslators.REGISTRY.translateToGraal(CTX, ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.ACACIA_SAPLING, 1)))
+                .invokeMember("equals", ValueTranslators.REGISTRY.translateToGraal(CTX, ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.ACACIA_SAPLING, 1)))).asBoolean(), is(true));
     }
 
     @Test
@@ -405,6 +423,35 @@ public class ValueTranslatorsJavaScriptTests {
         assertThat(translated.getMember("id_fluid").getMember("Amount").asInt(), equalTo(1000));
     }
 
+    @Test
+    public void testObjectFluidMethods() throws EvaluationException {
+        assertThat(ValueTranslators.REGISTRY.translateToGraal(CTX, ValueObjectTypeFluidStack.ValueFluidStack.of(new FluidStack(Fluids.WATER, 1000))).invokeMember("amount").asInt(), is(1000));
+        assertThat(ValueTranslators.REGISTRY.translateToGraal(CTX, ValueObjectTypeFluidStack.ValueFluidStack.of(new FluidStack(Fluids.WATER, 123))).invokeMember("amount").asInt(), is(123));
+    }
+
     // Entity, ingredients, and recipe are not easily testable
+
+    @Test
+    public void testGlobalFunctions() throws EvaluationException {
+        Value ops = CTX.getBindings("js").getMember("idContext").getMember("ops");
+
+        assertThat(
+                ops.invokeMember("itemstackSize", ValueTranslators.REGISTRY.translateToGraal(CTX, ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.ARROW, 10)))).asInt(),
+                equalTo(10)
+        );
+
+        assertThat(
+                ops.invokeMember("anyEquals",
+                        ValueTranslators.REGISTRY.translateToGraal(CTX, ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.ARROW, 10))),
+                        ValueTranslators.REGISTRY.translateToGraal(CTX, ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.ARROW, 20)))
+                ).asBoolean(),
+                equalTo(false)
+        );
+
+        assertThat(
+                ops.invokeMember("fluidstackAmount", ValueTranslators.REGISTRY.translateToGraal(CTX, ValueObjectTypeFluidStack.ValueFluidStack.of(new FluidStack(Fluids.WATER, 1000)))).asInt(),
+                equalTo(1000)
+        );
+    }
 
 }

@@ -13,6 +13,7 @@ import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -83,12 +84,7 @@ public class ValueTranslatorNbt implements IValueTranslator<ValueTypeNbt.ValueNb
                 return context.asValue(list);
             }
             case Tag.TAG_COMPOUND -> {
-                CompoundTag compoundTag = (CompoundTag) tag;
-                Value map = context.eval("js", "new Object()");
-                for (String key : compoundTag.getAllKeys()) {
-                    map.putMember(key, translateTag(context, compoundTag.get(key)));
-                }
-                return map;
+                return translateCompoundTag(context, (CompoundTag) tag, null);
             }
             case Tag.TAG_INT_ARRAY -> {
                 return context.asValue(((IntArrayTag) tag).getAsIntArray());
@@ -98,6 +94,16 @@ public class ValueTranslatorNbt implements IValueTranslator<ValueTypeNbt.ValueNb
             }
             default -> throw new EvaluationException(Component.translatable("valuetype.integratedscripting.error.translation.nbt_unknown", tag.getType().getPrettyName()));
         }
+    }
+
+    public Value translateCompoundTag(Context context, CompoundTag tag, @Nullable ValueTranslatorObjectAdapter.IInstanceConstructor instanceConstructor) throws EvaluationException {
+        Value instance = instanceConstructor == null ?
+                context.eval("js", "new Object()") :
+                instanceConstructor.construct(context);
+        for (String key : tag.getAllKeys()) {
+            instance.putMember(key, translateTag(context, tag.get(key)));
+        }
+        return instance;
     }
 
     @Override

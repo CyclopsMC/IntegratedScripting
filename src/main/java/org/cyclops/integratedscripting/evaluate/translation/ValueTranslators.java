@@ -11,6 +11,7 @@ import org.cyclops.integratedscripting.evaluate.translation.translator.*;
 public class ValueTranslators {
 
     public static final IValueTranslatorRegistry REGISTRY = constructRegistry();
+    public static ValueTranslatorNbt TRANSLATOR_NBT;
 
     private static IValueTranslatorRegistry constructRegistry() {
         // This also allows this registry to be used outside of a minecraft environment.
@@ -40,7 +41,7 @@ public class ValueTranslators {
         REGISTRY.register(new ValueTranslatorObjectAdapter<>("id_recipe", ValueTypes.OBJECT_RECIPE));
 
         // NBT has last priority
-        REGISTRY.register(new ValueTranslatorNbt());
+        REGISTRY.register(TRANSLATOR_NBT = new ValueTranslatorNbt());
     }
 
 }
