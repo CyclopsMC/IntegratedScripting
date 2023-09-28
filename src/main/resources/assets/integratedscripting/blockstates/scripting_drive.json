@@ -1,0 +1,8 @@
+{
+  "variants": {
+    "facing=south": { "model": "integratedscripting:block/scripting_drive" },
+    "facing=west" : { "model": "integratedscripting:block/scripting_drive", "y": 90 },
+    "facing=north": { "model": "integratedscripting:block/scripting_drive", "y": 180 },
+    "facing=east" : { "model": "integratedscripting:block/scripting_drive", "y": 270 }
+  }
+}

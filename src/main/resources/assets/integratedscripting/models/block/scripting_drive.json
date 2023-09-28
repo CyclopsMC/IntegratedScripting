@@ -1,0 +1,8 @@
+{
+    "parent": "block/orientable",
+    "textures": {
+        "top": "integratedscripting:block/scripting_drive_top",
+        "front": "integratedscripting:block/scripting_drive_side",
+        "side": "integratedscripting:block/scripting_drive_side"
+    }
+}

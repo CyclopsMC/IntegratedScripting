@@ -19,10 +19,13 @@ import org.cyclops.cyclopscore.proxy.IClientProxy;
 import org.cyclops.cyclopscore.proxy.ICommonProxy;
 import org.cyclops.integrateddynamics.IntegratedDynamics;
 import org.cyclops.integrateddynamics.infobook.OnTheDynamicsOfIntegrationBook;
+import org.cyclops.integratedscripting.block.BlockScriptingDriveConfig;
+import org.cyclops.integratedscripting.blockentity.BlockEntityScriptingDriveConfig;
 import org.cyclops.integratedscripting.command.CommandTestScript;
 import org.cyclops.integratedscripting.evaluate.translation.IValueTranslatorRegistry;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslatorRegistry;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
+import org.cyclops.integratedscripting.inventory.container.ContainerScriptingDriveConfig;
 import org.cyclops.integratedscripting.proxy.ClientProxy;
 import org.cyclops.integratedscripting.proxy.CommonProxy;
 
@@ -77,6 +80,11 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
     protected void onConfigsRegister(ConfigHandler configHandler) {
         super.onConfigsRegister(configHandler);
 
+        configHandler.addConfigurable(new BlockScriptingDriveConfig());
+
+        configHandler.addConfigurable(new BlockEntityScriptingDriveConfig());
+
+        configHandler.addConfigurable(new ContainerScriptingDriveConfig());
     }
 
     @OnlyIn(Dist.CLIENT)

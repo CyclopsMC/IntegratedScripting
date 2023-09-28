@@ -9,6 +9,9 @@
   "valuetype.integratedscripting.error.translation.nbt_unknown": "Can not translate NBT members of type %s.",
   "valuetype.integratedscripting.error.translation.nbt_unmatched": "Could not interpret the field %s as NBT.",
 
+  "_comment": "Blocks",
+  "block.integratedscripting.scripting_drive": "Scripting Drive",
+
   "_comment": "------ On the Dynamics of Integration contents ------",
 
   "info_book.integratedscripting.section.main": "Scripting",
