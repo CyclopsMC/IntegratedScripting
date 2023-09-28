@@ -26,6 +26,7 @@ import org.cyclops.integratedscripting.evaluate.translation.IValueTranslatorRegi
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslatorRegistry;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
 import org.cyclops.integratedscripting.inventory.container.ContainerScriptingDriveConfig;
+import org.cyclops.integratedscripting.item.ItemScriptingDiskConfig;
 import org.cyclops.integratedscripting.proxy.ClientProxy;
 import org.cyclops.integratedscripting.proxy.CommonProxy;
 
@@ -79,6 +80,8 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
     @Override
     protected void onConfigsRegister(ConfigHandler configHandler) {
         super.onConfigsRegister(configHandler);
+
+        configHandler.addConfigurable(new ItemScriptingDiskConfig());
 
         configHandler.addConfigurable(new BlockScriptingDriveConfig());
 

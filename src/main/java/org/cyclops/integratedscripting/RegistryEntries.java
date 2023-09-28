@@ -1,6 +1,7 @@
 package org.cyclops.integratedscripting;
 
 import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.registries.ObjectHolder;
@@ -12,6 +13,9 @@ import org.cyclops.integratedscripting.inventory.container.ContainerScriptingDri
  * @author rubensworks
  */
 public class RegistryEntries {
+    @ObjectHolder(registryName = "item", value = "integratedscripting:scripting_disk")
+    public static final Item ITEM_SCRIPTING_DISK = null;
+
     @ObjectHolder(registryName = "block", value = "integratedscripting:scripting_drive")
     public static final Block BLOCK_SCRIPTING_DRIVE = null;
 

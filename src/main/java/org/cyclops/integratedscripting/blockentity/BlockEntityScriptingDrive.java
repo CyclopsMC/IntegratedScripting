@@ -17,10 +17,10 @@ import org.cyclops.cyclopscore.persist.IDirtyMarkListener;
 import org.cyclops.integrateddynamics.api.network.INetworkElement;
 import org.cyclops.integrateddynamics.capability.networkelementprovider.NetworkElementProviderConfig;
 import org.cyclops.integrateddynamics.capability.networkelementprovider.NetworkElementProviderSingleton;
-import org.cyclops.integrateddynamics.capability.variablefacade.VariableFacadeHolderConfig;
 import org.cyclops.integrateddynamics.core.blockentity.BlockEntityCableConnectableInventory;
 import org.cyclops.integratedscripting.RegistryEntries;
 import org.cyclops.integratedscripting.inventory.container.ContainerScriptingDrive;
+import org.cyclops.integratedscripting.item.ItemScriptingDisk;
 import org.cyclops.integratedscripting.network.ScriptingDriveNetworkElement;
 
 import javax.annotation.Nullable;
@@ -56,7 +56,7 @@ public class BlockEntityScriptingDrive extends BlockEntityCableConnectableInvent
             @Override
             public boolean canPlaceItem(int slot, ItemStack itemStack) {
                 return super.canPlaceItem(slot, itemStack)
-                        && (itemStack.isEmpty() || itemStack.getCapability(VariableFacadeHolderConfig.CAPABILITY, null).isPresent());
+                        && (itemStack.isEmpty() || itemStack.getItem() instanceof ItemScriptingDisk);
             }
         };
     }
