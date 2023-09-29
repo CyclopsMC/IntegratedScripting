@@ -1,0 +1,7 @@
+{
+	"parent": "integratedscripting:block/terminal",
+	"textures": {
+		"back" : "integratedscripting:part/terminal_back",
+		"front": "integratedscripting:part/terminal_scripting"
+	}
+}

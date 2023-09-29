@@ -10,6 +10,7 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.NewRegistryEvent;
 import org.apache.logging.log4j.Level;
 import org.cyclops.cyclopscore.config.ConfigHandler;
 import org.cyclops.cyclopscore.infobook.IInfoBookRegistry;
@@ -26,7 +27,9 @@ import org.cyclops.integratedscripting.evaluate.translation.IValueTranslatorRegi
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslatorRegistry;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
 import org.cyclops.integratedscripting.inventory.container.ContainerScriptingDriveConfig;
+import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScriptingConfig;
 import org.cyclops.integratedscripting.item.ItemScriptingDiskConfig;
+import org.cyclops.integratedscripting.part.PartTypes;
 import org.cyclops.integratedscripting.proxy.ClientProxy;
 import org.cyclops.integratedscripting.proxy.CommonProxy;
 
@@ -45,7 +48,12 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
 
         getRegistryManager().addRegistry(IValueTranslatorRegistry.class, ValueTranslatorRegistry.getInstance());
 
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onRegistriesCreate);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::afterSetup);
+    }
+
+    public void onRegistriesCreate(NewRegistryEvent event) {
+        PartTypes.load();
     }
 
     @Override
@@ -74,7 +82,7 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
 
     @Override
     public CreativeModeTab constructDefaultCreativeModeTab() {
-        return new ItemGroupMod(this, () -> Items.BARRIER);
+        return new ItemGroupMod(this, () -> RegistryEntries.ITEM_SCRIPTING_DISK);
     }
 
     @Override
@@ -88,6 +96,7 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
         configHandler.addConfigurable(new BlockEntityScriptingDriveConfig());
 
         configHandler.addConfigurable(new ContainerScriptingDriveConfig());
+        configHandler.addConfigurable(new ContainerTerminalScriptingConfig());
     }
 
     @OnlyIn(Dist.CLIENT)

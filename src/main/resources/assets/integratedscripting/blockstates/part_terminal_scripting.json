@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "facing=north": { "model": "integratedscripting:block/part_terminal_scripting", "y": 180 },
+    "facing=east":  { "model": "integratedscripting:block/part_terminal_scripting", "y": 270 },
+    "facing=south": { "model": "integratedscripting:block/part_terminal_scripting"           },
+    "facing=west":  { "model": "integratedscripting:block/part_terminal_scripting", "y": 90  },
+    "facing=up":    { "model": "integratedscripting:block/part_terminal_scripting", "x": 90  },
+    "facing=down":  { "model": "integratedscripting:block/part_terminal_scripting", "x": 270 }
+  }
+}

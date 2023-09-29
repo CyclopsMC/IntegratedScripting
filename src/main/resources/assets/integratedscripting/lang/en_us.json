@@ -15,6 +15,10 @@
   "_comment": "Blocks",
   "block.integratedscripting.scripting_drive": "Scripting Drive",
 
+  "_comment": "Part types",
+  "parttype.integratedscripting.terminal_scripting": "Scripting Terminal",
+  "parttype.integratedscripting.terminal_scripting.info": "Manage scripts inside the network.",
+
   "_comment": "------ On the Dynamics of Integration contents ------",
 
   "info_book.integratedscripting.section.main": "Scripting",
