@@ -11,6 +11,8 @@
 
   "_comment": "Items",
   "item.integratedscripting.scripting_disk": "Scripting Disk",
+  "item.integratedscripting.scripting_disk.id": "ID: %s",
+  "item.integratedscripting.scripting_disk.bytes": "Bytes: %s",
 
   "_comment": "Blocks",
   "block.integratedscripting.scripting_drive": "Scripting Drive",

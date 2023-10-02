@@ -9,6 +9,9 @@ import org.cyclops.integrateddynamics.core.network.TileNetworkElement;
 import org.cyclops.integratedscripting.GeneralConfig;
 import org.cyclops.integratedscripting.Reference;
 import org.cyclops.integratedscripting.blockentity.BlockEntityScriptingDrive;
+import org.cyclops.integratedscripting.core.network.ScriptingNetworkHelpers;
+
+import java.util.function.Supplier;
 
 /**
  * @author rubensworks
@@ -18,14 +21,16 @@ public class ScriptingDriveNetworkElement extends TileNetworkElement<BlockEntity
 
     public static final ResourceLocation GROUP = new ResourceLocation(Reference.MOD_ID, "scripting_drive");
 
-    public ScriptingDriveNetworkElement(DimPos pos) {
+    private final Supplier<Integer> idGetter;
+
+    public ScriptingDriveNetworkElement(DimPos pos, Supplier<Integer> idGetter) {
         super(pos);
+        this.idGetter = idGetter;
     }
 
     @Override
     public int getId() {
-        // TODO: forward disk id
-        return 0;
+        return this.idGetter.get();
     }
 
     @Override
@@ -36,8 +41,12 @@ public class ScriptingDriveNetworkElement extends TileNetworkElement<BlockEntity
     @Override
     public boolean onNetworkAddition(INetwork network) {
         if(super.onNetworkAddition(network)) {
-            // TODO: add to network if we have a valid disk
-            return true;
+            return ScriptingNetworkHelpers.getScriptingNetwork(network)
+                    .map(scriptingNetwork -> {
+                        scriptingNetwork.addDisk(getId());
+                        return true;
+                    })
+                    .orElse(false);
         }
         return false;
     }
@@ -45,7 +54,10 @@ public class ScriptingDriveNetworkElement extends TileNetworkElement<BlockEntity
     @Override
     public void onNetworkRemoval(INetwork network) {
         super.onNetworkRemoval(network);
-        // TODO: remove from network
+        ScriptingNetworkHelpers.getScriptingNetwork(network)
+                .ifPresent(scriptingNetwork -> {
+                    scriptingNetwork.removeDisk(getId());
+                });
     }
 
     @Override

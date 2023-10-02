@@ -1,6 +1,7 @@
 package org.cyclops.integratedscripting.blockentity;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
@@ -19,6 +20,7 @@ import org.cyclops.integrateddynamics.capability.networkelementprovider.NetworkE
 import org.cyclops.integrateddynamics.capability.networkelementprovider.NetworkElementProviderSingleton;
 import org.cyclops.integrateddynamics.core.blockentity.BlockEntityCableConnectableInventory;
 import org.cyclops.integratedscripting.RegistryEntries;
+import org.cyclops.integratedscripting.core.network.ScriptingNetworkHelpers;
 import org.cyclops.integratedscripting.inventory.container.ContainerScriptingDrive;
 import org.cyclops.integratedscripting.item.ItemScriptingDisk;
 import org.cyclops.integratedscripting.network.ScriptingDriveNetworkElement;
@@ -37,6 +39,8 @@ public class BlockEntityScriptingDrive extends BlockEntityCableConnectableInvent
     public static final int COLS = 1;
     public static final int INVENTORY_SIZE = ROWS * COLS;
 
+    private int exposedDiskId = -1;
+
     public BlockEntityScriptingDrive(BlockPos blockPos, BlockState blockState) {
         super(RegistryEntries.BLOCK_ENTITY_SCRIPTING_DRIVE, blockPos, blockState, BlockEntityScriptingDrive.INVENTORY_SIZE, 1);
         getInventory().addDirtyMarkListener(this);
@@ -45,9 +49,42 @@ public class BlockEntityScriptingDrive extends BlockEntityCableConnectableInvent
         addCapabilityInternal(NetworkElementProviderConfig.CAPABILITY, LazyOptional.of(() -> new NetworkElementProviderSingleton() {
             @Override
             public INetworkElement createNetworkElement(Level world, BlockPos blockPos) {
-                return new ScriptingDriveNetworkElement(DimPos.of(world, blockPos));
+                return new ScriptingDriveNetworkElement(DimPos.of(world, blockPos), () -> getExposedDiskId());
             }
         }));
+    }
+
+    @Override
+    public void read(CompoundTag tag) {
+        super.read(tag);
+        this.exposedDiskId = tag.getInt("exposedDiskId");
+    }
+
+    @Override
+    public void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        tag.putInt("exposedDiskId", this.exposedDiskId);
+    }
+
+    public int getExposedDiskId() {
+        return exposedDiskId;
+    }
+
+    public void setExposedDiskId(int exposedDiskId) {
+        int oldExposedDiskId = this.exposedDiskId;
+        this.exposedDiskId = exposedDiskId;
+
+        if (oldExposedDiskId != exposedDiskId) {
+            this.onDirty();
+            ScriptingNetworkHelpers.getScriptingNetwork(getNetwork())
+                    .ifPresent(scriptingNetwork -> {
+                        if (exposedDiskId == -1) {
+                            scriptingNetwork.removeDisk(oldExposedDiskId);
+                        } else {
+                            scriptingNetwork.addDisk(exposedDiskId);
+                        }
+                    });
+        }
     }
 
     @Override
@@ -57,6 +94,17 @@ public class BlockEntityScriptingDrive extends BlockEntityCableConnectableInvent
             public boolean canPlaceItem(int slot, ItemStack itemStack) {
                 return super.canPlaceItem(slot, itemStack)
                         && (itemStack.isEmpty() || itemStack.getItem() instanceof ItemScriptingDisk);
+            }
+
+            @Override
+            protected void onInventoryChanged() {
+                super.onInventoryChanged();
+                ItemStack itemStack = getItem(0);
+                int id = -1;
+                if (itemStack.getItem() instanceof ItemScriptingDisk itemScriptingDisk) {
+                    id = itemScriptingDisk.getOrCreateDiskId(itemStack);
+                }
+                setExposedDiskId(id);
             }
         };
     }

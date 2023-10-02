@@ -3,9 +3,13 @@ package org.cyclops.integratedscripting;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.world.item.CreativeModeTab;
-import net.minecraft.world.item.Items;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
+import net.minecraftforge.event.server.ServerStoppingEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
@@ -22,7 +26,10 @@ import org.cyclops.integrateddynamics.IntegratedDynamics;
 import org.cyclops.integrateddynamics.infobook.OnTheDynamicsOfIntegrationBook;
 import org.cyclops.integratedscripting.block.BlockScriptingDriveConfig;
 import org.cyclops.integratedscripting.blockentity.BlockEntityScriptingDriveConfig;
+import org.cyclops.integratedscripting.capability.ScriptingNetworkCapabilityConstructors;
+import org.cyclops.integratedscripting.capability.network.ScriptingNetworkConfig;
 import org.cyclops.integratedscripting.command.CommandTestScript;
+import org.cyclops.integratedscripting.core.network.ScriptingData;
 import org.cyclops.integratedscripting.evaluate.translation.IValueTranslatorRegistry;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslatorRegistry;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
@@ -43,6 +50,8 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
 
     public static IntegratedScripting _instance;
 
+    public ScriptingData scriptingData;
+
     public IntegratedScripting() {
         super(Reference.MOD_ID, (instance) -> _instance = instance);
 
@@ -50,6 +59,8 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
 
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onRegistriesCreate);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::afterSetup);
+        MinecraftForge.EVENT_BUS.addListener(this::onServerStarting);
+        MinecraftForge.EVENT_BUS.addListener(this::onServerTick);
     }
 
     public void onRegistriesCreate(NewRegistryEvent event) {
@@ -69,7 +80,31 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
     protected void setup(FMLCommonSetupEvent event) {
         super.setup(event);
 
+        MinecraftForge.EVENT_BUS.register(new ScriptingNetworkCapabilityConstructors());
+
         ValueTranslators.load();
+    }
+
+    @SubscribeEvent
+    public void onServerStarted(ServerStartedEvent event) {
+        MinecraftForge.EVENT_BUS.register(this.scriptingData = new ScriptingData(event.getServer().getWorldPath(ScriptingData.LEVEL_RESOURCE)));
+    }
+
+    @Override
+    protected void onServerStopping(ServerStoppingEvent event) {
+        if (this.scriptingData != null) {
+            this.scriptingData.close();
+        }
+        this.scriptingData = null;
+    }
+
+    @SubscribeEvent
+    public void onServerTick(TickEvent.ServerTickEvent event) {
+        if(event.phase == TickEvent.Phase.START) {
+            if (this.scriptingData != null) {
+                this.scriptingData.tick();
+            }
+        }
     }
 
     protected void afterSetup(FMLLoadCompleteEvent event) {
@@ -88,6 +123,8 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
     @Override
     protected void onConfigsRegister(ConfigHandler configHandler) {
         super.onConfigsRegister(configHandler);
+
+        configHandler.addConfigurable(new ScriptingNetworkConfig());
 
         configHandler.addConfigurable(new ItemScriptingDiskConfig());
 
