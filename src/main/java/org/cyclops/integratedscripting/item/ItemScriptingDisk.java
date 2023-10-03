@@ -15,6 +15,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.cyclops.integrateddynamics.IntegratedDynamics;
 import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.Reference;
+import org.cyclops.integratedscripting.api.network.IScriptingData;
 import org.cyclops.integratedscripting.core.network.ScriptingNetworkHelpers;
 
 import java.nio.file.Path;
@@ -59,7 +60,7 @@ public class ItemScriptingDisk extends Item {
             scripts.put(Path.of("file1.js"), "console.log('abc')");
             scripts.put(Path.of("file2.js"), "console.log('def')");
             scripts.put(Path.of("abc", "file3.js"), "console.log('ghi')");
-            ScriptingNetworkHelpers.getScriptingData().setScripts(id, scripts);
+            ScriptingNetworkHelpers.getScriptingData().setScripts(id, scripts, IScriptingData.ChangeLocation.MEMORY);
         }
 
         return id;

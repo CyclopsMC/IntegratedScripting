@@ -15,7 +15,14 @@ import javax.annotation.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
+import java.nio.file.ClosedWatchServiceException;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardWatchEventKinds;
+import java.nio.file.WatchEvent;
+import java.nio.file.WatchKey;
+import java.nio.file.WatchService;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
@@ -33,6 +40,8 @@ public class ScriptingData implements IScriptingData {
     private final Path rootPath;
     private final Set<Pair<Integer, Path>> dirtyPaths = Sets.newHashSet();
     private final Int2ObjectMap<List<IScriptChangeListener>> scriptChangeListeners = new Int2ObjectAVLTreeMap<>();
+    private final Map<Path, WatchKey> pathWatchers = Maps.newHashMap();
+    private final Map<WatchKey, Path> pathWatchersReverse = Maps.newHashMap();
 
     private boolean initialized = false;
     private WatchService watchService;
@@ -77,6 +86,13 @@ public class ScriptingData implements IScriptingData {
         Path disksPath = getDisksPath();
         disksPath.toFile().mkdirs();
 
+        // Initialize watcher
+        try {
+            this.watchService = FileSystems.getDefault().newWatchService();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         // Collect all disk ids
         List<Integer> diskIds = Lists.newArrayList();
         try {
@@ -96,19 +112,7 @@ public class ScriptingData implements IScriptingData {
 
         // Read scripts for all disk id's
         for (Integer diskId : diskIds) {
-            Map<Path, String> scripts = Maps.newHashMap();
-            Path diskDir = getDiskPath(diskId);
-            Iterator<File> filesIt = FileUtils.iterateFilesAndDirs(diskDir.toFile(), FileFilterUtils.trueFileFilter(), FileFilterUtils.trueFileFilter());
-            while (filesIt.hasNext()) {
-                File file = filesIt.next();
-                Path filePathRelative = diskDir.relativize(file.toPath());
-                try {
-                    scripts.put(filePathRelative, FileUtils.readFileToString(file, StandardCharsets.UTF_8));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-            diskScripts.put(diskId.intValue(), scripts);
+            this.initializeDiskScripts(diskId);
         }
 
         // Listen to changes
@@ -116,42 +120,54 @@ public class ScriptingData implements IScriptingData {
         watchThread.start();
     }
 
+    protected void initializeDiskScripts(int diskId) {
+        Map<Path, String> scripts = Maps.newHashMap();
+        Path diskDir = getDiskPath(diskId);
+        Iterator<File> filesIt = FileUtils.iterateFilesAndDirs(diskDir.toFile(), FileFilterUtils.trueFileFilter(), FileFilterUtils.trueFileFilter());
+        while (filesIt.hasNext()) {
+            File file = filesIt.next();
+            if (file.isFile()) {
+                Path filePathRelative = diskDir.relativize(file.toPath());
+                try {
+                    scripts.put(filePathRelative, FileUtils.readFileToString(file, StandardCharsets.UTF_8));
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+        this.setScripts(diskId, scripts, ChangeLocation.DISK);
+    }
+
     protected void watchFiles() {
         // Listen to changes
         while (true) {
             try {
-                this.watchService = FileSystems.getDefault().newWatchService();
-                Path path = getDisksPath();
-                path.register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
                 boolean poll = true;
                 while (poll) {
                     WatchKey key = watchService.take();
                     for (WatchEvent<?> event : key.pollEvents()) {
-                        System.out.println("Event kind : " + event.kind() + " - File : " + event.context()); // TODO
 
                         // Check if the file is part of a disk directory
-                        Path changedPath = (Path) event.context();
-                        try {
-                            int diskId = Integer.parseInt(changedPath.getName(0).toString());
-                            if (changedPath.getNameCount() > 1) {
-                                Path scriptPathRelative = changedPath.subpath(1, changedPath.getNameCount());
-                                File scriptPathRelativeFile = scriptPathRelative.toFile();
-                                if (scriptPathRelativeFile.isFile()) {
-                                    if (event.kind() == StandardWatchEventKinds.ENTRY_CREATE ||
-                                            event.kind() == StandardWatchEventKinds.ENTRY_MODIFY) {
-                                        this.updateWatchedScript(diskId, scriptPathRelative, FileUtils.readFileToString(scriptPathRelativeFile, StandardCharsets.UTF_8));
-                                    } else if (event.kind() == StandardWatchEventKinds.ENTRY_DELETE) {
-                                        this.updateWatchedScript(diskId, scriptPathRelative, null);
-                                    }
+                        Path changedPathRelative = (Path) event.context();
+                        Path pathDirectory = pathWatchersReverse.get(key);
+                        if (pathDirectory != null) {
+                            Path changedPathAbsolute = pathDirectory.resolve(changedPathRelative);
+                            Path disksPath = getDisksPath();
+                            if (changedPathAbsolute.startsWith(disksPath)) {
+                                try {
+                                    int diskId = Integer.parseInt(changedPathAbsolute.getName(disksPath.getNameCount()).toString());
+                                    // Re-initialize the full directory
+                                    this.initializeDiskScripts(diskId);
+                                } catch (NumberFormatException e) {
+                                    // Ignore non-disk directories
                                 }
                             }
-                        } catch (NumberFormatException e) {
-                            // Ignore non-disk directories
                         }
                     }
                     poll = key.reset();
+                    Thread.yield();
                 }
-            } catch (IOException | InterruptedException e) {
+            } catch (InterruptedException e) {
                 e.printStackTrace();
             } catch (ClosedWatchServiceException e) {
                 // Exit the infinite loop
@@ -171,15 +187,44 @@ public class ScriptingData implements IScriptingData {
     }
 
     @Override
-    public void setScripts(int disk, Map<Path, String> scripts) {
-        diskScripts.put(disk, scripts);
-        for (Path path : scripts.keySet()) {
-            this.markDirty(disk, path);
+    public void setScripts(int disk, Map<Path, String> scripts, ChangeLocation changeLocation) {
+        // Update script data
+        Map<Path, String> oldScripts = diskScripts.put(disk, scripts);
+
+        // Propagate changes
+        if (changeLocation == ChangeLocation.MEMORY) {
+            // Mark dirty
+            for (Path path : scripts.keySet()) {
+                this.markDirty(disk, path);
+            }
+        }
+        if (changeLocation == ChangeLocation.DISK) {
+            // Invoke listeners
+            List<IScriptChangeListener> listeners = scriptChangeListeners.get(disk);
+            if (listeners != null) {
+                for (IScriptChangeListener listener : listeners) {
+                    for (Path scriptPathRelative : scripts.keySet()) {
+                        listener.onChange(scriptPathRelative);
+                    }
+                }
+            }
+
+            // Unregister old watchers
+            if (oldScripts != null) {
+                for (Path path : oldScripts.keySet()) {
+                    this.unregisterPathWatcher(disk, path.getParent());
+                }
+            }
+
+            // Register watchers for all directories
+            for (Path path : scripts.keySet()) {
+                this.registerPathWatcher(disk, path.getParent());
+            }
         }
     }
 
-    protected void updateWatchedScript(int disk, Path scriptPathRelative, @Nullable String script) {
-        System.out.println("Set script " + disk + "::" + scriptPathRelative + "::" + (script != null)); // TODO
+    @Override
+    public void setScript(int disk, Path scriptPathRelative, @Nullable String script, ChangeLocation changeLocation) {
         // Update script data
         Map<Path, String> scripts = diskScripts.get(disk);
         if (scripts == null) {
@@ -192,12 +237,46 @@ public class ScriptingData implements IScriptingData {
             scripts.put(scriptPathRelative, script);
         }
 
-        // Invoke listeners
-        List<IScriptChangeListener> listeners = scriptChangeListeners.get(disk);
-        if (listeners != null) {
-            for (IScriptChangeListener listener : listeners) {
-                listener.onChange(scriptPathRelative);
+        // Propagate changes
+        if (changeLocation == ChangeLocation.MEMORY) {
+            this.markDirty(disk, scriptPathRelative);
+        }
+        if (changeLocation == ChangeLocation.DISK) {
+            // Invoke listeners
+            List<IScriptChangeListener> listeners = scriptChangeListeners.get(disk);
+            if (listeners != null) {
+                for (IScriptChangeListener listener : listeners) {
+                    listener.onChange(scriptPathRelative);
+                }
             }
+
+            // Register watcher
+            this.registerPathWatcher(disk, scriptPathRelative.getParent());
+        }
+    }
+
+    protected void registerPathWatcher(int diskId, @Nullable Path pathRelative) {
+        Path diskPath = getDiskPath(diskId);
+        Path pathAbsolute = pathRelative == null ? diskPath : diskPath.resolve(pathRelative);
+        if (!pathWatchers.containsKey(pathAbsolute)) {
+            try {
+                WatchKey watchKey = pathAbsolute.register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
+                pathWatchers.put(pathAbsolute, watchKey);
+                pathWatchersReverse.put(watchKey, pathAbsolute);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    protected void unregisterPathWatcher(int diskId, @Nullable Path pathRelative) {
+        Path diskPath = getDiskPath(diskId);
+        Path pathAbsolute = pathRelative == null ? diskPath : diskPath.resolve(pathRelative);
+        WatchKey watchKey = pathWatchers.get(pathAbsolute);
+        if (watchKey != null) {
+            pathWatchers.remove(pathAbsolute);
+            pathWatchersReverse.remove(watchKey);
+            watchKey.cancel();
         }
     }
 
