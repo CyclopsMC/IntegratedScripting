@@ -1,59 +1,121 @@
 package org.cyclops.integratedscripting.inventory.container;
 
-import net.minecraft.nbt.CompoundTag;
+import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.common.util.LazyOptional;
+import net.minecraft.world.level.Level;
+import org.cyclops.cyclopscore.inventory.container.InventoryContainer;
 import org.cyclops.integrateddynamics.api.network.INetwork;
-import org.cyclops.integrateddynamics.api.network.IPositionedAddonsNetwork;
 import org.cyclops.integrateddynamics.api.part.IPartContainer;
 import org.cyclops.integrateddynamics.api.part.PartTarget;
 import org.cyclops.integrateddynamics.core.helper.NetworkHelpers;
 import org.cyclops.integrateddynamics.core.helper.PartHelpers;
-import org.cyclops.integrateddynamics.core.inventory.container.ContainerMultipart;
-import org.cyclops.integrateddynamics.core.part.PartStateEmpty;
 import org.cyclops.integratedscripting.RegistryEntries;
+import org.cyclops.integratedscripting.api.network.IScriptingNetwork;
+import org.cyclops.integratedscripting.core.network.ScriptingNetworkHelpers;
 import org.cyclops.integratedscripting.part.PartTypeTerminalScripting;
 
+import java.nio.file.Path;
+import java.util.Map;
 import java.util.Optional;
 
 /**
  * Container for the crafting jobs overview gui.
  * @author rubensworks
  */
-public class ContainerTerminalScripting extends ContainerMultipart<PartTypeTerminalScripting, PartStateEmpty<PartTypeTerminalScripting>> {
+public class ContainerTerminalScripting extends InventoryContainer {
 
-    private final LazyOptional<INetwork> network;
+    private final PartTarget target;
+    private final Optional<IPartContainer> partContainer;
+    private final PartTypeTerminalScripting partType;
+    private final Level world;
+    private final Optional<INetwork> network;
+    private final Optional<IScriptingNetwork> scriptingNetwork;
+
+    private IntList availableDisks;
+    private int activeDisk;
 
     public ContainerTerminalScripting(int id, Inventory playerInventory, FriendlyByteBuf packetBuffer) {
-        this(id, playerInventory, PartHelpers.readPartTarget(packetBuffer), Optional.empty(), PartHelpers.readPart(packetBuffer));
+        this(id, playerInventory, PartHelpers.readPartTarget(packetBuffer), Optional.empty(),
+                PartHelpers.readPart(packetBuffer), InitData.readFromPacketBuffer(packetBuffer));
     }
 
     public ContainerTerminalScripting(int id, Inventory playerInventory,
                                       PartTarget target, Optional<IPartContainer> partContainer,
-                                      PartTypeTerminalScripting partType) {
-        super(RegistryEntries.CONTAINER_TERMINAL_SCRIPTING, id, playerInventory, new SimpleContainer(), Optional.of(target), partContainer, partType);
+                                      PartTypeTerminalScripting partType, InitData initData) {
+        super(RegistryEntries.CONTAINER_TERMINAL_SCRIPTING, id, playerInventory, new SimpleContainer());
+        this.target = target;
+        this.partType = partType;
+        this.partContainer = partContainer;
+        this.world = player.getCommandSenderWorld();
 
-        this.network = getTarget()
-                .map(t -> NetworkHelpers.getNetwork(t.getCenter()))
-                .orElse(LazyOptional.empty());
+        this.network = NetworkHelpers.getNetwork(getTarget().getCenter()).resolve();
+        this.scriptingNetwork = this.network.flatMap(network -> ScriptingNetworkHelpers.getScriptingNetwork(network).resolve());
+
+        this.availableDisks = initData.getAvailableDisks();
+        this.activeDisk = this.availableDisks.isEmpty() ? -1 : this.availableDisks.getInt(0);
     }
 
-    public LazyOptional<INetwork> getNetwork() {
+    public Level getLevel() {
+        return world;
+    }
+
+    public PartTypeTerminalScripting getPartType() {
+        return partType;
+    }
+
+    public PartTarget getTarget() {
+        return target;
+    }
+
+    public Optional<PartTypeTerminalScripting> getPartState() {
+        return partContainer.map(p -> (PartTypeTerminalScripting) p.getPartState(getTarget().getCenter().getSide()));
+    }
+
+    public Optional<IPartContainer> getPartContainer() {
+        return partContainer;
+    }
+
+    @Override
+    public boolean stillValid(Player playerIn) {
+        return PartHelpers.canInteractWith(getTarget(), player, this.partContainer.get());
+    }
+
+    public Optional<INetwork> getNetwork() {
         return network;
     }
 
-    public int getChannel() {
-        return IPositionedAddonsNetwork.WILDCARD_CHANNEL;
+    public Optional<IScriptingNetwork> getScriptingNetwork() {
+        return scriptingNetwork;
+    }
+
+    public IntList getAvailableDisks() {
+        return availableDisks;
+    }
+
+    public int getActiveDisk() {
+        return activeDisk;
+    }
+
+    public void setActiveDisk(int activeDisk) {
+        this.activeDisk = activeDisk;
     }
 
     @Override
     public void broadcastChanges() {
         super.broadcastChanges();
 
-        // TODO: Send initial script data to clients
+        // Send disk contents to clients
+        if (!this.getLevel().isClientSide()) {
+            this.getScriptingNetwork().ifPresent(scriptingNetwork -> {
+                for (Integer disk : this.getAvailableDisks()) {
+                    Map<Path, String> scripts = ScriptingNetworkHelpers.getScriptingData().getScripts(disk);
+                    // TODO
+                }
+            });
+        }
     }
 
     @Override
@@ -61,16 +123,26 @@ public class ContainerTerminalScripting extends ContainerMultipart<PartTypeTermi
         return 0;
     }
 
-    @Override
-    public boolean stillValid(Player playerIn) {
-        return true;
-    }
+    public static class InitData {
 
-    @Override
-    public void onUpdate(int valueId, CompoundTag value) {
-        super.onUpdate(valueId, value);
+        private final IntList availableDisks;
 
-        // TODO: Read updates from server
+        public InitData(IntList availableDisks) {
+            this.availableDisks = availableDisks;
+        }
+
+        public IntList getAvailableDisks() {
+            return availableDisks;
+        }
+
+        public void writeToPacketBuffer(FriendlyByteBuf packetBuffer) {
+            packetBuffer.writeIntIdList(getAvailableDisks());
+        }
+
+        public static InitData readFromPacketBuffer(FriendlyByteBuf packetBuffer) {
+            return new InitData(packetBuffer.readIntIdList());
+        }
+
     }
 
 }

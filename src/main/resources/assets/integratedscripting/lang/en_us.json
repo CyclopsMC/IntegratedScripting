@@ -2,6 +2,9 @@
   "_comment": "General",
   "itemGroup.integratedscripting": "Integrated Scripting",
 
+  "_comment": "Gui",
+  "gui.integratedscripting.disk": "Disk",
+
   "valuetype.integratedscripting.error.translation.unknown_to_graal": "Could not find a translator from %s values to Graal.",
   "valuetype.integratedscripting.error.translation.unknown_to_graal_nbt": "Could not find a translator from %s values to Graal during NBT translation.",
   "valuetype.integratedscripting.error.translation.unknown_from_graal": "Could not find a translator from %s Graal values.",

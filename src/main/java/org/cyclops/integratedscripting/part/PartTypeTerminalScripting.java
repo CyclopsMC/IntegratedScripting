@@ -1,5 +1,6 @@
 package org.cyclops.integratedscripting.part;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
@@ -18,20 +19,25 @@ import org.apache.commons.lang3.tuple.Triple;
 import org.cyclops.cyclopscore.config.extendedconfig.BlockConfig;
 import org.cyclops.cyclopscore.init.ModBase;
 import org.cyclops.cyclopscore.network.PacketCodec;
+import org.cyclops.integrateddynamics.api.network.INetwork;
 import org.cyclops.integrateddynamics.api.part.IPartContainer;
 import org.cyclops.integrateddynamics.api.part.PartPos;
 import org.cyclops.integrateddynamics.api.part.PartTarget;
 import org.cyclops.integrateddynamics.core.block.IgnoredBlock;
 import org.cyclops.integrateddynamics.core.helper.L10NValues;
+import org.cyclops.integrateddynamics.core.helper.NetworkHelpers;
 import org.cyclops.integrateddynamics.core.helper.PartHelpers;
 import org.cyclops.integrateddynamics.core.part.PartStateEmpty;
 import org.cyclops.integrateddynamics.core.part.PartTypeBase;
 import org.cyclops.integrateddynamics.core.part.panel.PartTypePanel;
 import org.cyclops.integratedscripting.GeneralConfig;
 import org.cyclops.integratedscripting.IntegratedScripting;
+import org.cyclops.integratedscripting.api.network.IScriptingNetwork;
+import org.cyclops.integratedscripting.core.network.ScriptingNetworkHelpers;
 import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScripting;
 
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 /**
  * A part that exposes a gui using which players can manage scripts in the network.
@@ -95,7 +101,8 @@ public class PartTypeTerminalScripting extends PartTypePanel<PartTypeTerminalScr
             public AbstractContainerMenu createMenu(int id, Inventory playerInventory, Player playerEntity) {
                 Triple<IPartContainer, PartTypeBase, PartTarget> data = PartHelpers.getContainerPartConstructionData(pos);
                 return new ContainerTerminalScripting(id, playerInventory,
-                        data.getRight(), Optional.of(data.getLeft()), (PartTypeTerminalScripting) data.getMiddle());
+                        data.getRight(), Optional.of(data.getLeft()), (PartTypeTerminalScripting) data.getMiddle(),
+                        createContainerInitData(data.getRight().getCenter()));
             }
         });
     }
@@ -104,5 +111,16 @@ public class PartTypeTerminalScripting extends PartTypePanel<PartTypeTerminalScr
     public void writeExtraGuiData(FriendlyByteBuf packetBuffer, PartPos pos, ServerPlayer player) {
         PacketCodec.write(packetBuffer, pos);
         super.writeExtraGuiData(packetBuffer, pos, player);
+        createContainerInitData(pos).writeToPacketBuffer(packetBuffer);
+    }
+
+    protected ContainerTerminalScripting.InitData createContainerInitData(PartPos pos) {
+        Optional<INetwork> network = NetworkHelpers.getNetwork(pos).resolve();
+        Optional<IScriptingNetwork> scriptingNetwork = network.flatMap(net -> ScriptingNetworkHelpers.getScriptingNetwork(net).resolve());
+        IntArrayList availableDisks = scriptingNetwork
+                .map(net -> net.getDisks().stream().sorted().collect(Collectors.toList()))
+                .map(IntArrayList::new)
+                .orElse(new IntArrayList());
+        return new ContainerTerminalScripting.InitData(availableDisks);
     }
 }
