@@ -21,6 +21,7 @@ import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScri
 
 import javax.annotation.Nullable;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -37,6 +38,10 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     public static int PATHS_HEIGHT = 230;
     public static int PATHS_ROW_HEIGHT = 5;
     public static int PATHS_MAX_ROWS = PATHS_HEIGHT / PATHS_ROW_HEIGHT;
+    public static int SCRIPT_X = 88;
+    public static int SCRIPT_Y = 18;
+    public static int SCRIPT_WIDTH = 160;
+    public static int SCRIPT_HEIGHT = 131;
 
     private final Player player;
 
@@ -104,12 +109,20 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         scrollBar.drawGuiContainerBackgroundLayer(matrixStack, partialTicks, mouseX, mouseY);
 
         if (!this.getMenu().getAvailableDisks().isEmpty()) {
-            this.renderScripts(matrixStack, partialTicks, mouseX, mouseY);
+            this.renderScriptPaths(matrixStack, partialTicks, mouseX, mouseY);
         } else {
             // Gray-out editor and file list
             RenderSystem.setShaderColor(0.3F, 0.3F, 0.3F, 0.3F);
-            fill(matrixStack, leftPos + 88, topPos + 18, leftPos + 88 + 160, topPos + 18 + 131, Helpers.RGBAToInt(50, 50, 50, 100));
             fill(matrixStack, leftPos + PATHS_X, topPos + PATHS_Y, leftPos + PATHS_X + PATHS_WIDTH, topPos + PATHS_Y + PATHS_HEIGHT, Helpers.RGBAToInt(50, 50, 50, 100));
+            RenderSystem.setShaderColor(1, 1, 1, 1);
+        }
+
+        if (this.getMenu().getActiveScript() != null) {
+            this.renderActiveScript(matrixStack, partialTicks, mouseX, mouseY, this.getMenu().getActiveScript());
+        } else {
+            // Gray-out editor and file list
+            RenderSystem.setShaderColor(0.3F, 0.3F, 0.3F, 0.3F);
+            fill(matrixStack, leftPos + SCRIPT_X, topPos + SCRIPT_Y, leftPos + SCRIPT_X + SCRIPT_WIDTH, topPos + SCRIPT_Y + SCRIPT_HEIGHT, Helpers.RGBAToInt(50, 50, 50, 100));
             RenderSystem.setShaderColor(1, 1, 1, 1);
         }
     }
@@ -119,31 +132,53 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         return this.container.getLastScripts().get(this.container.getActiveDisk());
     }
 
-    protected void renderScripts(PoseStack poseStack, float partialTicks, int mouseX, int mouseY) {
+    protected List<Path> getVisibleScriptPaths() {
         Map<Path, String> scripts = getActiveScripts();
         if (scripts != null) {
             List<Path> paths = scripts.keySet().stream().sorted().collect(Collectors.toList());
             if (!paths.isEmpty()) {
-                List<Path> pathsSubList = paths.subList(
+                return paths.subList(
                         Math.max(0, this.firstRow),
                         Math.max(0, this.firstRow) + Math.min(paths.size(), scrollBar.getVisibleRows())
                 );
-                int i = 0;
-                for (Path path : pathsSubList) {
-                    boolean hovering = isHovering(PATHS_X, PATHS_Y + i * PATHS_ROW_HEIGHT, PATHS_WIDTH, PATHS_ROW_HEIGHT, mouseX, mouseY);
-                    RenderHelpers.drawScaledString(
-                            poseStack,
-                            font,
-                            StringUtil.truncateStringIfNecessary(path.toString(), 50, true),
-                            this.leftPos + PATHS_X + 1,
-                            this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT + 1,
-                            0.5f,
-                            hovering ? Helpers.RGBToInt(50, 50, 250) : Helpers.RGBToInt(0, 0, 0)
-                    );
-                    i++;
-                }
             }
         }
+        return Collections.emptyList();
+    }
+
+    protected void renderScriptPaths(PoseStack poseStack, float partialTicks, int mouseX, int mouseY) {
+        List<Path> paths = getVisibleScriptPaths();
+        int i = 0;
+        for (Path path : paths) {
+            boolean hovering = isHovering(PATHS_X, PATHS_Y + i * PATHS_ROW_HEIGHT, PATHS_WIDTH, PATHS_ROW_HEIGHT, mouseX, mouseY);
+            RenderHelpers.drawScaledString(
+                    poseStack,
+                    font,
+                    StringUtil.truncateStringIfNecessary(path.toString(), 50, true),
+                    this.leftPos + PATHS_X + 1,
+                    this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT + 1,
+                    0.5f,
+                    hovering ? Helpers.RGBToInt(50, 50, 250) : Helpers.RGBToInt(0, 0, 0)
+            );
+            i++;
+        }
+    }
+
+    @Nullable
+    protected Path getHoveredScriptPath(double mouseX, double mouseY) {
+        List<Path> paths = getVisibleScriptPaths();
+        int i = 0;
+        for (Path path : paths) {
+            if (isHovering(PATHS_X, PATHS_Y + i * PATHS_ROW_HEIGHT, PATHS_WIDTH, PATHS_ROW_HEIGHT, mouseX, mouseY)) {
+                return path;
+            }
+            i++;
+        }
+        return null;
+    }
+
+    protected void renderActiveScript(PoseStack poseStack, float partialTicks, int mouseX, int mouseY, String script) {
+        font.draw(poseStack, script, this.leftPos + SCRIPT_X + 1, this.topPos + SCRIPT_Y + 1, Helpers.RGBToInt(0, 0, 0));
     }
 
     @Override
@@ -156,6 +191,12 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+        Path hoveredScriptPath = getHoveredScriptPath(mouseX, mouseY);
+        if (hoveredScriptPath != null) {
+            getMenu().setActiveScriptPath(hoveredScriptPath);
+            return true;
+        }
+
         // Update channel when changing channel field
         if (this.fieldDisk.mouseClicked(mouseX, mouseY, mouseButton)) {
             int disk;

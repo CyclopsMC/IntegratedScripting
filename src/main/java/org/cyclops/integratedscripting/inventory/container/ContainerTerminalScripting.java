@@ -48,6 +48,7 @@ public class ContainerTerminalScripting extends InventoryContainer {
     private final Int2ObjectMap<Map<Path, String>> lastScripts = new Int2ObjectAVLTreeMap<>();
     private IntList availableDisks;
     private int activeDisk;
+    private Path activeScriptPath;
 
     public ContainerTerminalScripting(int id, Inventory playerInventory, FriendlyByteBuf packetBuffer) {
         this(id, playerInventory, PartHelpers.readPartTarget(packetBuffer), Optional.empty(),
@@ -68,6 +69,7 @@ public class ContainerTerminalScripting extends InventoryContainer {
 
         this.availableDisks = initData.getAvailableDisks();
         this.activeDisk = this.availableDisks.isEmpty() ? -1 : this.availableDisks.getInt(0);
+        this.activeScriptPath = null;
     }
 
     public Level getLevel() {
@@ -195,6 +197,28 @@ public class ContainerTerminalScripting extends InventoryContainer {
 
     public void setServerScript(int disk, Path path, @Nullable String script) {
         ScriptingNetworkHelpers.getScriptingData().setScript(disk, path, script, IScriptingData.ChangeLocation.MEMORY);
+    }
+
+    @Nullable
+    public Path getActiveScriptPath() {
+        return activeScriptPath;
+    }
+
+    public void setActiveScriptPath(Path activeScriptPath) {
+        this.activeScriptPath = activeScriptPath;
+    }
+
+    @Nullable
+    public String getActiveScript() {
+        Path path = getActiveScriptPath();
+        int disk = getActiveDisk();
+        if (path != null && disk >= 0) {
+            Map<Path, String> diskScripts = getLastScripts().get(disk);
+            if (diskScripts != null) {
+                return diskScripts.get(path);
+            }
+        }
+        return null;
     }
 
     public static class InitData {
