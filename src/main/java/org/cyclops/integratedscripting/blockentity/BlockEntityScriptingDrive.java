@@ -23,7 +23,7 @@ import org.cyclops.integratedscripting.RegistryEntries;
 import org.cyclops.integratedscripting.core.network.ScriptingNetworkHelpers;
 import org.cyclops.integratedscripting.inventory.container.ContainerScriptingDrive;
 import org.cyclops.integratedscripting.item.ItemScriptingDisk;
-import org.cyclops.integratedscripting.network.ScriptingDriveNetworkElement;
+import org.cyclops.integratedscripting.core.network.ScriptingDriveNetworkElement;
 
 import javax.annotation.Nullable;
 

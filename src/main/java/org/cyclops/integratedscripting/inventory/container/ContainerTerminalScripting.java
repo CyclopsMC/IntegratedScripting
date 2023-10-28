@@ -1,7 +1,12 @@
 package org.cyclops.integratedscripting.inventory.container;
 
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -12,14 +17,20 @@ import org.cyclops.integrateddynamics.api.part.IPartContainer;
 import org.cyclops.integrateddynamics.api.part.PartTarget;
 import org.cyclops.integrateddynamics.core.helper.NetworkHelpers;
 import org.cyclops.integrateddynamics.core.helper.PartHelpers;
+import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.RegistryEntries;
+import org.cyclops.integratedscripting.api.network.IScriptingData;
 import org.cyclops.integratedscripting.api.network.IScriptingNetwork;
 import org.cyclops.integratedscripting.core.network.ScriptingNetworkHelpers;
+import org.cyclops.integratedscripting.network.packet.TerminalScriptingModifiedScriptPacket;
 import org.cyclops.integratedscripting.part.PartTypeTerminalScripting;
 
+import javax.annotation.Nullable;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 
 /**
  * Container for the crafting jobs overview gui.
@@ -34,6 +45,7 @@ public class ContainerTerminalScripting extends InventoryContainer {
     private final Optional<INetwork> network;
     private final Optional<IScriptingNetwork> scriptingNetwork;
 
+    private final Int2ObjectMap<Map<Path, String>> lastScripts = new Int2ObjectAVLTreeMap<>();
     private IntList availableDisks;
     private int activeDisk;
 
@@ -111,8 +123,42 @@ public class ContainerTerminalScripting extends InventoryContainer {
         if (!this.getLevel().isClientSide()) {
             this.getScriptingNetwork().ifPresent(scriptingNetwork -> {
                 for (Integer disk : this.getAvailableDisks()) {
-                    Map<Path, String> scripts = ScriptingNetworkHelpers.getScriptingData().getScripts(disk);
-                    // TODO
+                    Map<Path, String> scriptsNew = ScriptingNetworkHelpers.getScriptingData().getScripts(disk);
+                    Map<Path, String> scriptsOld = lastScripts.get((int) disk);
+
+                    // Determine files (union of new and old)
+                    Set<Path> files;
+                    if (scriptsOld == null) {
+                        scriptsOld = Maps.newHashMap();
+                        lastScripts.put((int) disk, scriptsOld);
+                        files = scriptsNew.keySet();
+                    } else {
+                        files = Sets.newHashSet(scriptsNew.keySet());
+                        files.addAll(scriptsOld.keySet());
+                    }
+
+                    // Determine changed files
+                    for (Path file : files) {
+                        String scriptNew = scriptsNew.get(file);
+                        String scriptOld = scriptsOld.get(file);
+                        if (!Objects.equals(scriptNew, scriptOld)) {
+                            // Send separate packet for each modified file
+                            IntegratedScripting._instance.getPacketHandler()
+                                    .sendToPlayer(new TerminalScriptingModifiedScriptPacket(disk, file, scriptNew), (ServerPlayer) player);
+
+                            // Update the next old value
+                            if (scriptNew != null) {
+                                scriptsOld.put(file, scriptNew);
+                            } else {
+                                scriptsOld.remove(file);
+                            }
+
+                            // Cleanup if we have no scripts anymore for a certain disk
+                            if (scriptsOld.isEmpty()) {
+                                lastScripts.remove((int) disk);
+                            }
+                        }
+                    }
                 }
             });
         }
@@ -121,6 +167,30 @@ public class ContainerTerminalScripting extends InventoryContainer {
     @Override
     protected int getSizeInventory() {
         return 0;
+    }
+
+    public void setLastScript(int disk, Path path, @Nullable String script) {
+        Map<Path, String> lastScriptsDisk = lastScripts.get(disk);
+        if (lastScriptsDisk == null) {
+            lastScriptsDisk = Maps.newHashMap();
+            lastScripts.put(disk, lastScriptsDisk);
+        }
+
+        // Store or delete script
+        if (script != null) {
+            lastScriptsDisk.put(path, script);
+        } else {
+            lastScriptsDisk.remove(path);
+        }
+
+        // Cleanup if we have no scripts anymore for a certain disk
+        if (lastScriptsDisk.isEmpty()) {
+            lastScripts.remove(disk);
+        }
+    }
+
+    public void setServerScript(int disk, Path path, @Nullable String script) {
+        ScriptingNetworkHelpers.getScriptingData().setScript(disk, path, script, IScriptingData.ChangeLocation.MEMORY);
     }
 
     public static class InitData {

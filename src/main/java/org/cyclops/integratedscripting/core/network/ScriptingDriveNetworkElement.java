@@ -1,4 +1,4 @@
-package org.cyclops.integratedscripting.network;
+package org.cyclops.integratedscripting.core.network;
 
 import net.minecraft.resources.ResourceLocation;
 import org.cyclops.cyclopscore.datastructure.DimPos;
@@ -9,7 +9,6 @@ import org.cyclops.integrateddynamics.core.network.TileNetworkElement;
 import org.cyclops.integratedscripting.GeneralConfig;
 import org.cyclops.integratedscripting.Reference;
 import org.cyclops.integratedscripting.blockentity.BlockEntityScriptingDrive;
-import org.cyclops.integratedscripting.core.network.ScriptingNetworkHelpers;
 
 import java.util.function.Supplier;
 
