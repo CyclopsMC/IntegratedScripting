@@ -7,6 +7,7 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.StringUtil;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import org.cyclops.cyclopscore.client.gui.component.WidgetScrollBar;
@@ -18,16 +19,30 @@ import org.cyclops.cyclopscore.helper.RenderHelpers;
 import org.cyclops.integratedscripting.Reference;
 import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScripting;
 
+import javax.annotation.Nullable;
+import java.nio.file.Path;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 /**
  * The crafting jobs overview gui.
  * @author rubensworks
  */
 public class ContainerScreenTerminalScripting extends ContainerScreenExtended<ContainerTerminalScripting> {
 
+    public static int PATHS_X = 19;
+    public static int PATHS_Y = 18;
+    public static int PATHS_WIDTH = 56;
+    public static int PATHS_HEIGHT = 230;
+    public static int PATHS_ROW_HEIGHT = 5;
+    public static int PATHS_MAX_ROWS = PATHS_HEIGHT / PATHS_ROW_HEIGHT;
+
     private final Player player;
 
     private WidgetArrowedListField<Integer> fieldDisk;
     private WidgetScrollBar scrollBar;
+    private int firstRow;
 
     public ContainerScreenTerminalScripting(ContainerTerminalScripting container, Inventory inventory, Component title) {
         super(container, inventory, title);
@@ -38,13 +53,14 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         this.titleLabelY = 6;
         this.inventoryLabelX = 88;
         this.inventoryLabelY = this.imageHeight - 94;
+        this.firstRow = 0;
     }
 
     @Override
     public void init() {
         super.init();
 
-        fieldDisk = new WidgetArrowedListField<>(Minecraft.getInstance().font, leftPos + 207,
+        fieldDisk = new WidgetArrowedListField<>(Minecraft.getInstance().font, leftPos + 30,
                 topPos + 4, 42, 15, true,
                 Component.translatable("gui.integratedscripting.disk"), true,
                 getMenu().getAvailableDisks());
@@ -56,8 +72,13 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         fieldDisk.setValue(String.valueOf(getMenu().getActiveDisk()));
 
         scrollBar = new WidgetScrollBar(leftPos + 5, topPos + 18, 178,
-                Component.translatable("gui.cyclopscore.scrollbar"), this::setFirstRow, 10);
-        scrollBar.setTotalRows(10); // TODO: set to number of files - 1
+                Component.translatable("gui.cyclopscore.scrollbar"), this::setFirstRow, PATHS_MAX_ROWS) {
+            @Override
+            public int getTotalRows() {
+                Map<Path, String> scripts = getActiveScripts();
+                return scripts == null ? 0 : scripts.keySet().size();
+            }
+        };
     }
 
     @Override
@@ -88,13 +109,41 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             // Gray-out editor and file list
             RenderSystem.setShaderColor(0.3F, 0.3F, 0.3F, 0.3F);
             fill(matrixStack, leftPos + 88, topPos + 18, leftPos + 88 + 160, topPos + 18 + 131, Helpers.RGBAToInt(50, 50, 50, 100));
-            fill(matrixStack, leftPos + 19, topPos + 18, leftPos + 19 + 56, topPos + 18 + 230, Helpers.RGBAToInt(50, 50, 50, 100));
+            fill(matrixStack, leftPos + PATHS_X, topPos + PATHS_Y, leftPos + PATHS_X + PATHS_WIDTH, topPos + PATHS_Y + PATHS_HEIGHT, Helpers.RGBAToInt(50, 50, 50, 100));
             RenderSystem.setShaderColor(1, 1, 1, 1);
         }
     }
 
-    protected void renderScripts(PoseStack matrixStack, float partialTicks, int mouseX, int mouseY) {
-        // TODO: render scripts
+    @Nullable
+    protected Map<Path, String> getActiveScripts() {
+        return this.container.getLastScripts().get(this.container.getActiveDisk());
+    }
+
+    protected void renderScripts(PoseStack poseStack, float partialTicks, int mouseX, int mouseY) {
+        Map<Path, String> scripts = getActiveScripts();
+        if (scripts != null) {
+            List<Path> paths = scripts.keySet().stream().sorted().collect(Collectors.toList());
+            if (!paths.isEmpty()) {
+                List<Path> pathsSubList = paths.subList(
+                        Math.max(0, this.firstRow),
+                        Math.max(0, this.firstRow) + Math.min(paths.size(), scrollBar.getVisibleRows())
+                );
+                int i = 0;
+                for (Path path : pathsSubList) {
+                    boolean hovering = isHovering(PATHS_X, PATHS_Y + i * PATHS_ROW_HEIGHT, PATHS_WIDTH, PATHS_ROW_HEIGHT, mouseX, mouseY);
+                    RenderHelpers.drawScaledString(
+                            poseStack,
+                            font,
+                            StringUtil.truncateStringIfNecessary(path.toString(), 50, true),
+                            this.leftPos + PATHS_X + 1,
+                            this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT + 1,
+                            0.5f,
+                            hovering ? Helpers.RGBToInt(50, 50, 250) : Helpers.RGBToInt(0, 0, 0)
+                    );
+                    i++;
+                }
+            }
+        }
     }
 
     @Override
@@ -102,7 +151,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         super.renderLabels(poseStack, mouseX, mouseY);
 
         // Draw disk label
-        drawString(poseStack, font, L10NHelpers.localize("gui.integratedscripting.disk") + ":", 185, 6, 16777215);
+        drawString(poseStack, font, L10NHelpers.localize("gui.integratedscripting.disk") + ":", 8, 6, 16777215);
     }
 
     @Override
@@ -131,6 +180,6 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     }
 
     public void setFirstRow(int firstRow) {
-        // TODO: handle scrolling
+        this.firstRow = firstRow;
     }
 }

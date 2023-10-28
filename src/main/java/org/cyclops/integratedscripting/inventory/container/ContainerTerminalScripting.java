@@ -189,6 +189,10 @@ public class ContainerTerminalScripting extends InventoryContainer {
         }
     }
 
+    public Int2ObjectMap<Map<Path, String>> getLastScripts() {
+        return lastScripts;
+    }
+
     public void setServerScript(int disk, Path path, @Nullable String script) {
         ScriptingNetworkHelpers.getScriptingData().setScript(disk, path, script, IScriptingData.ChangeLocation.MEMORY);
     }
