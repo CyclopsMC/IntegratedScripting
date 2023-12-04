@@ -17,7 +17,9 @@ import org.cyclops.cyclopscore.helper.Helpers;
 import org.cyclops.cyclopscore.helper.L10NHelpers;
 import org.cyclops.cyclopscore.helper.RenderHelpers;
 import org.cyclops.integratedscripting.Reference;
+import org.cyclops.integratedscripting.client.gui.component.input.WidgetTextArea;
 import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScripting;
+import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.Nullable;
 import java.nio.file.Path;
@@ -48,6 +50,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     private WidgetArrowedListField<Integer> fieldDisk;
     private WidgetScrollBar scrollBar;
     private int firstRow;
+    private WidgetTextArea textArea;
 
     public ContainerScreenTerminalScripting(ContainerTerminalScripting container, Inventory inventory, Component title) {
         super(container, inventory, title);
@@ -64,6 +67,8 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     @Override
     public void init() {
         super.init();
+
+        this.minecraft.keyboardHandler.setSendRepeatsToGui(true);
 
         fieldDisk = new WidgetArrowedListField<>(Minecraft.getInstance().font, leftPos + 30,
                 topPos + 4, 42, 15, true,
@@ -84,6 +89,20 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
                 return scripts == null ? 0 : scripts.keySet().size();
             }
         };
+
+        textArea = new WidgetTextArea(Minecraft.getInstance().font, this.leftPos + SCRIPT_X + 1, this.topPos + SCRIPT_Y + 1, SCRIPT_WIDTH, SCRIPT_HEIGHT, Component.translatable("gui.integratedscripting.script"));
+        textArea.setListener(this::onActiveScriptModified);
+        addRenderableWidget(textArea);
+    }
+
+    @Override
+    protected void containerTick() {
+        super.containerTick();
+        textArea.tick();
+    }
+
+    public void removed() {
+        this.minecraft.keyboardHandler.setSendRepeatsToGui(false);
     }
 
     @Override
@@ -117,9 +136,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             RenderSystem.setShaderColor(1, 1, 1, 1);
         }
 
-        if (this.getMenu().getActiveScript() != null) {
-            this.renderActiveScript(matrixStack, partialTicks, mouseX, mouseY, this.getMenu().getActiveScript());
-        } else {
+        if (this.getMenu().getActiveScript() == null) {
             // Gray-out editor and file list
             RenderSystem.setShaderColor(0.3F, 0.3F, 0.3F, 0.3F);
             fill(matrixStack, leftPos + SCRIPT_X, topPos + SCRIPT_Y, leftPos + SCRIPT_X + SCRIPT_WIDTH, topPos + SCRIPT_Y + SCRIPT_HEIGHT, Helpers.RGBAToInt(50, 50, 50, 100));
@@ -177,10 +194,6 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         return null;
     }
 
-    protected void renderActiveScript(PoseStack poseStack, float partialTicks, int mouseX, int mouseY, String script) {
-        font.draw(poseStack, script, this.leftPos + SCRIPT_X + 1, this.topPos + SCRIPT_Y + 1, Helpers.RGBToInt(0, 0, 0));
-    }
-
     @Override
     protected void renderLabels(PoseStack poseStack, int mouseX, int mouseY) {
         super.renderLabels(poseStack, mouseX, mouseY);
@@ -194,6 +207,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         Path hoveredScriptPath = getHoveredScriptPath(mouseX, mouseY);
         if (hoveredScriptPath != null) {
             getMenu().setActiveScriptPath(hoveredScriptPath);
+            this.onActiveScriptSelected();
             return true;
         }
 
@@ -222,5 +236,37 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
     public void setFirstRow(int firstRow) {
         this.firstRow = firstRow;
+    }
+
+    private void onActiveScriptSelected() {
+        this.textArea.setValuePassive(getMenu().getActiveScript());
+    }
+
+    private void onActiveScriptModified() {
+        getMenu().setActiveScript(this.textArea.getValue());
+    }
+
+    @Override
+    public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double offsetX, double offsetY) {
+        if (textArea.mouseDragged(mouseX, mouseY, mouseButton, offsetX, offsetY)) {
+            return true;
+        }
+        return super.mouseDragged(mouseX, mouseY, mouseButton, offsetX, offsetY);
+    }
+
+    @Override
+    public boolean keyPressed(int typedChar, int keyCode, int modifiers) {
+        if (textArea.isFocused()) {
+            boolean ret = textArea.keyPressed(typedChar, keyCode, modifiers);
+            if (typedChar != GLFW.GLFW_KEY_ESCAPE) {
+                return ret;
+            }
+        }
+        return super.keyPressed(typedChar, keyCode, modifiers);
+    }
+
+    @Override
+    public boolean charTyped(char p_94683_, int p_94684_) {
+        return super.charTyped(p_94683_, p_94684_);
     }
 }

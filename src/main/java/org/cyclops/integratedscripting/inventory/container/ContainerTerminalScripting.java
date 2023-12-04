@@ -221,6 +221,19 @@ public class ContainerTerminalScripting extends InventoryContainer {
         return null;
     }
 
+    public void setActiveScript(String scriptNew) {
+        Path path = getActiveScriptPath();
+        int disk = getActiveDisk();
+        if (path != null && disk >= 0) {
+            Map<Path, String> diskScripts = getLastScripts().get(disk);
+            if (diskScripts != null) {
+                diskScripts.put(path, scriptNew);
+                IntegratedScripting._instance.getPacketHandler()
+                        .sendToServer(new TerminalScriptingModifiedScriptPacket(disk, path, scriptNew));
+            }
+        }
+    }
+
     public static class InitData {
 
         private final IntList availableDisks;
