@@ -11,6 +11,7 @@ import net.minecraft.util.StringUtil;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import org.cyclops.cyclopscore.client.gui.component.WidgetScrollBar;
+import org.cyclops.cyclopscore.client.gui.component.button.ButtonText;
 import org.cyclops.cyclopscore.client.gui.component.input.WidgetArrowedListField;
 import org.cyclops.cyclopscore.client.gui.container.ContainerScreenExtended;
 import org.cyclops.cyclopscore.helper.Helpers;
@@ -22,6 +23,7 @@ import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScri
 import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.Nullable;
+import java.awt.*;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -51,6 +53,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     private WidgetScrollBar scrollBar;
     private int firstRow;
     private WidgetTextArea textArea;
+    private ButtonText buttonCreateFile;
 
     public ContainerScreenTerminalScripting(ContainerTerminalScripting container, Inventory inventory, Component title) {
         super(container, inventory, title);
@@ -93,6 +96,10 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         textArea = new WidgetTextArea(Minecraft.getInstance().font, this.leftPos + SCRIPT_X + 1, this.topPos + SCRIPT_Y + 1, SCRIPT_WIDTH, SCRIPT_HEIGHT, Component.translatable("gui.integratedscripting.script"));
         textArea.setListener(this::onActiveScriptModified);
         addRenderableWidget(textArea);
+
+        buttonCreateFile = new ButtonText(this.leftPos + 19, this.topPos + 238, 56, 10, Component.translatable("gui.integratedscripting.create_file"), Component.literal("+"),
+                (button) -> getMenu().createNewFile(), true);
+        addRenderableWidget(buttonCreateFile);
     }
 
     @Override

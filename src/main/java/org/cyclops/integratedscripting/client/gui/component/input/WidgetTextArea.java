@@ -344,6 +344,8 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
         tesselator.end();
         RenderSystem.disableColorLogicOp();
         RenderSystem.enableTexture();
+
+        RenderSystem.setShaderColor(1, 1, 1, 1);
     }
 
     private Pos2i convertScreenToLocal(Pos2i posScreen) {

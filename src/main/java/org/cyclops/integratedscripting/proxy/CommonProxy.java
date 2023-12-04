@@ -4,6 +4,7 @@ import org.cyclops.cyclopscore.init.ModBase;
 import org.cyclops.cyclopscore.network.PacketHandler;
 import org.cyclops.cyclopscore.proxy.CommonProxyComponent;
 import org.cyclops.integratedscripting.IntegratedScripting;
+import org.cyclops.integratedscripting.network.packet.TerminalScriptingCreateNewScriptPacket;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingModifiedScriptPacket;
 
 /**
@@ -23,5 +24,6 @@ public class CommonProxy extends CommonProxyComponent {
         super.registerPacketHandlers(packetHandler);
 
         packetHandler.register(TerminalScriptingModifiedScriptPacket.class);
+        packetHandler.register(TerminalScriptingCreateNewScriptPacket.class);
     }
 }

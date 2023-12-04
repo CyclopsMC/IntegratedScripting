@@ -5,6 +5,7 @@
   "_comment": "Gui",
   "gui.integratedscripting.disk": "Disk",
   "gui.integratedscripting.script": "Script",
+  "gui.integratedscripting.create_file": "Create File",
 
   "valuetype.integratedscripting.error.translation.unknown_to_graal": "Could not find a translator from %s values to Graal.",
   "valuetype.integratedscripting.error.translation.unknown_to_graal_nbt": "Could not find a translator from %s values to Graal during NBT translation.",

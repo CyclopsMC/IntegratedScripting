@@ -22,6 +22,7 @@ import org.cyclops.integratedscripting.RegistryEntries;
 import org.cyclops.integratedscripting.api.network.IScriptingData;
 import org.cyclops.integratedscripting.api.network.IScriptingNetwork;
 import org.cyclops.integratedscripting.core.network.ScriptingNetworkHelpers;
+import org.cyclops.integratedscripting.network.packet.TerminalScriptingCreateNewScriptPacket;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingModifiedScriptPacket;
 import org.cyclops.integratedscripting.part.PartTypeTerminalScripting;
 
@@ -199,6 +200,19 @@ public class ContainerTerminalScripting extends InventoryContainer {
         ScriptingNetworkHelpers.getScriptingData().setScript(disk, path, script, IScriptingData.ChangeLocation.MEMORY);
     }
 
+    public void createNewServerScript(int disk) {
+        // Determine unique script name
+        Set<Path> existingScripts = ScriptingNetworkHelpers.getScriptingData().getScripts(disk).keySet();
+        Path path;
+        int i = 0;
+        do {
+            path = Path.of("script" + i++ + ".js");
+        } while (existingScripts.contains(path));
+
+        // Create empty script
+        ScriptingNetworkHelpers.getScriptingData().setScript(disk, path, "", IScriptingData.ChangeLocation.MEMORY);
+    }
+
     @Nullable
     public Path getActiveScriptPath() {
         return activeScriptPath;
@@ -231,6 +245,13 @@ public class ContainerTerminalScripting extends InventoryContainer {
                 IntegratedScripting._instance.getPacketHandler()
                         .sendToServer(new TerminalScriptingModifiedScriptPacket(disk, path, scriptNew));
             }
+        }
+    }
+
+    public void createNewFile() {
+        int disk = getActiveDisk();
+        if (disk >= 0) {
+            IntegratedScripting._instance.getPacketHandler().sendToServer(new TerminalScriptingCreateNewScriptPacket(disk));
         }
     }
 
