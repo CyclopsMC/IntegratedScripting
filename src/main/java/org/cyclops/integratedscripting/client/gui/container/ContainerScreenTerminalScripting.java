@@ -97,7 +97,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             }
         };
 
-        textArea = new WidgetTextArea(Minecraft.getInstance().font, this.leftPos + SCRIPT_X + 1, this.topPos + SCRIPT_Y + 1, SCRIPT_WIDTH, SCRIPT_HEIGHT, Component.translatable("gui.integratedscripting.script"));
+        textArea = new WidgetTextArea(Minecraft.getInstance().font, this.leftPos + SCRIPT_X + 1, this.topPos + SCRIPT_Y + 1, SCRIPT_WIDTH, SCRIPT_HEIGHT, Component.translatable("gui.integratedscripting.script"), true);
         textArea.setListener(this::onActiveScriptModified);
         addRenderableWidget(textArea);
 
@@ -314,6 +314,14 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     private void removeScript(Path path) {
         IntegratedScripting._instance.getPacketHandler()
                 .sendToServer(new TerminalScriptingDeleteScriptPacket(getMenu().getActiveDisk(), path));
+    }
+
+    @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scroll) {
+        if (textArea.mouseScrolled(mouseX, mouseY, scroll)) {
+            return true;
+        }
+        return super.mouseScrolled(mouseX, mouseY, scroll);
     }
 
     @Override

@@ -32,6 +32,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableInt;
+import org.cyclops.cyclopscore.client.gui.component.WidgetScrollBar;
 import org.cyclops.cyclopscore.client.gui.component.input.IInputListener;
 
 import javax.annotation.Nullable;
@@ -46,6 +47,7 @@ import java.util.List;
  * * {@link #tick()}
  * * {@link #mouseClicked(double, double, int)}
  * * {@link #mouseDragged(double, double, int, double, double)}
+ * * {@link #mouseScrolled(double, double, double)}
  * * {@link #keyPressed(int, int, int)}
  * * {@link #charTyped(char, int)}
  *
@@ -53,6 +55,8 @@ import java.util.List;
  */
 @OnlyIn(Dist.CLIENT)
 public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventListener {
+
+    public static final int ROW_HEIGHT = 9;
 
     private final TextFieldHelper textFieldHelper;
     private final Font font;
@@ -65,11 +69,36 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
     private WidgetTextArea.DisplayCache displayCache = WidgetTextArea.DisplayCache.EMPTY;
     private long lastClickTime;
     private int lastIndex = -1;
+    @Nullable
+    private WidgetScrollBar scrollBar;
+    private int firstRow;
 
-    public WidgetTextArea(Font font, int x, int y, int width, int height, Component narrationMessage) {
+    public WidgetTextArea(Font font, int x, int y, int width, int height, Component narrationMessage, boolean scrollBar) {
         super(x, y, width, height, narrationMessage);
         this.font = font;
         this.textFieldHelper = new TextFieldHelper(this::getValue, this::setValuePassive, this::getClipboard, this::setClipboard, s -> true);
+        if (scrollBar) {
+            this.scrollBar = new WidgetScrollBar(x + width - 14, y, height,
+                    Component.translatable("gui.cyclopscore.scrollbar"), this::setFirstRow, height / ROW_HEIGHT) {
+                @Override
+                public int getTotalRows() {
+                    return getDisplayCache().linesTotal;
+                }
+
+                @Override
+                public void drawGuiContainerBackgroundLayer(PoseStack matrixStack, float partialTicks, int mouseX, int mouseY) {
+                    // Only show scrollbar if needed
+                    if (this.needsScrollBars()) {
+                        super.drawGuiContainerBackgroundLayer(matrixStack, partialTicks, mouseX, mouseY);
+                    }
+                }
+            };
+        }
+    }
+
+    public void setFirstRow(int firstRow) {
+        this.firstRow = firstRow;
+        this.clearDisplayCache();
     }
 
     public void setListener(IInputListener listener) {
@@ -79,6 +108,9 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
     public void setValue(String value) {
         this.setValuePassive(value);
 
+        if (this.scrollBar != null) {
+            scrollBar.scrollTo(0);
+        }
         textFieldHelper.setCursorToStart();
         textFieldHelper.setSelectionPos(textFieldHelper.getCursorPos());
     }
@@ -118,7 +150,6 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
         if (mouseButton == 1 && mouseX >= this.x && mouseX < this.x + this.width
                 && mouseY >= this.y && mouseY < this.y + this.height) {
             // Select everything
-            this.setFocused(true);
             this.setFocused(true);
             textFieldHelper.selectAll();
             return true;
@@ -163,7 +194,22 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
     }
 
     @Override
+    public boolean mouseScrolled(double mouseX, double mouseY, double scroll) {
+        if (this.scrollBar != null && mouseX >= this.x && mouseX < this.x + this.width
+                && mouseY >= this.y && mouseY < this.y + this.height
+                && this.scrollBar.mouseScrolled(mouseX, mouseY, scroll)) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
     public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double offsetX, double offsetY) {
+        if (this.scrollBar != null && mouseX >= this.x + this.width - 12 && mouseX < this.x + this.width
+                && mouseY >= this.y && mouseY < this.y + this.height) {
+            return this.scrollBar.mouseDragged(mouseX, mouseY, mouseButton, offsetX, offsetY);
+        }
+
         if (mouseButton == 0) {
             DisplayCache bookeditscreen$displaycache = this.getDisplayCache();
             int i = bookeditscreen$displaycache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i((int)mouseX, (int)mouseY)));
@@ -299,13 +345,26 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
     public void render(PoseStack poseStack, int x, int y, float partialTicks) {
         this.renderBg(poseStack, Minecraft.getInstance(), x, y);
 
+        // Determine lines to show
         DisplayCache displayCache = this.getDisplayCache();
-        for(LineInfo line : displayCache.lines) {
-            this.font.draw(poseStack, line.asComponent, (float)line.x, (float)line.y, -16777216);
+        List<LineInfo> lines = Arrays.asList(displayCache.lines);
+        int offsetY = 0;
+
+        // Draw lines
+        for(LineInfo line : lines) {
+            this.font.draw(poseStack, line.asComponent, (float)line.x, (float)line.y - offsetY, -16777216);
         }
 
+        // Show highlighting and cursor
         this.renderHighlight(displayCache.selection);
-        this.renderCursor(poseStack, displayCache.cursor, displayCache.cursorAtEnd);
+        if (displayCache.cursor != null) {
+            this.renderCursor(poseStack, displayCache.cursor, displayCache.cursorAtEnd);
+        }
+
+        // Render scrollbar
+        if (this.scrollBar != null) {
+            this.scrollBar.drawGuiContainerBackgroundLayer(poseStack, partialTicks, x, y);
+        }
     }
 
     private void renderCursor(PoseStack poseStack, Pos2i pos, boolean cursorAtEnd) {
@@ -373,10 +432,10 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
         if (s.isEmpty()) {
             return DisplayCache.EMPTY;
         } else {
-            int i = this.textFieldHelper.getCursorPos();
-            int j = this.textFieldHelper.getSelectionPos();
-            IntList intlist = new IntArrayList();
-            List<LineInfo> list = Lists.newArrayList();
+            int cursorPos = this.textFieldHelper.getCursorPos();
+            int selectionPos = this.textFieldHelper.getSelectionPos();
+            IntList linePositionsOld = new IntArrayList();
+            List<LineInfo> linesAll = Lists.newArrayList();
             MutableInt mutableint = new MutableInt();
             MutableBoolean mutableboolean = new MutableBoolean();
             StringSplitter stringsplitter = this.font.getSplitter();
@@ -385,48 +444,76 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
                 String s2 = s.substring(p_98133_, p_98134_);
                 mutableboolean.setValue(s2.endsWith("\n"));
                 String s3 = StringUtils.stripEnd(s2, " \n");
-                int l3 = k3 * 9;
+                int l3 = (k3 - this.firstRow) * 9; // Offset firstRow!
                 Pos2i bookeditscreen$pos2i1 = this.convertLocalToScreen(new Pos2i(0, l3));
-                intlist.add(p_98133_);
-                list.add(new LineInfo(p_98132_, s3, bookeditscreen$pos2i1.x, bookeditscreen$pos2i1.y));
+                linePositionsOld.add(p_98133_);
+                linesAll.add(new LineInfo(p_98132_, s3, bookeditscreen$pos2i1.x, bookeditscreen$pos2i1.y));
             });
-            int[] aint = intlist.toIntArray();
-            boolean flag = i == s.length();
-            Pos2i bookeditscreen$pos2i;
-            if (flag && mutableboolean.isTrue()) {
-                bookeditscreen$pos2i = new Pos2i(0, list.size() * 9);
-            } else {
-                int k = findLineFromPos(aint, i);
-                int l = this.font.width(s.substring(aint[k], i));
-                bookeditscreen$pos2i = new Pos2i(l, k * 9);
+
+            // --- Changed ---
+            // Slice lines based on scroll position
+            int linesTotal = linesAll.size();
+            List<LineInfo> lines = linesAll;
+            IntList lineStarts = linePositionsOld;
+            if (this.scrollBar != null) {
+                if (this.firstRow > lines.size() - this.scrollBar.getVisibleRows()) {
+                    this.firstRow = lines.size() - this.scrollBar.getVisibleRows();
+                }
+                if (this.firstRow < 0) {
+                    this.firstRow = 0;
+                }
+                lines = lines.subList(this.firstRow, Math.min(this.firstRow + this.scrollBar.getVisibleRows(), lines.size()));
             }
 
-            List<Rect2i> list1 = Lists.newArrayList();
-            if (i != j) {
-                int l2 = Math.min(i, j);
-                int i1 = Math.max(i, j);
-                int j1 = findLineFromPos(aint, l2);
-                int k1 = findLineFromPos(aint, i1);
-                if (j1 == k1) {
-                    int l1 = j1 * 9;
-                    int i2 = aint[j1];
-                    list1.add(this.createPartialLineSelection(s, stringsplitter, l2, i1, l1, i2));
-                } else {
-                    int i3 = j1 + 1 > aint.length ? s.length() : aint[j1 + 1];
-                    list1.add(this.createPartialLineSelection(s, stringsplitter, l2, i3, j1 * 9, aint[j1]));
+            int[] lineStartsArr = lineStarts.toIntArray();
+            boolean flag = cursorPos == s.length();
+            Pos2i cursor;
+            if (flag && mutableboolean.isTrue()) {
+                cursor = new Pos2i(0, lines.size() * 9);
+            } else {
+                int cursorLine = findLineFromPos(lineStartsArr, cursorPos);
+                int cursorX = this.font.width(s.substring(lineStartsArr[cursorLine], cursorPos));
+                cursor = new Pos2i(cursorX, (cursorLine - this.firstRow) * 9); // We have to offset the firstRow here!
+            }
+            // Hide cursor if out of view
+            if (cursor.y < 0 || cursor.y > getHeight()) {
+                cursor = null;
+            }
 
-                    for(int j3 = j1 + 1; j3 < k1; ++j3) {
+            List<Rect2i> selection = Lists.newArrayList();
+            if (cursorPos != selectionPos) {
+                int l2 = Math.min(cursorPos, selectionPos);
+                int i1 = Math.max(cursorPos, selectionPos);
+                int lineStart = findLineFromPos(lineStartsArr, l2);
+                int lineEnd = findLineFromPos(lineStartsArr, i1);
+                if (lineStart == lineEnd) {
+                    int l1 = lineStart * 9;
+                    int i2 = lineStartsArr[lineStart];
+                    selection.add(this.createPartialLineSelection(s, stringsplitter, l2, i1, l1, i2));
+                } else {
+                    int i3 = lineStart + 1 > lineStartsArr.length ? s.length() : lineStartsArr[lineStart + 1];
+                    selection.add(this.createPartialLineSelection(s, stringsplitter, l2, i3, lineStart * 9, lineStartsArr[lineStart]));
+
+                    for(int j3 = lineStart + 1; j3 < lineEnd; ++j3) {
                         int j2 = j3 * 9;
-                        String s1 = s.substring(aint[j3], aint[j3 + 1]);
+                        String s1 = s.substring(lineStartsArr[j3], lineStartsArr[j3 + 1]);
                         int k2 = (int)stringsplitter.stringWidth(s1);
-                        list1.add(this.createSelection(new Pos2i(0, j2), new Pos2i(k2, j2 + 9)));
+                        selection.add(this.createSelection(new Pos2i(0, j2), new Pos2i(k2, j2 + 9)));
                     }
 
-                    list1.add(this.createPartialLineSelection(s, stringsplitter, aint[k1], i1, k1 * 9, aint[k1]));
+                    selection.add(this.createPartialLineSelection(s, stringsplitter, lineStartsArr[lineEnd], i1, lineEnd * 9, lineStartsArr[lineEnd]));
+                }
+            }
+            // Hide out-of-view selections and offset them
+            List<Rect2i> selectionNew = Lists.newArrayList();
+            for (Rect2i rect2i : selection) {
+                Rect2i rect2iNew = new Rect2i(rect2i.getX(), rect2i.getY() - this.firstRow * ROW_HEIGHT, rect2i.getWidth(), rect2i.getHeight());
+                if (rect2iNew.getY() - this.y >= 0 && rect2iNew.getY() - this.y < getHeight()) {
+                    selectionNew.add(rect2iNew);
                 }
             }
 
-            return new DisplayCache(s, bookeditscreen$pos2i, flag, aint, list.toArray(new LineInfo[0]), list1.toArray(new Rect2i[0]));
+            return new DisplayCache(s, cursor, flag, lineStartsArr, lines.toArray(new LineInfo[0]), linesAll.toArray(new LineInfo[0]), selectionNew.toArray(new Rect2i[0]), linesTotal, this.firstRow);
         }
     }
 
@@ -455,31 +542,38 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
 
     @OnlyIn(Dist.CLIENT)
     static class DisplayCache {
-        static final DisplayCache EMPTY = new DisplayCache("", new Pos2i(0, 0), true, new int[]{0}, new LineInfo[]{new LineInfo(Style.EMPTY, "", 0, 0)}, new Rect2i[0]);
+        static final DisplayCache EMPTY = new DisplayCache("", new Pos2i(0, 0), true, new int[]{0}, new LineInfo[]{new LineInfo(Style.EMPTY, "", 0, 0)}, new LineInfo[]{new LineInfo(Style.EMPTY, "", 0, 0)}, new Rect2i[0], 0, 0);
         private final String fullText;
+        @Nullable
         final Pos2i cursor;
         final boolean cursorAtEnd;
         private final int[] lineStarts;
         final LineInfo[] lines;
+        final LineInfo[] linesAll;
         final Rect2i[] selection;
+        final int linesTotal;
+        final int firstRow;
 
-        public DisplayCache(String p_98201_, Pos2i p_98202_, boolean p_98203_, int[] p_98204_, LineInfo[] p_98205_, Rect2i[] p_98206_) {
+        public DisplayCache(String p_98201_, Pos2i cursor, boolean p_98203_, int[] p_98204_, LineInfo[] lines, LineInfo[] linesAll, Rect2i[] selection, int linesTotal, int firstRow) {
             this.fullText = p_98201_;
-            this.cursor = p_98202_;
+            this.cursor = cursor;
             this.cursorAtEnd = p_98203_;
             this.lineStarts = p_98204_;
-            this.lines = p_98205_;
-            this.selection = p_98206_;
+            this.lines = lines;
+            this.linesAll = linesAll;
+            this.selection = selection;
+            this.linesTotal = linesTotal;
+            this.firstRow = firstRow;
         }
 
         public int getIndexAtPosition(Font p_98214_, Pos2i p_98215_) {
-            int i = p_98215_.y / 9;
+            int i = p_98215_.y / 9 + this.firstRow;
             if (i < 0) {
                 return 0;
-            } else if (i >= this.lines.length) {
+            } else if (i >= this.linesAll.length) {
                 return this.fullText.length();
             } else {
-                LineInfo bookeditscreen$lineinfo = this.lines[i];
+                LineInfo bookeditscreen$lineinfo = this.linesAll[i];
                 return this.lineStarts[i] + p_98214_.getSplitter().plainIndexAtWidth(bookeditscreen$lineinfo.contents, p_98215_.x, bookeditscreen$lineinfo.style);
             }
         }
@@ -490,7 +584,7 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
             int k;
             if (0 <= j && j < this.lineStarts.length) {
                 int l = p_98211_ - this.lineStarts[i];
-                int i1 = this.lines[j].contents.length();
+                int i1 = this.linesAll[j].contents.length();
                 k = this.lineStarts[j] + Math.min(l, i1);
             } else {
                 k = p_98211_;
@@ -506,7 +600,7 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
 
         public int findLineEnd(int p_98219_) {
             int i = WidgetTextArea.findLineFromPos(this.lineStarts, p_98219_);
-            return this.lineStarts[i] + this.lines[i].contents.length();
+            return this.lineStarts[i] + this.linesAll[i].contents.length();
         }
     }
 
