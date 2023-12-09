@@ -23,6 +23,7 @@ import org.cyclops.integratedscripting.api.network.IScriptingData;
 import org.cyclops.integratedscripting.api.network.IScriptingNetwork;
 import org.cyclops.integratedscripting.core.network.ScriptingNetworkHelpers;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingCreateNewScriptPacket;
+import org.cyclops.integratedscripting.network.packet.TerminalScriptingDeleteScriptPacket;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingModifiedScriptPacket;
 import org.cyclops.integratedscripting.part.PartTypeTerminalScripting;
 
@@ -146,8 +147,13 @@ public class ContainerTerminalScripting extends InventoryContainer {
                         String scriptOld = scriptsOld.get(file);
                         if (!Objects.equals(scriptNew, scriptOld)) {
                             // Send separate packet for each modified file
-                            IntegratedScripting._instance.getPacketHandler()
-                                    .sendToPlayer(new TerminalScriptingModifiedScriptPacket(disk, file, scriptNew), (ServerPlayer) player);
+                            if (scriptNew != null) {
+                                IntegratedScripting._instance.getPacketHandler()
+                                        .sendToPlayer(new TerminalScriptingModifiedScriptPacket(disk, file, scriptNew), (ServerPlayer) player);
+                            } else {
+                                IntegratedScripting._instance.getPacketHandler()
+                                        .sendToPlayer(new TerminalScriptingDeleteScriptPacket(disk, file), (ServerPlayer) player);
+                            }
 
                             // Update the next old value
                             if (scriptNew != null) {

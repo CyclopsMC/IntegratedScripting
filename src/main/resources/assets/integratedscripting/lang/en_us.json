@@ -6,6 +6,10 @@
   "gui.integratedscripting.disk": "Disk",
   "gui.integratedscripting.script": "Script",
   "gui.integratedscripting.create_file": "Create File",
+  "gui.integratedscripting.removal_dialog.title": "Confirm script deletion",
+  "gui.integratedscripting.removal_dialog.message": "Do you want to delete \"%s\"?",
+  "gui.integratedscripting.removal_dialog.delete": "Delete",
+  "gui.integratedscripting.removal_dialog.keep": "Keep",
 
   "valuetype.integratedscripting.error.translation.unknown_to_graal": "Could not find a translator from %s values to Graal.",
   "valuetype.integratedscripting.error.translation.unknown_to_graal_nbt": "Could not find a translator from %s values to Graal during NBT translation.",

@@ -14,16 +14,19 @@ import org.cyclops.cyclopscore.client.gui.component.WidgetScrollBar;
 import org.cyclops.cyclopscore.client.gui.component.button.ButtonText;
 import org.cyclops.cyclopscore.client.gui.component.input.WidgetArrowedListField;
 import org.cyclops.cyclopscore.client.gui.container.ContainerScreenExtended;
+import org.cyclops.cyclopscore.client.gui.image.Images;
 import org.cyclops.cyclopscore.helper.Helpers;
 import org.cyclops.cyclopscore.helper.L10NHelpers;
 import org.cyclops.cyclopscore.helper.RenderHelpers;
+import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.Reference;
+import org.cyclops.integratedscripting.client.gui.component.input.WidgetDialog;
 import org.cyclops.integratedscripting.client.gui.component.input.WidgetTextArea;
 import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScripting;
+import org.cyclops.integratedscripting.network.packet.TerminalScriptingDeleteScriptPacket;
 import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.Nullable;
-import java.awt.*;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -54,6 +57,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     private int firstRow;
     private WidgetTextArea textArea;
     private ButtonText buttonCreateFile;
+    private WidgetDialog pendingScriptRemovalDialog;
 
     public ContainerScreenTerminalScripting(ContainerTerminalScripting container, Inventory inventory, Component title) {
         super(container, inventory, title);
@@ -191,6 +195,22 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
                     0.5f,
                     hovering && !active ? Helpers.RGBToInt(50, 50, 250) : Helpers.RGBToInt(0, 0, 0)
             );
+
+            // If hovering, render removal button
+            if (hovering) {
+                poseStack.pushPose();
+                float scale = 0.4F;
+                int size = (int) (Images.ERROR.getWidth() * scale);
+                poseStack.translate(this.leftPos + PATHS_X + PATHS_WIDTH - size, this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT, 0);
+                poseStack.scale(scale, scale, 4F);
+                if (isHovering(PATHS_X + PATHS_WIDTH - size, PATHS_Y + i * PATHS_ROW_HEIGHT, PATHS_X + PATHS_WIDTH - size + size, PATHS_Y + i * PATHS_ROW_HEIGHT + size, mouseX, mouseY)) {
+                    Images.ERROR.draw(this, poseStack, 0, 0);
+                } else {
+                    Images.ERROR.drawWithColor(this, poseStack, 0, 0, 0.7F, 0.7F, 0.7F, 1F);
+                }
+                poseStack.popPose();
+            }
+
             i++;
         }
     }
@@ -218,11 +238,42 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+        // Make active dialog consume all input
+        if (pendingScriptRemovalDialog != null) {
+            return pendingScriptRemovalDialog.mouseClicked(mouseX, mouseY, mouseButton);
+        }
+
+        // Handle script path clicks
         Path hoveredScriptPath = getHoveredScriptPath(mouseX, mouseY);
         if (hoveredScriptPath != null) {
-            getMenu().setActiveScriptPath(hoveredScriptPath);
-            this.onActiveScriptSelected();
-            return true;
+            // Handle script removal clicks
+            if (mouseX >= this.leftPos + PATHS_X + PATHS_WIDTH - (int) (Images.ERROR.getWidth() * 0.4F)) {
+                this.fieldDisk.playDownSound(Minecraft.getInstance().getSoundManager());
+
+                // Show confirmation dialog
+                pendingScriptRemovalDialog = new WidgetDialog(font, leftPos + getBaseXSize() / 2 - WidgetDialog.WIDTH / 2, topPos + 50, this,
+                        Component.translatable("gui.integratedscripting.removal_dialog.title"),
+                        Component.translatable("gui.integratedscripting.removal_dialog.message", hoveredScriptPath.toString()),
+                        Component.translatable("gui.integratedscripting.removal_dialog.delete"),
+                        Component.translatable("gui.integratedscripting.removal_dialog.keep"),
+                        (b) -> {
+                            removeWidget(pendingScriptRemovalDialog);
+                            pendingScriptRemovalDialog = null;
+                            this.removeScript(hoveredScriptPath);
+                        },
+                        (b) -> {
+                            removeWidget(pendingScriptRemovalDialog);
+                            pendingScriptRemovalDialog = null;
+                        });
+                addRenderableWidget(pendingScriptRemovalDialog);
+
+                return true;
+            } else{
+                getMenu().setActiveScriptPath(hoveredScriptPath);
+                this.onActiveScriptSelected();
+                this.fieldDisk.playDownSound(Minecraft.getInstance().getSoundManager());
+                return true;
+            }
         }
 
         // Update channel when changing channel field
@@ -260,8 +311,18 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         getMenu().setActiveScript(this.textArea.getValue());
     }
 
+    private void removeScript(Path path) {
+        IntegratedScripting._instance.getPacketHandler()
+                .sendToServer(new TerminalScriptingDeleteScriptPacket(getMenu().getActiveDisk(), path));
+    }
+
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double offsetX, double offsetY) {
+        // Make active dialog consume all input
+        if (pendingScriptRemovalDialog != null) {
+            return false;
+        }
+
         if (textArea.mouseDragged(mouseX, mouseY, mouseButton, offsetX, offsetY)) {
             return true;
         }
@@ -270,6 +331,11 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
     @Override
     public boolean keyPressed(int typedChar, int keyCode, int modifiers) {
+        // Make active dialog consume all input
+        if (typedChar != GLFW.GLFW_KEY_ESCAPE && pendingScriptRemovalDialog != null) {
+            return false;
+        }
+
         if (textArea.isFocused()) {
             boolean ret = textArea.keyPressed(typedChar, keyCode, modifiers);
             if (typedChar != GLFW.GLFW_KEY_ESCAPE) {
@@ -281,6 +347,10 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
     @Override
     public boolean charTyped(char p_94683_, int p_94684_) {
+        // Make active dialog consume all input
+        if (pendingScriptRemovalDialog != null) {
+            return false;
+        }
         return super.charTyped(p_94683_, p_94684_);
     }
 }
