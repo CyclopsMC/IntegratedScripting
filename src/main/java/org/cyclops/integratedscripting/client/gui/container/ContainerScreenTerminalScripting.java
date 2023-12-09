@@ -42,13 +42,13 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     public static int PATHS_X = 19;
     public static int PATHS_Y = 18;
     public static int PATHS_WIDTH = 56;
-    public static int PATHS_HEIGHT = 230;
+    public static int PATHS_HEIGHT = 214;
     public static int PATHS_ROW_HEIGHT = 5;
     public static int PATHS_MAX_ROWS = PATHS_HEIGHT / PATHS_ROW_HEIGHT;
     public static int SCRIPT_X = 88;
     public static int SCRIPT_Y = 18;
     public static int SCRIPT_WIDTH = 160;
-    public static int SCRIPT_HEIGHT = 131;
+    public static int SCRIPT_HEIGHT = 115;
 
     private final Player player;
 
@@ -63,7 +63,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         super(container, inventory, title);
         this.player = inventory.player;
 
-        this.imageHeight = 256;
+        this.imageHeight = 240;
         this.titleLabelX = 88;
         this.titleLabelY = 6;
         this.inventoryLabelX = 88;
@@ -88,7 +88,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         fieldDisk.setEditable(true);
         fieldDisk.setValue(String.valueOf(getMenu().getActiveDisk()));
 
-        scrollBar = new WidgetScrollBar(leftPos + 5, topPos + 18, 178,
+        scrollBar = new WidgetScrollBar(leftPos + 5, topPos + 18, 162,
                 Component.translatable("gui.cyclopscore.scrollbar"), this::setFirstRow, PATHS_MAX_ROWS) {
             @Override
             public int getTotalRows() {
@@ -101,7 +101,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         textArea.setListener(this::onActiveScriptModified);
         addRenderableWidget(textArea);
 
-        buttonCreateFile = new ButtonText(this.leftPos + 19, this.topPos + 238, 56, 10, Component.translatable("gui.integratedscripting.create_file"), Component.literal("+"),
+        buttonCreateFile = new ButtonText(this.leftPos + 19, this.topPos + 222, 56, 10, Component.translatable("gui.integratedscripting.create_file"), Component.literal("+"),
                 (button) -> getMenu().createNewFile(), true);
         addRenderableWidget(buttonCreateFile);
     }
@@ -128,7 +128,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
     @Override
     public int getBaseYSize() {
-        return 256;
+        return 240;
     }
 
     @Override
