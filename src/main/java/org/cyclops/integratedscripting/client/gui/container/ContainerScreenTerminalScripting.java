@@ -175,6 +175,13 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         int i = 0;
         for (Path path : paths) {
             boolean hovering = isHovering(PATHS_X, PATHS_Y + i * PATHS_ROW_HEIGHT, PATHS_WIDTH, PATHS_ROW_HEIGHT, mouseX, mouseY);
+            boolean active = path.equals(getMenu().getActiveScriptPath());
+
+            // Draw highlighted background behind script path text
+            if (active) {
+                fill(poseStack, this.leftPos + PATHS_X, this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT, this.leftPos + PATHS_X + PATHS_WIDTH, this.topPos + PATHS_Y + (i + 1) * PATHS_ROW_HEIGHT, Helpers.RGBAToInt(110, 130, 240, 255));
+            }
+
             RenderHelpers.drawScaledString(
                     poseStack,
                     font,
@@ -182,7 +189,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
                     this.leftPos + PATHS_X + 1,
                     this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT + 1,
                     0.5f,
-                    hovering ? Helpers.RGBToInt(50, 50, 250) : Helpers.RGBToInt(0, 0, 0)
+                    hovering && !active ? Helpers.RGBToInt(50, 50, 250) : Helpers.RGBToInt(0, 0, 0)
             );
             i++;
         }
