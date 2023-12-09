@@ -246,7 +246,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     }
 
     private void onActiveScriptSelected() {
-        this.textArea.setValuePassive(getMenu().getActiveScript());
+        this.textArea.setValue(getMenu().getActiveScript());
     }
 
     private void onActiveScriptModified() {
