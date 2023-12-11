@@ -20,6 +20,7 @@ import org.cyclops.cyclopscore.client.gui.image.Images;
 import org.cyclops.cyclopscore.helper.Helpers;
 import org.cyclops.cyclopscore.helper.L10NHelpers;
 import org.cyclops.cyclopscore.helper.RenderHelpers;
+import org.cyclops.integrateddynamics.core.client.gui.container.DisplayErrorsComponent;
 import org.cyclops.integratedscripting.GeneralConfig;
 import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.Reference;
@@ -65,6 +66,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     private ButtonText buttonCreateFile;
     private WidgetDialog pendingScriptRemovalDialog;
     private int lastClientSyncTick;
+    private final DisplayErrorsComponent displayErrors = new DisplayErrorsComponent();
 
     public ContainerScreenTerminalScripting(ContainerTerminalScripting container, Inventory inventory, Component title) {
         super(container, inventory, title);
@@ -169,6 +171,14 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         return 240;
     }
 
+    protected int getErrorX() {
+        return 212;
+    }
+
+    protected int getErrorY() {
+        return 139;
+    }
+
     @Override
     protected void renderBg(PoseStack matrixStack, float partialTicks, int mouseX, int mouseY) {
         super.renderBg(matrixStack, partialTicks, mouseX, mouseY);
@@ -191,6 +201,9 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             fill(matrixStack, leftPos + SCRIPT_X, topPos + SCRIPT_Y, leftPos + SCRIPT_X + SCRIPT_WIDTH, topPos + SCRIPT_Y + SCRIPT_HEIGHT, Helpers.RGBAToInt(50, 50, 50, 100));
             RenderSystem.setShaderColor(1, 1, 1, 1);
         }
+
+        displayErrors.drawBackground(matrixStack, getMenu().getReadErrors(), getErrorX(), getErrorY(), getErrorX(), getErrorY(), this,
+                this.leftPos, this.topPos, getMenu().canWriteScriptToVariable());
     }
 
     @Nullable
@@ -272,6 +285,8 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
         // Draw disk label
         drawString(poseStack, font, L10NHelpers.localize("gui.integratedscripting.disk") + ":", 8, 6, 16777215);
+
+        displayErrors.drawForeground(poseStack, getMenu().getReadErrors(), getErrorX(), getErrorY(), mouseX, mouseY, this, this.leftPos, this.topPos);
     }
 
     @Override

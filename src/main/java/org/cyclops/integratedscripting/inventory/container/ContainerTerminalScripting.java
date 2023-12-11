@@ -6,22 +6,34 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import org.apache.commons.compress.utils.Lists;
 import org.apache.commons.lang3.tuple.Pair;
+import org.cyclops.cyclopscore.helper.ValueNotifierHelpers;
+import org.cyclops.cyclopscore.inventory.SimpleInventory;
 import org.cyclops.cyclopscore.inventory.container.InventoryContainer;
+import org.cyclops.cyclopscore.persist.IDirtyMarkListener;
+import org.cyclops.integrateddynamics.IntegratedDynamics;
+import org.cyclops.integrateddynamics.api.item.IVariableFacadeHandlerRegistry;
 import org.cyclops.integrateddynamics.api.network.INetwork;
 import org.cyclops.integrateddynamics.api.part.IPartContainer;
 import org.cyclops.integrateddynamics.api.part.PartTarget;
 import org.cyclops.integrateddynamics.core.helper.NetworkHelpers;
 import org.cyclops.integrateddynamics.core.helper.PartHelpers;
+import org.cyclops.integrateddynamics.core.inventory.container.slot.SlotVariable;
 import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.RegistryEntries;
+import org.cyclops.integratedscripting.api.item.IScriptVariableFacade;
 import org.cyclops.integratedscripting.api.network.IScriptingData;
 import org.cyclops.integratedscripting.api.network.IScriptingNetwork;
+import org.cyclops.integratedscripting.core.evaluate.ScriptVariableFacadeHandler;
+import org.cyclops.integratedscripting.core.item.ScriptVariableFacade;
 import org.cyclops.integratedscripting.core.network.ScriptingNetworkHelpers;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingCreateNewScriptPacket;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingDeleteScriptPacket;
@@ -30,6 +42,7 @@ import org.cyclops.integratedscripting.part.PartTypeTerminalScripting;
 
 import javax.annotation.Nullable;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -39,8 +52,9 @@ import java.util.Set;
  * Container for the crafting jobs overview gui.
  * @author rubensworks
  */
-public class ContainerTerminalScripting extends InventoryContainer {
+public class ContainerTerminalScripting extends InventoryContainer implements IDirtyMarkListener {
 
+    private final SimpleInventory writeSlot;
     private final PartTarget target;
     private final Optional<IPartContainer> partContainer;
     private final PartTypeTerminalScripting partType;
@@ -52,7 +66,7 @@ public class ContainerTerminalScripting extends InventoryContainer {
     private final Int2ObjectMap<Map<Path, String>> lastScripts = new Int2ObjectAVLTreeMap<>();
     private IntList availableDisks;
     private int activeDisk;
-    private Path activeScriptPath;
+    private final int activeScriptPathId;
 
     public ContainerTerminalScripting(int id, Inventory playerInventory, FriendlyByteBuf packetBuffer) {
         this(id, playerInventory, PartHelpers.readPartTarget(packetBuffer), Optional.empty(),
@@ -63,6 +77,12 @@ public class ContainerTerminalScripting extends InventoryContainer {
                                       PartTarget target, Optional<IPartContainer> partContainer,
                                       PartTypeTerminalScripting partType, InitData initData) {
         super(RegistryEntries.CONTAINER_TERMINAL_SCRIPTING, id, playerInventory, new SimpleContainer());
+
+        this.writeSlot = new SimpleInventory(1, 1);
+        this.writeSlot.addDirtyMarkListener(this);
+        addSlot(new SlotVariable(this.writeSlot, 0, 232, 137));
+        addPlayerInventory(playerInventory, 88, 158);
+
         this.target = target;
         this.partType = partType;
         this.partContainer = partContainer;
@@ -74,8 +94,9 @@ public class ContainerTerminalScripting extends InventoryContainer {
 
         this.availableDisks = initData.getAvailableDisks();
         this.activeDisk = this.availableDisks.isEmpty() ? -1 : this.availableDisks.getInt(0);
-        this.activeScriptPath = null;
+        this.activeScriptPathId = getNextValueId();
     }
+
 
     public Level getLevel() {
         return world;
@@ -100,6 +121,17 @@ public class ContainerTerminalScripting extends InventoryContainer {
     @Override
     public boolean stillValid(Player playerIn) {
         return PartHelpers.canInteractWith(getTarget(), player, this.partContainer.get());
+    }
+
+    @Override
+    public void removed(Player player) {
+        super.removed(player);
+        if (!player.level.isClientSide()) {
+            ItemStack itemStack = writeSlot.getItem(0);
+            if(!itemStack.isEmpty()) {
+                player.drop(itemStack, false);
+            }
+        }
     }
 
     public Optional<INetwork> getNetwork() {
@@ -228,11 +260,12 @@ public class ContainerTerminalScripting extends InventoryContainer {
 
     @Nullable
     public Path getActiveScriptPath() {
-        return activeScriptPath;
+        String str = ValueNotifierHelpers.getValueString(this, activeScriptPathId);
+        return str == null ? null : Path.of(str);
     }
 
     public void setActiveScriptPath(Path activeScriptPath) {
-        this.activeScriptPath = activeScriptPath;
+        ValueNotifierHelpers.setValue(this, activeScriptPathId, activeScriptPath.toString());
     }
 
     @Nullable
@@ -267,6 +300,41 @@ public class ContainerTerminalScripting extends InventoryContainer {
         if (disk >= 0) {
             IntegratedScripting._instance.getPacketHandler().sendToServer(new TerminalScriptingCreateNewScriptPacket(disk));
         }
+    }
+
+    public List<MutableComponent> getReadErrors() {
+        // TODO: validate disk, path, and member
+        return Lists.newArrayList();
+    }
+
+    public boolean canWriteScriptToVariable() {
+        return getActiveDisk() != 0 && getActiveScriptPath() != null; // TODO: check if a member is selected
+    }
+
+    @Override
+    public void onDirty() {
+        ItemStack itemStack = writeSlot.getItem(0);
+        if (canWriteScriptToVariable() && !itemStack.isEmpty()) {
+            ItemStack outputStack = writeScriptVariable(!world.isClientSide, itemStack.copy(), getActiveDisk(), getActiveScriptPath(), "TODO"); // TODO: determine member based on selection
+            writeSlot.removeDirtyMarkListener(this);
+            writeSlot.setItem(0, outputStack);
+            writeSlot.addDirtyMarkListener(this);
+        }
+    }
+
+    public ItemStack writeScriptVariable(boolean generateId, ItemStack itemStack, final int disk, final Path path, String member) {
+        IVariableFacadeHandlerRegistry registry = IntegratedDynamics._instance.getRegistryManager().getRegistry(IVariableFacadeHandlerRegistry.class);
+        return registry.writeVariableFacadeItem(generateId, itemStack, ScriptVariableFacadeHandler.getInstance(), new IVariableFacadeHandlerRegistry.IVariableFacadeFactory<IScriptVariableFacade>() {
+            @Override
+            public IScriptVariableFacade create(boolean generateId) {
+                return new ScriptVariableFacade(generateId, disk, path, member);
+            }
+
+            @Override
+            public IScriptVariableFacade create(int id) {
+                return new ScriptVariableFacade(id, disk, path, member);
+            }
+        }, player, world.getBlockState(getTarget().getCenter().getPos().getBlockPos()));
     }
 
     public static class InitData {

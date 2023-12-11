@@ -18,6 +18,11 @@
   "valuetype.integratedscripting.error.translation.nbt_unknown": "Can not translate NBT members of type %s.",
   "valuetype.integratedscripting.error.translation.nbt_unmatched": "Could not interpret the field %s as NBT.",
 
+  "_comment": "Script Variable",
+  "script.integratedscripting.tooltip.disk": "§e§oDisk ID: §r§o%s",
+  "script.integratedscripting.tooltip.path": "§e§oScript Path: §r§o%s",
+  "script.integratedscripting.tooltip.member": "§e§oMember: §r§o%s",
+
   "_comment": "Items",
   "item.integratedscripting.scripting_disk": "Scripting Disk",
   "item.integratedscripting.scripting_disk.id": "ID: %s",

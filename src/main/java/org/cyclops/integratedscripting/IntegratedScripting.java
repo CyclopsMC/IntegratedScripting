@@ -17,12 +17,14 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.minecraftforge.registries.NewRegistryEvent;
 import org.apache.logging.log4j.Level;
 import org.cyclops.cyclopscore.config.ConfigHandler;
+import org.cyclops.cyclopscore.helper.MinecraftHelpers;
 import org.cyclops.cyclopscore.infobook.IInfoBookRegistry;
 import org.cyclops.cyclopscore.init.ItemGroupMod;
 import org.cyclops.cyclopscore.init.ModBaseVersionable;
 import org.cyclops.cyclopscore.proxy.IClientProxy;
 import org.cyclops.cyclopscore.proxy.ICommonProxy;
 import org.cyclops.integrateddynamics.IntegratedDynamics;
+import org.cyclops.integrateddynamics.api.item.IVariableFacadeHandlerRegistry;
 import org.cyclops.integrateddynamics.infobook.OnTheDynamicsOfIntegrationBook;
 import org.cyclops.integratedscripting.api.language.ILanguageHandlerRegistry;
 import org.cyclops.integratedscripting.block.BlockScriptingDriveConfig;
@@ -30,6 +32,8 @@ import org.cyclops.integratedscripting.blockentity.BlockEntityScriptingDriveConf
 import org.cyclops.integratedscripting.capability.ScriptingNetworkCapabilityConstructors;
 import org.cyclops.integratedscripting.capability.network.ScriptingNetworkConfig;
 import org.cyclops.integratedscripting.command.CommandTestScript;
+import org.cyclops.integratedscripting.core.client.model.ScriptingVariableModelProviders;
+import org.cyclops.integratedscripting.core.evaluate.ScriptVariableFacadeHandler;
 import org.cyclops.integratedscripting.core.language.LanguageHandlerRegistry;
 import org.cyclops.integratedscripting.core.language.LanguageHandlers;
 import org.cyclops.integratedscripting.core.network.ScriptingData;
@@ -68,6 +72,16 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
     }
 
     public void onRegistriesCreate(NewRegistryEvent event) {
+        // Register handlers
+        IntegratedDynamics._instance.getRegistryManager().getRegistry(IVariableFacadeHandlerRegistry.class)
+                .registerHandler(ScriptVariableFacadeHandler.getInstance());
+
+        // Load client models
+        if (MinecraftHelpers.isClientSide()) {
+            ScriptingVariableModelProviders.load();
+        }
+
+        // Load parts
         PartTypes.load();
     }
 
