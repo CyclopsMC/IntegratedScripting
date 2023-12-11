@@ -79,7 +79,7 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
         this.textFieldHelper = new TextFieldHelper(this::getValue, this::setValuePassive, this::getClipboard, this::setClipboard, s -> true);
         if (scrollBar) {
             this.scrollBar = new WidgetScrollBar(x + width - 14, y, height,
-                    Component.translatable("gui.cyclopscore.scrollbar"), this::setFirstRow, height / ROW_HEIGHT) {
+                    Component.translatable("gui.cyclopscore.scrollbar"), firstRow -> setFirstRow(firstRow, false), height / ROW_HEIGHT) {
                 @Override
                 public int getTotalRows() {
                     return getDisplayCache().linesTotal;
@@ -96,8 +96,22 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
         }
     }
 
-    public void setFirstRow(int firstRow) {
+    public void setFirstRow(int firstRow, boolean propagateToScrollbar) {
         this.firstRow = firstRow;
+
+        if (this.scrollBar != null) {
+            int linesTotal = getDisplayCache().linesTotal;
+            if (this.firstRow > linesTotal - this.scrollBar.getVisibleRows()) {
+                this.firstRow = linesTotal - this.scrollBar.getVisibleRows();
+            }
+            if (this.firstRow < 0) {
+                this.firstRow = 0;
+            }
+            if (propagateToScrollbar) {
+                this.scrollBar.setFirstRow(this.firstRow, false);
+            }
+        }
+
         this.clearDisplayCache();
     }
 
@@ -111,6 +125,7 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
         textFieldHelper.setCursorToStart();
         textFieldHelper.setSelectionPos(textFieldHelper.getCursorPos());
         if (this.scrollBar != null) {
+            this.firstRow = 0;
             scrollBar.scrollTo(0);
         }
     }
@@ -314,9 +329,22 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
     }
 
     private void changeLine(int p_98098_) {
-        int i = this.textFieldHelper.getCursorPos();
-        int j = this.getDisplayCache().changeLine(i, p_98098_);
+        int cursorPos = this.textFieldHelper.getCursorPos();
+        DisplayCache displayCache = this.getDisplayCache();
+        int j = displayCache.changeLine(cursorPos, p_98098_);
         this.textFieldHelper.setCursorPos(j, Screen.hasShiftDown());
+
+        // Modify scroll position when cursor goes out of screen
+        if (this.scrollBar != null) {
+            int cursorLine = findLineFromPos(Arrays.stream(displayCache.lineStarts).toArray(), cursorPos);
+            if (cursorLine < this.firstRow + 2) {
+                // Cursor is above viewport
+                this.setFirstRow(cursorLine - 2, true);
+            } else if (cursorLine > this.firstRow + this.scrollBar.getVisibleRows() - 3) {
+                // Cursor is below viewport
+                this.setFirstRow(cursorLine - (this.scrollBar.getVisibleRows() - 3), true);
+            }
+        }
     }
 
     private void keyHome() {
@@ -456,12 +484,6 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
             List<LineInfo> lines = linesAll;
             IntList lineStarts = linePositionsOld;
             if (this.scrollBar != null) {
-                if (this.firstRow > lines.size() - this.scrollBar.getVisibleRows()) {
-                    this.firstRow = lines.size() - this.scrollBar.getVisibleRows();
-                }
-                if (this.firstRow < 0) {
-                    this.firstRow = 0;
-                }
                 lines = lines.subList(this.firstRow, Math.min(this.firstRow + this.scrollBar.getVisibleRows(), lines.size()));
             }
 
