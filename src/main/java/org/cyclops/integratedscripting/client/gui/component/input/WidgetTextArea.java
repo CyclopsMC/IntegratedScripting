@@ -26,18 +26,22 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableInt;
+import org.apache.commons.lang3.tuple.Pair;
 import org.cyclops.cyclopscore.client.gui.component.WidgetScrollBar;
 import org.cyclops.cyclopscore.client.gui.component.input.IInputListener;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * A widget to edit multi-line text.
@@ -65,6 +69,8 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
     private String value = "";
     @Nullable
     private IInputListener listener;
+    @Nullable
+    private IMarkupProvider markupProvider;
     @Nullable
     private WidgetTextArea.DisplayCache displayCache = WidgetTextArea.DisplayCache.EMPTY;
     private long lastClickTime;
@@ -115,8 +121,12 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
         this.clearDisplayCache();
     }
 
-    public void setListener(IInputListener listener) {
+    public void setListener(@Nullable IInputListener listener) {
         this.listener = listener;
+    }
+
+    public void setMarkupProvider(@Nullable IMarkupProvider markupProvider) {
+        this.markupProvider = markupProvider;
     }
 
     public void setValue(String value) {
@@ -467,15 +477,15 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
             MutableInt mutableint = new MutableInt();
             MutableBoolean mutableboolean = new MutableBoolean();
             StringSplitter stringsplitter = this.font.getSplitter();
-            stringsplitter.splitLines(s, this.getWidth() /* changed: constant width */, Style.EMPTY, true, (p_98132_, p_98133_, p_98134_) -> {
+            stringsplitter.splitLines(s, this.getWidth() /* changed: constant width */, Style.EMPTY, true, (style, startPos, endPos) -> {
                 int k3 = mutableint.getAndIncrement();
-                String s2 = s.substring(p_98133_, p_98134_);
-                mutableboolean.setValue(s2.endsWith("\n"));
-                String s3 = StringUtils.stripEnd(s2, " \n");
+                String stringPart = s.substring(startPos, endPos);
+                mutableboolean.setValue(stringPart.endsWith("\n"));
+                String s3 = StringUtils.stripEnd(stringPart, " \n");
                 int l3 = (k3 - this.firstRow) * 9; // Offset firstRow!
                 Pos2i bookeditscreen$pos2i1 = this.convertLocalToScreen(new Pos2i(0, l3));
-                linePositionsOld.add(p_98133_);
-                linesAll.add(new LineInfo(p_98132_, s3, bookeditscreen$pos2i1.x, bookeditscreen$pos2i1.y));
+                linePositionsOld.add(startPos);
+                linesAll.add(new LineInfo(this.markupLine(style, s3), bookeditscreen$pos2i1.x, bookeditscreen$pos2i1.y));
             });
 
             // --- Changed ---
@@ -539,6 +549,13 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
         }
     }
 
+    private List<Pair<Style, String>> markupLine(Style style, String line) {
+        if (this.markupProvider != null) {
+            return this.markupProvider.markupLine(style, line);
+        }
+        return Lists.newArrayList(Pair.of(style, line));
+    }
+
     static int findLineFromPos(int[] p_98150_, int p_98151_) {
         int i = Arrays.binarySearch(p_98150_, p_98151_);
         return i < 0 ? -(i + 2) : i;
@@ -564,7 +581,7 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
 
     @OnlyIn(Dist.CLIENT)
     static class DisplayCache {
-        static final DisplayCache EMPTY = new DisplayCache("", new Pos2i(0, 0), true, new int[]{0}, new LineInfo[]{new LineInfo(Style.EMPTY, "", 0, 0)}, new LineInfo[]{new LineInfo(Style.EMPTY, "", 0, 0)}, new Rect2i[0], 0, 0);
+        static final DisplayCache EMPTY = new DisplayCache("", new Pos2i(0, 0), true, new int[]{0}, new LineInfo[]{new LineInfo(Collections.emptyList(), 0, 0)}, new LineInfo[]{new LineInfo(Collections.emptyList(), 0, 0)}, new Rect2i[0], 0, 0);
         private final String fullText;
         @Nullable
         final Pos2i cursor;
@@ -596,7 +613,7 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
                 return this.fullText.length();
             } else {
                 LineInfo bookeditscreen$lineinfo = this.linesAll[i];
-                return this.lineStarts[i] + p_98214_.getSplitter().plainIndexAtWidth(bookeditscreen$lineinfo.contents, p_98215_.x, bookeditscreen$lineinfo.style);
+                return this.lineStarts[i] + p_98214_.getSplitter().plainIndexAtWidth(bookeditscreen$lineinfo.contents, p_98215_.x, Style.EMPTY);
             }
         }
 
@@ -628,18 +645,23 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
 
     @OnlyIn(Dist.CLIENT)
     static class LineInfo {
-        final Style style;
+        final List<Pair<Style, String>> contentsStyled;
         final String contents;
         final Component asComponent;
         final int x;
         final int y;
 
-        public LineInfo(Style p_98232_, String p_98233_, int p_98234_, int p_98235_) {
-            this.style = p_98232_;
-            this.contents = p_98233_;
-            this.x = p_98234_;
-            this.y = p_98235_;
-            this.asComponent = Component.literal(p_98233_).setStyle(p_98232_);
+        public LineInfo(List<Pair<Style, String>> contentsStyled, int x, int y) {
+            this.contentsStyled = contentsStyled;
+            this.contents = contentsStyled.stream().map(Pair::getRight).collect(Collectors.joining());
+            this.x = x;
+            this.y = y;
+
+            MutableComponent component = Component.literal("");
+            for (Pair<Style, String> value : contentsStyled) {
+                component = component.append(Component.literal(value.getRight()).setStyle(value.getLeft()));
+            }
+            this.asComponent = component;
         }
     }
 
@@ -652,5 +674,9 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
             this.x = p_98249_;
             this.y = p_98250_;
         }
+    }
+
+    public static interface IMarkupProvider {
+        public List<Pair<Style, String>> markupLine(Style style, String line);
     }
 }

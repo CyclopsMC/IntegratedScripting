@@ -24,11 +24,14 @@ import org.cyclops.cyclopscore.proxy.IClientProxy;
 import org.cyclops.cyclopscore.proxy.ICommonProxy;
 import org.cyclops.integrateddynamics.IntegratedDynamics;
 import org.cyclops.integrateddynamics.infobook.OnTheDynamicsOfIntegrationBook;
+import org.cyclops.integratedscripting.api.language.ILanguageHandlerRegistry;
 import org.cyclops.integratedscripting.block.BlockScriptingDriveConfig;
 import org.cyclops.integratedscripting.blockentity.BlockEntityScriptingDriveConfig;
 import org.cyclops.integratedscripting.capability.ScriptingNetworkCapabilityConstructors;
 import org.cyclops.integratedscripting.capability.network.ScriptingNetworkConfig;
 import org.cyclops.integratedscripting.command.CommandTestScript;
+import org.cyclops.integratedscripting.core.language.LanguageHandlerRegistry;
+import org.cyclops.integratedscripting.core.language.LanguageHandlers;
 import org.cyclops.integratedscripting.core.network.ScriptingData;
 import org.cyclops.integratedscripting.evaluate.translation.IValueTranslatorRegistry;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslatorRegistry;
@@ -56,6 +59,7 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
         super(Reference.MOD_ID, (instance) -> _instance = instance);
 
         getRegistryManager().addRegistry(IValueTranslatorRegistry.class, ValueTranslatorRegistry.getInstance());
+        getRegistryManager().addRegistry(ILanguageHandlerRegistry.class, LanguageHandlerRegistry.getInstance());
 
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onRegistriesCreate);
         FMLJavaModLoadingContext.get().getModEventBus().addListener(this::afterSetup);
@@ -83,6 +87,7 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
         MinecraftForge.EVENT_BUS.register(new ScriptingNetworkCapabilityConstructors());
 
         ValueTranslators.load();
+        LanguageHandlers.load();
     }
 
     @SubscribeEvent

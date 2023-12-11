@@ -1,5 +1,6 @@
 package org.cyclops.integratedscripting.client.gui.container;
 
+import com.google.common.collect.Lists;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -10,6 +11,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import org.apache.commons.lang3.tuple.Pair;
 import org.cyclops.cyclopscore.client.gui.component.WidgetScrollBar;
 import org.cyclops.cyclopscore.client.gui.component.button.ButtonText;
 import org.cyclops.cyclopscore.client.gui.component.input.WidgetArrowedListField;
@@ -20,8 +22,10 @@ import org.cyclops.cyclopscore.helper.L10NHelpers;
 import org.cyclops.cyclopscore.helper.RenderHelpers;
 import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.Reference;
+import org.cyclops.integratedscripting.api.language.ILanguageHandler;
 import org.cyclops.integratedscripting.client.gui.component.input.WidgetDialog;
 import org.cyclops.integratedscripting.client.gui.component.input.WidgetTextArea;
+import org.cyclops.integratedscripting.core.language.LanguageHandlers;
 import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScripting;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingDeleteScriptPacket;
 import org.lwjgl.glfw.GLFW;
@@ -99,6 +103,10 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
         textArea = new WidgetTextArea(Minecraft.getInstance().font, this.leftPos + SCRIPT_X + 1, this.topPos + SCRIPT_Y + 1, SCRIPT_WIDTH, SCRIPT_HEIGHT, Component.translatable("gui.integratedscripting.script"), true);
         textArea.setListener(this::onActiveScriptModified);
+        textArea.setMarkupProvider((style, line) -> {
+            ILanguageHandler languageHandler = LanguageHandlers.REGISTRY.getProvider(getMenu().getActiveScriptPath());
+            return languageHandler != null ? languageHandler.markupLine(line) : Lists.newArrayList(Pair.of(style, line));
+        });
         addRenderableWidget(textArea);
 
         buttonCreateFile = new ButtonText(this.leftPos + 19, this.topPos + 222, 56, 10, Component.translatable("gui.integratedscripting.create_file"), Component.literal("+"),
