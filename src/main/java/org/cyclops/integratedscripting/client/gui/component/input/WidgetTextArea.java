@@ -108,11 +108,11 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
     public void setValue(String value) {
         this.setValuePassive(value);
 
+        textFieldHelper.setCursorToStart();
+        textFieldHelper.setSelectionPos(textFieldHelper.getCursorPos());
         if (this.scrollBar != null) {
             scrollBar.scrollTo(0);
         }
-        textFieldHelper.setCursorToStart();
-        textFieldHelper.setSelectionPos(textFieldHelper.getCursorPos());
     }
 
     public void setValuePassive(String value) {
