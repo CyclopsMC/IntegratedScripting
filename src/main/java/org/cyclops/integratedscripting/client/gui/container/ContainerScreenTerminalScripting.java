@@ -20,6 +20,7 @@ import org.cyclops.cyclopscore.client.gui.image.Images;
 import org.cyclops.cyclopscore.helper.Helpers;
 import org.cyclops.cyclopscore.helper.L10NHelpers;
 import org.cyclops.cyclopscore.helper.RenderHelpers;
+import org.cyclops.integratedscripting.GeneralConfig;
 import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.Reference;
 import org.cyclops.integratedscripting.api.language.ILanguageHandler;
@@ -28,6 +29,7 @@ import org.cyclops.integratedscripting.client.gui.component.input.WidgetTextArea
 import org.cyclops.integratedscripting.core.language.LanguageHandlers;
 import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScripting;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingDeleteScriptPacket;
+import org.cyclops.integratedscripting.network.packet.TerminalScriptingModifiedScriptPacket;
 import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.Nullable;
@@ -62,6 +64,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     private WidgetTextArea textArea;
     private ButtonText buttonCreateFile;
     private WidgetDialog pendingScriptRemovalDialog;
+    private int lastClientSyncTick;
 
     public ContainerScreenTerminalScripting(ContainerTerminalScripting container, Inventory inventory, Component title) {
         super(container, inventory, title);
@@ -73,6 +76,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         this.inventoryLabelX = 88;
         this.inventoryLabelY = this.imageHeight - 94;
         this.firstRow = 0;
+        this.lastClientSyncTick = 0;
     }
 
     @Override
@@ -118,6 +122,32 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     protected void containerTick() {
         super.containerTick();
         textArea.tick();
+
+        if (this.lastClientSyncTick == 0) {
+            // Send modified scripts from client to server
+            syncDirtyScripts();
+        }
+        this.lastClientSyncTick = (this.lastClientSyncTick + 1) % GeneralConfig.terminalScriptingClientSyncTickInterval;
+    }
+
+    protected void syncDirtyScripts() {
+        for (Pair<Integer, Path> entry : getMenu().getClientScriptsDirty()) {
+            Map<Path, String> diskScripts = getMenu().getLastScripts().get(entry.getLeft());
+            if (diskScripts != null) {
+                String script = diskScripts.get(entry.getRight());
+                if (script != null) {
+                    IntegratedScripting._instance.getPacketHandler()
+                            .sendToServer(new TerminalScriptingModifiedScriptPacket(entry.getLeft(), entry.getRight(), script));
+                }
+            }
+        }
+        getMenu().getClientScriptsDirty().clear();
+    }
+
+    @Override
+    public void onClose() {
+        this.syncDirtyScripts();
+        super.onClose();
     }
 
     public void removed() {

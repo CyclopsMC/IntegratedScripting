@@ -19,6 +19,8 @@ public class GeneralConfig extends DummyConfig {
     public static int scriptingDriveBaseConsumption = 2;
     @ConfigurableProperty(category = "general", comment = "The base energy usage for the scripting terminal.", minimalValue = 0, configLocation = ModConfig.Type.SERVER)
     public static int terminalScriptingBaseConsumption = 1;
+    @ConfigurableProperty(category = "general", comment = "The minimum number of ticks inbetween sending a script change packet from client to server.", minimalValue = 0, configLocation = ModConfig.Type.SERVER)
+    public static int terminalScriptingClientSyncTickInterval = 20;
 
     public GeneralConfig() {
         super(IntegratedScripting._instance, "general");

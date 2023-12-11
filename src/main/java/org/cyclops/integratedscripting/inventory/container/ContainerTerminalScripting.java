@@ -11,6 +11,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import org.apache.commons.lang3.tuple.Pair;
 import org.cyclops.cyclopscore.inventory.container.InventoryContainer;
 import org.cyclops.integrateddynamics.api.network.INetwork;
 import org.cyclops.integrateddynamics.api.part.IPartContainer;
@@ -46,6 +47,7 @@ public class ContainerTerminalScripting extends InventoryContainer {
     private final Level world;
     private final Optional<INetwork> network;
     private final Optional<IScriptingNetwork> scriptingNetwork;
+    private final Set<Pair<Integer, Path>> clientScriptsDirty;
 
     private final Int2ObjectMap<Map<Path, String>> lastScripts = new Int2ObjectAVLTreeMap<>();
     private IntList availableDisks;
@@ -68,6 +70,7 @@ public class ContainerTerminalScripting extends InventoryContainer {
 
         this.network = NetworkHelpers.getNetwork(getTarget().getCenter()).resolve();
         this.scriptingNetwork = this.network.flatMap(network -> ScriptingNetworkHelpers.getScriptingNetwork(network).resolve());
+        this.clientScriptsDirty = Sets.newHashSet();
 
         this.availableDisks = initData.getAvailableDisks();
         this.activeDisk = this.availableDisks.isEmpty() ? -1 : this.availableDisks.getInt(0);
@@ -119,12 +122,16 @@ public class ContainerTerminalScripting extends InventoryContainer {
         this.activeDisk = activeDisk;
     }
 
+    public Set<Pair<Integer, Path>> getClientScriptsDirty() {
+        return clientScriptsDirty;
+    }
+
     @Override
     public void broadcastChanges() {
         super.broadcastChanges();
 
-        // Send disk contents to clients
         if (!this.getLevel().isClientSide()) {
+            // Send disk contents to clients
             this.getScriptingNetwork().ifPresent(scriptingNetwork -> {
                 for (Integer disk : this.getAvailableDisks()) {
                     Map<Path, String> scriptsNew = ScriptingNetworkHelpers.getScriptingData().getScripts(disk);
@@ -247,9 +254,10 @@ public class ContainerTerminalScripting extends InventoryContainer {
         if (path != null && disk >= 0) {
             Map<Path, String> diskScripts = getLastScripts().get(disk);
             if (diskScripts != null) {
-                diskScripts.put(path, scriptNew);
-                IntegratedScripting._instance.getPacketHandler()
-                        .sendToServer(new TerminalScriptingModifiedScriptPacket(disk, path, scriptNew));
+                String scriptOld = diskScripts.put(path, scriptNew);
+                if (!Objects.equals(scriptOld, scriptNew)) {
+                    this.clientScriptsDirty.add(Pair.of(disk, path));
+                }
             }
         }
     }
