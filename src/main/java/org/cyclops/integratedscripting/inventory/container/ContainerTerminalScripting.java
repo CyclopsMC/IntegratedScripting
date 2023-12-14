@@ -5,10 +5,11 @@ import com.google.common.collect.Sets;
 import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.IntList;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -54,7 +55,6 @@ import java.util.Set;
  */
 public class ContainerTerminalScripting extends InventoryContainer implements IDirtyMarkListener {
 
-    private final SimpleInventory writeSlot;
     private final PartTarget target;
     private final Optional<IPartContainer> partContainer;
     private final PartTypeTerminalScripting partType;
@@ -67,6 +67,7 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
     private IntList availableDisks;
     private int activeDisk;
     private final int activeScriptPathId;
+    private final int selectionId;
 
     public ContainerTerminalScripting(int id, Inventory playerInventory, FriendlyByteBuf packetBuffer) {
         this(id, playerInventory, PartHelpers.readPartTarget(packetBuffer), Optional.empty(),
@@ -76,11 +77,10 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
     public ContainerTerminalScripting(int id, Inventory playerInventory,
                                       PartTarget target, Optional<IPartContainer> partContainer,
                                       PartTypeTerminalScripting partType, InitData initData) {
-        super(RegistryEntries.CONTAINER_TERMINAL_SCRIPTING, id, playerInventory, new SimpleContainer());
+        super(RegistryEntries.CONTAINER_TERMINAL_SCRIPTING, id, playerInventory, new SimpleInventory(1, 1));
 
-        this.writeSlot = new SimpleInventory(1, 1);
-        this.writeSlot.addDirtyMarkListener(this);
-        addSlot(new SlotVariable(this.writeSlot, 0, 232, 137));
+        ((SimpleInventory) getContainerInventory()).addDirtyMarkListener(this);
+        addSlot(new SlotVariable(getContainerInventory(), 0, 232, 137));
         addPlayerInventory(playerInventory, 88, 158);
 
         this.target = target;
@@ -95,6 +95,7 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
         this.availableDisks = initData.getAvailableDisks();
         this.activeDisk = this.availableDisks.isEmpty() ? -1 : this.availableDisks.getInt(0);
         this.activeScriptPathId = getNextValueId();
+        this.selectionId = getNextValueId();
     }
 
 
@@ -127,7 +128,7 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
     public void removed(Player player) {
         super.removed(player);
         if (!player.level.isClientSide()) {
-            ItemStack itemStack = writeSlot.getItem(0);
+            ItemStack itemStack = getContainerInventory().getItem(0);
             if(!itemStack.isEmpty()) {
                 player.drop(itemStack, false);
             }
@@ -214,7 +215,7 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
 
     @Override
     protected int getSizeInventory() {
-        return 0;
+        return getContainerInventory().getContainerSize();
     }
 
     public void setLastScript(int disk, Path path, @Nullable String script) {
@@ -268,6 +269,19 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
         ValueNotifierHelpers.setValue(this, activeScriptPathId, activeScriptPath.toString());
     }
 
+    public String getSelection() {
+        String str = ValueNotifierHelpers.getValueString(this, selectionId);
+        return str == null ? "" : str;
+    }
+
+    public void setSelection(String selection) {
+        ValueNotifierHelpers.setValue(this, selectionId, selection);
+    }
+
+    public boolean isMemberSelected() {
+        return getSelection().matches("[0-9a-zA-Z_]+");
+    }
+
     @Nullable
     public String getActiveScript() {
         Path path = getActiveScriptPath();
@@ -303,22 +317,28 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
     }
 
     public List<MutableComponent> getReadErrors() {
-        // TODO: validate disk, path, and member
-        return Lists.newArrayList();
+        List<MutableComponent> list = Lists.newArrayList();
+        if (canWriteScriptToVariable()) {
+            if (!isMemberSelected()) {
+                list.add(Component.translatable("gui.integratedscripting.error.invalid_member"));
+            }
+        }
+        return list;
     }
 
     public boolean canWriteScriptToVariable() {
-        return getActiveDisk() != 0 && getActiveScriptPath() != null; // TODO: check if a member is selected
+        return !getContainerInventory().getItem(0).isEmpty() && getActiveDisk() != 0 && getActiveScriptPath() != null;
     }
 
     @Override
     public void onDirty() {
-        ItemStack itemStack = writeSlot.getItem(0);
-        if (canWriteScriptToVariable() && !itemStack.isEmpty()) {
-            ItemStack outputStack = writeScriptVariable(!world.isClientSide, itemStack.copy(), getActiveDisk(), getActiveScriptPath(), "TODO"); // TODO: determine member based on selection
-            writeSlot.removeDirtyMarkListener(this);
-            writeSlot.setItem(0, outputStack);
-            writeSlot.addDirtyMarkListener(this);
+        SimpleInventory writeInv = (SimpleInventory) getContainerInventory();
+        ItemStack itemStack = writeInv.getItem(0);
+        if (canWriteScriptToVariable() && !itemStack.isEmpty() && isMemberSelected()) {
+            ItemStack outputStack = writeScriptVariable(!world.isClientSide, itemStack.copy(), getActiveDisk(), getActiveScriptPath(), getSelection());
+            writeInv.removeDirtyMarkListener(this);
+            writeInv.setItem(0, outputStack);
+            writeInv.addDirtyMarkListener(this);
         }
     }
 
@@ -335,6 +355,16 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
                 return new ScriptVariableFacade(id, disk, path, member);
             }
         }, player, world.getBlockState(getTarget().getCenter().getPos().getBlockPos()));
+    }
+
+    @Override
+    public void setValue(int valueId, CompoundTag value) {
+        super.setValue(valueId, value);
+
+        // Potentially trigger a variable write when a new member was selected
+        if (valueId == selectionId) {
+            this.onDirty();
+        }
     }
 
     public static class InitData {

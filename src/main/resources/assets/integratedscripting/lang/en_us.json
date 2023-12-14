@@ -10,6 +10,7 @@
   "gui.integratedscripting.removal_dialog.message": "Do you want to delete \"%s\"?",
   "gui.integratedscripting.removal_dialog.delete": "Delete",
   "gui.integratedscripting.removal_dialog.keep": "Keep",
+  "gui.integratedscripting.error.invalid_member": "Select a valid function or variable member inside the script editor to bind with.",
 
   "valuetype.integratedscripting.error.translation.unknown_to_graal": "Could not find a translator from %s values to Graal.",
   "valuetype.integratedscripting.error.translation.unknown_to_graal_nbt": "Could not find a translator from %s values to Graal during NBT translation.",

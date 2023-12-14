@@ -65,7 +65,7 @@ public class ScriptVariableFacade extends VariableFacadeBase implements IScriptV
 
     @Override
     public void validate(IPartNetwork network, IValidator validator, IValueType containingValueType) {
-        // TODO: validation
+        // TODO: validation: check if disk is present and such...
 //        Optional<IVariable> targetVariable = getTargetVariable(network);
 //        if (!isValid()) {
 //            validator.addError(Component.translatable(L10NValues.VARIABLE_ERROR_INVALIDITEM));

@@ -62,13 +62,16 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
 
     public static final int ROW_HEIGHT = 9;
 
-    private final TextFieldHelper textFieldHelper;
+    private final TextFieldHelperExtended textFieldHelper;
     private final Font font;
 
     private int frameTick;
     private String value = "";
+    private String selected = "";
     @Nullable
     private IInputListener listener;
+    @Nullable
+    private IInputListener listenerSelection;
     @Nullable
     private IMarkupProvider markupProvider;
     @Nullable
@@ -82,7 +85,7 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
     public WidgetTextArea(Font font, int x, int y, int width, int height, Component narrationMessage, boolean scrollBar) {
         super(x, y, width, height, narrationMessage);
         this.font = font;
-        this.textFieldHelper = new TextFieldHelper(this::getValue, this::setValuePassive, this::getClipboard, this::setClipboard, s -> true);
+        this.textFieldHelper = new TextFieldHelperExtended(this::getValue, this::setValuePassive, this::getClipboard, this::setClipboard, s -> true, this::setSelected);
         if (scrollBar) {
             this.scrollBar = new WidgetScrollBar(x + width - 14, y, height,
                     Component.translatable("gui.cyclopscore.scrollbar"), firstRow -> setFirstRow(firstRow, false), height / ROW_HEIGHT) {
@@ -125,6 +128,10 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
         this.listener = listener;
     }
 
+    public void setListenerSelection(@Nullable IInputListener listenerSelection) {
+        this.listenerSelection = listenerSelection;
+    }
+
     public void setMarkupProvider(@Nullable IMarkupProvider markupProvider) {
         this.markupProvider = markupProvider;
     }
@@ -151,6 +158,18 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
 
     public String getValue() {
         return this.value;
+    }
+
+    public void setSelected(String value) {
+        this.selected = value;
+
+        if (listenerSelection != null) {
+            listenerSelection.onChanged();
+        }
+    }
+
+    public String getSelected() {
+        return selected;
     }
 
     public void updateNarration(NarrationElementOutput narrationElementOutput) {
@@ -235,7 +254,8 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
             return this.scrollBar.mouseDragged(mouseX, mouseY, mouseButton, offsetX, offsetY);
         }
 
-        if (mouseButton == 0) {
+        if (mouseButton == 0 && mouseX >= this.x && mouseX < this.x + this.width
+                && mouseY >= this.y && mouseY < this.y + this.height) {
             DisplayCache bookeditscreen$displaycache = this.getDisplayCache();
             int i = bookeditscreen$displaycache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i((int)mouseX, (int)mouseY)));
             this.textFieldHelper.setCursorPos(i, true);

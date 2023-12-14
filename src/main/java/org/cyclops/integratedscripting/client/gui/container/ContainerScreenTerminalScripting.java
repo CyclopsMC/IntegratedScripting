@@ -109,6 +109,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
         textArea = new WidgetTextArea(Minecraft.getInstance().font, this.leftPos + SCRIPT_X + 1, this.topPos + SCRIPT_Y + 1, SCRIPT_WIDTH, SCRIPT_HEIGHT, Component.translatable("gui.integratedscripting.script"), true);
         textArea.setListener(this::onActiveScriptModified);
+        textArea.setListenerSelection(this::onSelectionModified);
         textArea.setMarkupProvider((style, line) -> {
             ILanguageHandler languageHandler = LanguageHandlers.REGISTRY.getProvider(getMenu().getActiveScriptPath());
             return languageHandler != null ? languageHandler.markupLine(line) : Lists.newArrayList(Pair.of(style, line));
@@ -362,6 +363,10 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
     private void onActiveScriptModified() {
         getMenu().setActiveScript(this.textArea.getValue());
+    }
+
+    private void onSelectionModified() {
+        getMenu().setSelection(this.textArea.getSelected());
     }
 
     private void removeScript(Path path) {
