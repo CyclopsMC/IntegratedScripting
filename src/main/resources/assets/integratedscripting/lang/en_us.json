@@ -23,6 +23,11 @@
   "script.integratedscripting.tooltip.disk": "§e§oDisk ID: §r§o%s",
   "script.integratedscripting.tooltip.path": "§e§oScript Path: §r§o%s",
   "script.integratedscripting.tooltip.member": "§e§oMember: §r§o%s",
+  "script.integratedscripting.error.invalid_network": "No valid scripting network could be found.",
+  "script.integratedscripting.error.disk_not_in_network": "Disk with id %s could not be found within the current network.",
+  "script.integratedscripting.error.path_not_in_network": "Disk with id %s does not contain the script \"%s\".",
+  "script.integratedscripting.error.member_not_in_network": "Disk with id %s does not contain the member \"%s\" in the script \"%s\".",
+  "script.integratedscripting.error.unsupported_language": "The language of script \"%s\" is not supported.",
 
   "_comment": "Items",
   "item.integratedscripting.scripting_disk": "Scripting Disk",

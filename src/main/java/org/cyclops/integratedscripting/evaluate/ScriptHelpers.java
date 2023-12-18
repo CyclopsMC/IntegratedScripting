@@ -9,6 +9,8 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.Value;
 
+import javax.annotation.Nullable;
+import java.nio.file.Path;
 import java.util.Map;
 
 /**
@@ -41,6 +43,16 @@ public class ScriptHelpers {
         context.getBindings("js").putMember("idContext", idContext);
 
         return context;
+    }
+
+    @Nullable
+    public static String getPathExtension(Path path) {
+        String filePathString = path.toString();
+        int dotPos = filePathString.lastIndexOf('.');
+        if (dotPos >= 0 && dotPos + 1 < filePathString.length()) {
+            return filePathString.substring(dotPos + 1);
+        }
+        return null;
     }
 
 }

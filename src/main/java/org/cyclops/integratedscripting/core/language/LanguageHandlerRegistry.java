@@ -3,6 +3,7 @@ package org.cyclops.integratedscripting.core.language;
 import com.google.common.collect.Maps;
 import org.cyclops.integratedscripting.api.language.ILanguageHandler;
 import org.cyclops.integratedscripting.api.language.ILanguageHandlerRegistry;
+import org.cyclops.integratedscripting.evaluate.ScriptHelpers;
 
 import javax.annotation.Nullable;
 import java.nio.file.Path;
@@ -37,10 +38,8 @@ public class LanguageHandlerRegistry implements ILanguageHandlerRegistry {
     @Nullable
     @Override
     public ILanguageHandler getProvider(Path filePath) {
-        String filePathString = filePath.toString();
-        int dotPos = filePathString.lastIndexOf('.');
-        if (dotPos >= 0 && dotPos + 1 < filePathString.length()) {
-            String extension = filePathString.substring(dotPos + 1);
+        String extension = ScriptHelpers.getPathExtension(filePath);
+        if (extension != null) {
             return extensionToHandlerMap.get(extension);
         }
         return null;

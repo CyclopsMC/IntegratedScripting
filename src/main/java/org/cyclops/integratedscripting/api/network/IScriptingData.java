@@ -1,12 +1,14 @@
 package org.cyclops.integratedscripting.api.network;
 
+
 import javax.annotation.Nullable;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Map;
 
 /**
- * Capability for handling scripts inside a world.
+ * Server-side singleton for handling scripts inside the game.
+ * @see {@link IntegratedScripting#scriptingData}
  * @author rubensworks
  */
 public interface IScriptingData {

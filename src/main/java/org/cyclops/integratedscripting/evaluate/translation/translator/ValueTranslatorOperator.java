@@ -78,12 +78,12 @@ public class ValueTranslatorOperator implements IValueTranslator<ValueTypeOperat
 
     public static class GraalOperator extends OperatorBase {
         protected GraalOperator(IValueType[] inputTypes, IFunction function) {
-            super("GRAAL", "GRAAL", "GRAAL", null, false, inputTypes, ValueTypes.CATEGORY_ANY, function, null);
+            super("graal", "graal", "graal", null, false, inputTypes, ValueTypes.CATEGORY_ANY, function, null);
         }
 
         @Override
         protected String getUnlocalizedType() {
-            return "GRAAL";
+            return "graal";
         }
     }
 
