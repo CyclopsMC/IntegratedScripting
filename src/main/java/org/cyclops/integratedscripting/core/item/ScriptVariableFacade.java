@@ -57,7 +57,7 @@ public class ScriptVariableFacade extends VariableFacadeBase implements IScriptV
     public <V extends IValue> IVariable<V> getVariable(INetwork network, IPartNetwork partNetwork) {
         if(isValid()) {
             return ScriptingNetworkHelpers.getScriptingNetwork(network)
-                    .map(scriptingNetwork -> scriptingNetwork.<V>getOrCreateVariable(this.disk, this.path, this.member))
+                    .map(scriptingNetwork -> scriptingNetwork.<V>getVariable(this.disk, this.path, this.member))
                     .orElse(null);
         }
         return null;

@@ -49,6 +49,6 @@ public interface IScriptingNetwork {
      * @param <V> The value type.
      * @return A variable.
      */
-    public <V extends IValue> IVariable<V> getOrCreateVariable(int disk, Path path, String member);
+    public <V extends IValue> IVariable<V> getVariable(int disk, Path path, String member);
 
 }

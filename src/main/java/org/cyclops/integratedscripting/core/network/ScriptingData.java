@@ -39,7 +39,7 @@ public class ScriptingData implements IScriptingData {
     private final Int2ObjectMap<Map<Path, String>> diskScripts = new Int2ObjectAVLTreeMap<>();
     private final Path rootPath;
     private final Set<Pair<Integer, Path>> dirtyPaths = Sets.newHashSet();
-    private final Int2ObjectMap<List<IScriptChangeListener>> scriptChangeListeners = new Int2ObjectAVLTreeMap<>();
+    private final Int2ObjectMap<List<IDiskScriptsChangeListener>> scriptChangeListeners = new Int2ObjectAVLTreeMap<>();
     private final Map<Path, WatchKey> pathWatchers = Maps.newHashMap();
     private final Map<WatchKey, Path> pathWatchersReverse = Maps.newHashMap();
 
@@ -200,9 +200,9 @@ public class ScriptingData implements IScriptingData {
         }
         if (changeLocation == ChangeLocation.DISK) {
             // Invoke listeners
-            List<IScriptChangeListener> listeners = scriptChangeListeners.get(disk);
+            List<IDiskScriptsChangeListener> listeners = scriptChangeListeners.get(disk);
             if (listeners != null) {
-                for (IScriptChangeListener listener : listeners) {
+                for (IDiskScriptsChangeListener listener : Lists.newArrayList(listeners.listIterator())) {
                     for (Path scriptPathRelative : scripts.keySet()) {
                         listener.onChange(scriptPathRelative);
                     }
@@ -243,9 +243,9 @@ public class ScriptingData implements IScriptingData {
         }
         if (changeLocation == ChangeLocation.DISK) {
             // Invoke listeners
-            List<IScriptChangeListener> listeners = scriptChangeListeners.get(disk);
+            List<IDiskScriptsChangeListener> listeners = scriptChangeListeners.get(disk);
             if (listeners != null) {
-                for (IScriptChangeListener listener : listeners) {
+                for (IDiskScriptsChangeListener listener : listeners) {
                     listener.onChange(scriptPathRelative);
                 }
             }
@@ -286,8 +286,8 @@ public class ScriptingData implements IScriptingData {
     }
 
     @Override
-    public void addListener(int disk, IScriptChangeListener listener) {
-        List<IScriptChangeListener> listeners = scriptChangeListeners.get(disk);
+    public void addListener(int disk, IDiskScriptsChangeListener listener) {
+        List<IDiskScriptsChangeListener> listeners = scriptChangeListeners.get(disk);
         if (listeners == null) {
             listeners = Lists.newArrayList();
             scriptChangeListeners.put(disk, listeners);
@@ -296,8 +296,8 @@ public class ScriptingData implements IScriptingData {
     }
 
     @Override
-    public void removeListener(int disk, IScriptChangeListener listener) {
-        List<IScriptChangeListener> listeners = scriptChangeListeners.get(disk);
+    public void removeListener(int disk, IDiskScriptsChangeListener listener) {
+        List<IDiskScriptsChangeListener> listeners = scriptChangeListeners.get(disk);
         if (listeners != null) {
             listeners.remove(listener);
             if (listeners.isEmpty()) {

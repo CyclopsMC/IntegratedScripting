@@ -1,6 +1,7 @@
 package org.cyclops.integratedscripting.api.network;
 
 
+
 import javax.annotation.Nullable;
 import java.nio.file.Path;
 import java.util.Collection;
@@ -22,11 +23,11 @@ public interface IScriptingData {
 
     public void markDirty(int disk, Path scriptPathRelative);
 
-    public void addListener(int disk, IScriptChangeListener listener);
+    public void addListener(int disk, IDiskScriptsChangeListener listener);
 
-    public void removeListener(int disk, IScriptChangeListener listener);
+    public void removeListener(int disk, IDiskScriptsChangeListener listener);
 
-    public static interface IScriptChangeListener {
+    public static interface IDiskScriptsChangeListener {
         public void onChange(Path scriptPathRelative);
     }
 

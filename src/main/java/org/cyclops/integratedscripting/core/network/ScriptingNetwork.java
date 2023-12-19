@@ -1,24 +1,23 @@
 package org.cyclops.integratedscripting.core.network;
 
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import net.minecraft.network.chat.Component;
-import org.cyclops.cyclopscore.datastructure.Wrapper;
+import org.apache.commons.lang3.tuple.Triple;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
-import org.cyclops.integrateddynamics.api.evaluate.expression.VariableAdapter;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
-import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IVariable;
-import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypes;
 import org.cyclops.integratedscripting.api.language.ILanguageHandler;
 import org.cyclops.integratedscripting.api.network.IScript;
 import org.cyclops.integratedscripting.api.network.IScriptFactory;
-import org.cyclops.integratedscripting.api.network.IScriptMember;
 import org.cyclops.integratedscripting.api.network.IScriptingNetwork;
+import org.cyclops.integratedscripting.core.evaluate.ScriptVariable;
 import org.cyclops.integratedscripting.core.language.LanguageHandlers;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Collections;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -27,6 +26,7 @@ import java.util.Set;
 public class ScriptingNetwork implements IScriptingNetwork {
 
     private final Set<Integer> disks = Sets.newHashSet();
+    private final Map<Triple<Integer, Path, String>, ScriptVariable> variableCache = Maps.newHashMap();
 
     @Override
     public void addDisk(int disk) {
@@ -46,8 +46,6 @@ public class ScriptingNetwork implements IScriptingNetwork {
     @Nullable
     @Override
     public IScript getScript(int disk, Path path) throws EvaluationException {
-        // TODO: cache the following
-
         ILanguageHandler languageHandler = LanguageHandlers.REGISTRY.getProvider(path);
         if (languageHandler == null) {
             throw new EvaluationException(Component.translatable("script.integratedscripting.error.unsupported_language", path.toString()));
@@ -57,31 +55,14 @@ public class ScriptingNetwork implements IScriptingNetwork {
     }
 
     @Override
-    public <V extends IValue> IVariable<V> getOrCreateVariable(int disk, Path path, String member) {
-        // TODO: variable caching and invalidation (listen to file changes via IScript to ScriptingData)
-
-        Wrapper<IScript> script = new Wrapper<>();
-        VariableAdapter<IValue> variable = new VariableAdapter<IValue>() {
-
-            @Override
-            public IValueType<IValue> getType() {
-                return ValueTypes.CATEGORY_ANY;
-            }
-
-            @Override
-            public IValue getValue() throws EvaluationException {
-                if (script.get() == null) {
-                    // TODO: cache error?
-                    script.set(getScript(disk, path));
-                }
-                IScriptMember scriptMember = script.get().getMember(member);
-                if (scriptMember == null) {
-                    throw new EvaluationException(Component.translatable("script.integratedscripting.error.member_not_in_network", member, path.toString()));
-                }
-                return scriptMember.getValue();
-            }
-        };
-
+    public <V extends IValue> IVariable<V> getVariable(int disk, Path path, String member) {
+        Triple<Integer, Path, String> cacheKey = Triple.of(disk, path, member);
+        ScriptVariable variable = variableCache.get(cacheKey);
+        if (variable == null) {
+            variable = new ScriptVariable(disk, path, member, this);
+            variable.addInvalidationListener(() -> variableCache.remove(cacheKey));
+            variableCache.put(cacheKey, variable);
+        }
         return (IVariable) variable;
     }
 

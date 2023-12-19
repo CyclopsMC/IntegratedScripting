@@ -16,4 +16,24 @@ public interface IScript {
     @Nullable
     public IScriptMember getMember(String memberName);
 
+    /**
+     * Register a listener that will be invoked when this script gets invalidated.
+     * @param listener A listener for invalidations.
+     */
+    public void addInvalidationListener(IInvalidateListener listener);
+
+    /**
+     * Remove all registered invalidation listeners.
+     */
+    public void removeInvalidationListeners();
+
+    public interface IInvalidateListener {
+
+        /**
+         * Called when a script was invalidated.
+         */
+        public void invalidate();
+
+    }
+
 }

@@ -28,6 +28,8 @@
   "script.integratedscripting.error.path_not_in_network": "Disk with id %s does not contain the script \"%s\".",
   "script.integratedscripting.error.member_not_in_network": "Disk with id %s does not contain the member \"%s\" in the script \"%s\".",
   "script.integratedscripting.error.unsupported_language": "The language of script \"%s\" is not supported.",
+  "script.integratedscripting.error.script_read": "An error occurred when reading the script \"%s\" at disk %s: %s",
+  "script.integratedscripting.error.script_exec": "An error occurred when executing the member \"%s\" in script \"%s\" at disk %s: %s",
 
   "_comment": "Items",
   "item.integratedscripting.scripting_disk": "Scripting Disk",
