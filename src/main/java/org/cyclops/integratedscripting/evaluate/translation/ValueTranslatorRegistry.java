@@ -6,6 +6,8 @@ import org.apache.commons.compress.utils.Lists;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
+import org.cyclops.integratedscripting.api.evaluate.translation.IValueTranslator;
+import org.cyclops.integratedscripting.api.evaluate.translation.IValueTranslatorRegistry;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
 

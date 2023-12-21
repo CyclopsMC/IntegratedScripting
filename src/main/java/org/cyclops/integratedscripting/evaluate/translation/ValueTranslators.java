@@ -3,6 +3,7 @@ package org.cyclops.integratedscripting.evaluate.translation;
 import org.cyclops.cyclopscore.helper.MinecraftHelpers;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypes;
 import org.cyclops.integratedscripting.IntegratedScripting;
+import org.cyclops.integratedscripting.api.evaluate.translation.IValueTranslatorRegistry;
 import org.cyclops.integratedscripting.evaluate.translation.translator.*;
 
 /**
