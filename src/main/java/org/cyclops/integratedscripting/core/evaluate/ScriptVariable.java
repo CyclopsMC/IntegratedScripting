@@ -50,6 +50,11 @@ public class ScriptVariable extends VariableAdapter<IValue> {
         if (this.script == null) {
             try {
                 this.script = this.scriptingNetwork.getScript(disk, path);
+
+                // Listen to script changes to invalidate this variable.
+                if (this.script != null) {
+                    this.script.addInvalidationListener(this::invalidate);
+                }
             } catch (EvaluationException e) {
                 // Store error and re-throw later if the value is re-fetched.
                 this.lastEvaluationException = e;
@@ -61,9 +66,6 @@ public class ScriptVariable extends VariableAdapter<IValue> {
         if (this.script == null) {
             throw new EvaluationException(Component.translatable("script.integratedscripting.error.path_not_in_network", this.disk, this.path.toString()));
         }
-
-        // Listen to script changes to invalidate this variable.
-        this.script.addInvalidationListener(this::invalidate);
 
         // Fetch the script member.
         IScriptMember scriptMember = this.script.getMember(member);
