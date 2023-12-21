@@ -21,13 +21,13 @@ public interface IValueTranslatorRegistry extends IRegistry {
     @Nullable
     public <V extends IValue> IValueTranslator getValueTypeTranslator(IValueType<V> valueType);
 
-    public <V extends IValue> Value translateToGraal(Context context, V value) throws EvaluationException;
+    public <V extends IValue> Value translateToGraal(Context context, V value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException;
 
     @Nullable
     public IValueTranslator getScriptValueTranslator(Value scriptValue);
 
-    public <V extends IValue> V translateFromGraal(Context context, Value value) throws EvaluationException;
+    public <V extends IValue> V translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException;
 
-    public <V extends IValue> Tag translateToNbt(Context context, V value) throws EvaluationException;
+    public <V extends IValue> Tag translateToNbt(Context context, V value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException;
 
 }

@@ -9,9 +9,11 @@ import org.cyclops.integrateddynamics.core.evaluate.operator.OperatorBase;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeOperator;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypes;
 import org.cyclops.integrateddynamics.core.evaluate.variable.Variable;
+import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExceptionFactory;
 import org.cyclops.integratedscripting.api.evaluate.translation.IValueTranslator;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Value;
 
 /**
@@ -35,18 +37,18 @@ public class ValueTranslatorOperator implements IValueTranslator<ValueTypeOperat
     }
 
     @Override
-    public Value translateToGraal(Context context, ValueTypeOperator.ValueOperator value) throws EvaluationException {
+    public Value translateToGraal(Context context, ValueTypeOperator.ValueOperator value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
         return context.asValue((JavaRunnableFromGraal) args -> {
             IVariable<IValue>[] variables = new IVariable[args.length];
             for (int i = 0; i < args.length; i++) {
-                variables[i] = new Variable<>(ValueTranslators.REGISTRY.translateFromGraal(context, args[i]));
+                variables[i] = new Variable<>(ValueTranslators.REGISTRY.translateFromGraal(context, args[i], exceptionFactory));
             }
-            return ValueTranslators.REGISTRY.translateToGraal(context, value.getRawValue().evaluate(variables));
+            return ValueTranslators.REGISTRY.translateToGraal(context, value.getRawValue().evaluate(variables), exceptionFactory);
         });
     }
 
     @Override
-    public ValueTypeOperator.ValueOperator translateFromGraal(Context context, Value value) throws EvaluationException {
+    public ValueTypeOperator.ValueOperator translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
         // Determine input args of the function
         int argCount = value.getMember("length").asInt();
         IValueType[] inputValueTypes = new IValueType[argCount];
@@ -59,15 +61,20 @@ public class ValueTranslatorOperator implements IValueTranslator<ValueTypeOperat
             IVariable[] variables = args.getVariables();
             Value[] values = new Value[variables.length];
             for (int i = 0; i < variables.length; i++) {
-                values[i] = ValueTranslators.REGISTRY.translateToGraal(context, variables[i].getValue());
+                values[i] = ValueTranslators.REGISTRY.translateToGraal(context, variables[i].getValue(), exceptionFactory);
             }
-            Value returnValue = value.execute((Object[]) values);
-            return ValueTranslators.REGISTRY.translateFromGraal(context, returnValue);
+            Value returnValue;
+            try {
+                returnValue = value.execute((Object[]) values);
+            } catch (PolyglotException e) {
+                throw exceptionFactory.createError(e.getMessage());
+            }
+            return ValueTranslators.REGISTRY.translateFromGraal(context, returnValue, exceptionFactory);
         }));
     }
 
     @Override
-    public Tag translateToNbt(Context context, ValueTypeOperator.ValueOperator value) throws EvaluationException {
+    public Tag translateToNbt(Context context, ValueTypeOperator.ValueOperator value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
         throw new UnsupportedOperationException("translateToNbt is not supported");
     }
 

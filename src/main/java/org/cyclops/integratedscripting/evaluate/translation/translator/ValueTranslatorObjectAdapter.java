@@ -14,6 +14,7 @@ import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeNbt;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeOperator;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypes;
 import org.cyclops.integrateddynamics.core.evaluate.variable.Variable;
+import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExceptionFactory;
 import org.cyclops.integratedscripting.api.evaluate.translation.IValueTranslator;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
 import org.graalvm.polyglot.Context;
@@ -53,7 +54,7 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
     }
 
     @Override
-    public Value translateToGraal(Context context, V value) throws EvaluationException {
+    public Value translateToGraal(Context context, V value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
         CompoundTag tag = new CompoundTag();
         Tag subTag = this.valueType.serialize(value);
         tag.put(this.key, subTag);
@@ -67,7 +68,7 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
                     if (scopedOperators != null) {
                         for (Map.Entry<String, IOperator> entry : scopedOperators.entrySet()) {
                             IOperator curriedOperator = new CurriedOperator(entry.getValue(), new Variable<>(value));
-                            prototype.putMember(entry.getKey(), ValueTranslators.REGISTRY.translateToGraal(subContext, ValueTypeOperator.ValueOperator.of(curriedOperator)));
+                            prototype.putMember(entry.getKey(), ValueTranslators.REGISTRY.translateToGraal(subContext, ValueTypeOperator.ValueOperator.of(curriedOperator), exceptionFactory));
                         }
                     }
                 }
@@ -79,14 +80,14 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
     }
 
     @Override
-    public V translateFromGraal(Context context, Value value) throws EvaluationException {
+    public V translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
         Value idBlock = value.getMember(this.key);
-        ValueTypeNbt.ValueNbt valueNbt = ValueTranslators.REGISTRY.translateFromGraal(context, idBlock);
+        ValueTypeNbt.ValueNbt valueNbt = ValueTranslators.REGISTRY.translateFromGraal(context, idBlock, exceptionFactory);
         return this.valueType.deserialize(valueNbt.getRawValue().orElseThrow());
     }
 
     @Override
-    public Tag translateToNbt(Context context, V value) throws EvaluationException {
+    public Tag translateToNbt(Context context, V value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
         throw new UnsupportedOperationException("translateToNbt is not supported");
     }
 

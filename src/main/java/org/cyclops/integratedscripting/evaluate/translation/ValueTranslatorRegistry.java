@@ -6,6 +6,7 @@ import org.apache.commons.compress.utils.Lists;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
+import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExceptionFactory;
 import org.cyclops.integratedscripting.api.evaluate.translation.IValueTranslator;
 import org.cyclops.integratedscripting.api.evaluate.translation.IValueTranslatorRegistry;
 import org.graalvm.polyglot.Context;
@@ -48,12 +49,12 @@ public class ValueTranslatorRegistry implements IValueTranslatorRegistry {
     }
 
     @Override
-    public <V extends IValue> Value translateToGraal(Context context, V value) throws EvaluationException {
+    public <V extends IValue> Value translateToGraal(Context context, V value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
         IValueTranslator translator = getValueTypeTranslator(value.getType());
         if (translator == null) {
             throw new EvaluationException(Component.translatable("valuetype.integratedscripting.error.translation.unknown_to_graal", value.getType()));
         }
-        return translator.translateToGraal(context, value);
+        return translator.translateToGraal(context, value, exceptionFactory);
     }
 
     @Override
@@ -67,22 +68,22 @@ public class ValueTranslatorRegistry implements IValueTranslatorRegistry {
     }
 
     @Override
-    public <V extends IValue> V translateFromGraal(Context context, Value value) throws EvaluationException {
+    public <V extends IValue> V translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
         IValueTranslator translator = getScriptValueTranslator(value);
         if (translator == null) {
             throw new EvaluationException(Component.translatable("valuetype.integratedscripting.error.translation.unknown_from_graal", value));
         }
-        return (V) translator.translateFromGraal(context, value);
+        return (V) translator.translateFromGraal(context, value, exceptionFactory);
     }
 
     @Override
-    public <V extends IValue> Tag translateToNbt(Context context, V value) throws EvaluationException {
+    public <V extends IValue> Tag translateToNbt(Context context, V value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
         IValueTranslator translator = getValueTypeTranslator(value.getType());
         if (translator == null) {
             throw new EvaluationException(Component.translatable("valuetype.integratedscripting.error.translation.unknown_to_graal_nbt", value.getType()));
         }
         if (translator.canTranslateNbt()) {
-            return translator.translateToNbt(context, value);
+            return translator.translateToNbt(context, value, exceptionFactory);
         }
         throw new EvaluationException(Component.translatable("valuetype.integratedscripting.error.translation.nbt_unmatched", value.getType()));
     }

@@ -19,9 +19,9 @@ public interface IValueTranslator<V extends IValue> {
 
     boolean canTranslateNbt();
 
-    public Value translateToGraal(Context context, V value) throws EvaluationException;
+    public Value translateToGraal(Context context, V value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException;
 
-    public V translateFromGraal(Context context, Value value) throws EvaluationException;
+    public V translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException;
 
-    public Tag translateToNbt(Context context, V value) throws EvaluationException;
+    public Tag translateToNbt(Context context, V value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException;
 }

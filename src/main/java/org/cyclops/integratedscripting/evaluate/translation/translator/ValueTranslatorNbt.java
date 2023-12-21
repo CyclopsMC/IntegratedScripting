@@ -8,6 +8,7 @@ import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeNbt;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypes;
+import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExceptionFactory;
 import org.cyclops.integratedscripting.api.evaluate.translation.IValueTranslator;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
 import org.graalvm.polyglot.Context;
@@ -38,7 +39,7 @@ public class ValueTranslatorNbt implements IValueTranslator<ValueTypeNbt.ValueNb
     }
 
     @Override
-    public Value translateToGraal(Context context, ValueTypeNbt.ValueNbt value) throws EvaluationException {
+    public Value translateToGraal(Context context, ValueTypeNbt.ValueNbt value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
         Tag tag = value.getRawValue().orElse(null);
         if (tag == null) {
             return context.asValue(null);
@@ -107,7 +108,7 @@ public class ValueTranslatorNbt implements IValueTranslator<ValueTypeNbt.ValueNb
     }
 
     @Override
-    public ValueTypeNbt.ValueNbt translateFromGraal(Context context, Value value) throws EvaluationException {
+    public ValueTypeNbt.ValueNbt translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
         if (value.getMemberKeys().equals(Sets.newHashSet("nbt_end"))) {
             return ValueTypeNbt.ValueNbt.of(EndTag.INSTANCE);
         }
@@ -115,14 +116,14 @@ public class ValueTranslatorNbt implements IValueTranslator<ValueTypeNbt.ValueNb
         // In all other cases, assume we have a compound tag
         CompoundTag tag = new CompoundTag();
         for (String memberKey : value.getMemberKeys()) {
-            IValue subValue = ValueTranslators.REGISTRY.translateFromGraal(context, value.getMember(memberKey));
-            tag.put(memberKey, ValueTranslators.REGISTRY.translateToNbt(context, subValue));
+            IValue subValue = ValueTranslators.REGISTRY.translateFromGraal(context, value.getMember(memberKey), exceptionFactory);
+            tag.put(memberKey, ValueTranslators.REGISTRY.translateToNbt(context, subValue, exceptionFactory));
         }
         return ValueTypeNbt.ValueNbt.of(tag);
     }
 
     @Override
-    public Tag translateToNbt(Context context, ValueTypeNbt.ValueNbt value) throws EvaluationException {
+    public Tag translateToNbt(Context context, ValueTypeNbt.ValueNbt value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
         return value.getRawValue().orElseThrow();
     }
 }

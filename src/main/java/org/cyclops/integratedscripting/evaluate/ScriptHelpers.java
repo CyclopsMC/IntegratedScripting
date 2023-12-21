@@ -1,9 +1,11 @@
 package org.cyclops.integratedscripting.evaluate;
 
+import net.minecraft.network.chat.Component;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
 import org.cyclops.integrateddynamics.core.evaluate.operator.Operators;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeOperator;
+import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExceptionFactory;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
@@ -37,7 +39,7 @@ public class ScriptHelpers {
         Value idContext = context.eval("js", "new Object()");
         Value ops = context.eval("js", "new Object()");
         for (Map.Entry<String, IOperator> entry : Operators.REGISTRY.getGlobalInteractOperators().entrySet()) {
-            ops.putMember(entry.getKey(), ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeOperator.ValueOperator.of(entry.getValue())));
+            ops.putMember(entry.getKey(), ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeOperator.ValueOperator.of(entry.getValue()), getDummyEvaluationExceptionFactory()));
         }
         idContext.putMember("ops", ops);
         context.getBindings("js").putMember("idContext", idContext);
@@ -53,6 +55,14 @@ public class ScriptHelpers {
             return filePathString.substring(dotPos + 1);
         }
         return null;
+    }
+
+    public static IEvaluationExceptionFactory getDummyEvaluationExceptionFactory() {
+        return message -> new EvaluationException(Component.literal(message));
+    }
+
+    public static IEvaluationExceptionFactory getEvaluationExceptionFactory(int disk, Path path,String member) {
+        return message -> new EvaluationException(Component.translatable("script.integratedscripting.error.script_exec", member, path.toString(), disk, message));
     }
 
 }

@@ -15,6 +15,7 @@ import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeLong;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeNbt;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeOperator;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeString;
+import org.cyclops.integratedscripting.evaluate.ScriptHelpers;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.Value;
@@ -96,11 +97,11 @@ ToGraal-nbt: 0.004066ms/op
     }
 
     private static void runFromGraal(String label, Value graalValue, int replication) {
-        benchmark("FromGraal-" + label, () -> ValueTranslators.REGISTRY.translateFromGraal(CTX, graalValue), replication);
+        benchmark("FromGraal-" + label, () -> ValueTranslators.REGISTRY.translateFromGraal(CTX, graalValue, ScriptHelpers.getDummyEvaluationExceptionFactory()), replication);
     }
 
     private static void runToGraal(String label, IValue idValue, int replication) {
-        benchmark("ToGraal-" + label, () -> ValueTranslators.REGISTRY.translateToGraal(CTX, idValue), replication);
+        benchmark("ToGraal-" + label, () -> ValueTranslators.REGISTRY.translateToGraal(CTX, idValue, ScriptHelpers.getDummyEvaluationExceptionFactory()), replication);
     }
 
     public static void benchmark(String label, ThrowingRunnable runnable, int replication) {

@@ -6,6 +6,7 @@ import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeString;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypes;
+import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExceptionFactory;
 import org.cyclops.integratedscripting.api.evaluate.translation.IValueTranslator;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
@@ -30,17 +31,17 @@ public class ValueTranslatorString implements IValueTranslator<ValueTypeString.V
     }
 
     @Override
-    public Value translateToGraal(Context context, ValueTypeString.ValueString value) {
+    public Value translateToGraal(Context context, ValueTypeString.ValueString value, IEvaluationExceptionFactory exceptionFactory) {
         return context.asValue(value.getRawValue());
     }
 
     @Override
-    public ValueTypeString.ValueString translateFromGraal(Context context, Value value) {
+    public ValueTypeString.ValueString translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory) {
         return ValueTypeString.ValueString.of(value.asString());
     }
 
     @Override
-    public Tag translateToNbt(Context context, ValueTypeString.ValueString value) throws EvaluationException {
+    public Tag translateToNbt(Context context, ValueTypeString.ValueString value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
         return StringTag.valueOf(value.getRawValue());
     }
 }

@@ -15,6 +15,7 @@ import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeBoolean;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeInteger;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeList;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeNbt;
+import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExceptionFactory;
 import org.cyclops.integratedscripting.evaluate.ScriptHelpers;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
 import org.graalvm.polyglot.Context;
@@ -52,6 +53,7 @@ function testFunction(a, b, c, d, e, f) {
     console.log(f.block().stepSound());
     return 10;
 }""", "src.js").build();
+            IEvaluationExceptionFactory EF = ScriptHelpers.getDummyEvaluationExceptionFactory();
             try (Context context = ScriptHelpers.createPopulatedContext()) {
 //                long timeStart = System.currentTimeMillis();
 //                for (int i = 0; i < 100; i++) {
@@ -72,17 +74,17 @@ function testFunction(a, b, c, d, e, f) {
                 context.eval(source);
                 Value primesMain = context.getBindings("js").getMember("testFunction");
                 Value ret = primesMain.execute(
-                        ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeInteger.ValueInteger.of(10)),
-                        ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeBoolean.ValueBoolean.of(true)),
+                        ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeInteger.ValueInteger.of(10), EF),
+                        ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeBoolean.ValueBoolean.of(true), EF),
                         ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeList.ValueList.ofAll(
                                 ValueTypeInteger.ValueInteger.of(10),
                                 ValueTypeBoolean.ValueBoolean.of(true)
-                        )),
-                        ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeNbt.ValueNbt.of(new ByteArrayTag(new byte[]{1, 2, 3}))),
-                        ValueTranslators.REGISTRY.translateToGraal(context, ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.STONE))),
-                        ValueTranslators.REGISTRY.translateToGraal(context, ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.ACACIA_SAPLING)))
+                        ), EF),
+                        ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeNbt.ValueNbt.of(new ByteArrayTag(new byte[]{1, 2, 3})), EF),
+                        ValueTranslators.REGISTRY.translateToGraal(context, ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.STONE)), EF),
+                        ValueTranslators.REGISTRY.translateToGraal(context, ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.ACACIA_SAPLING)), EF)
                 );
-                System.out.println(ValueTranslators.REGISTRY.translateFromGraal(context, ret).toString()); // TODO
+                System.out.println(ValueTranslators.REGISTRY.translateFromGraal(context, ret, EF).toString()); // TODO
             }
         } catch (IOException | EvaluationException | RuntimeException e) {
             e.printStackTrace();

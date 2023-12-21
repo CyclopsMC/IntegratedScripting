@@ -1,10 +1,11 @@
 package org.cyclops.integratedscripting.core.network;
 
-import net.minecraft.network.chat.Component;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
+import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExceptionFactory;
 import org.cyclops.integratedscripting.api.network.IScript;
 import org.cyclops.integratedscripting.api.network.IScriptMember;
+import org.cyclops.integratedscripting.evaluate.ScriptHelpers;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
@@ -61,10 +62,11 @@ public class GraalScript implements IScript, IScriptMember {
 
     @Override
     public IValue getValue() throws EvaluationException {
+        IEvaluationExceptionFactory exceptionFactory = ScriptHelpers.getEvaluationExceptionFactory(disk, path, member);
         try {
-            return ValueTranslators.REGISTRY.translateFromGraal(this.graalContext, graalValue);
+            return ValueTranslators.REGISTRY.translateFromGraal(this.graalContext, graalValue, exceptionFactory);
         } catch (PolyglotException e) {
-            throw new EvaluationException(Component.translatable("script.integratedscripting.error.script_exec", member, path.toString(), disk, e.getMessage()));
+            throw exceptionFactory.createError(e.getMessage());
         }
     }
 }
