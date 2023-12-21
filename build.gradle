@@ -111,6 +111,9 @@ dependencies {
     }
 
     modLib "com.google.re2j:re2j:1.1"
+    modLib ("io.netty:netty-codec-http:4.1.77.Final") {
+        transitive = false
+    }
 
     modLib "org.graalvm.sdk:graal-sdk:22.3.2"
     shadow "org.graalvm.sdk:graal-sdk:22.3.2"
