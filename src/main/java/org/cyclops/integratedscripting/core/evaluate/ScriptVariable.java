@@ -26,6 +26,8 @@ public class ScriptVariable extends VariableAdapter<IValue> {
 
     @Nullable
     protected IScript script;
+    @Nullable
+    protected IValue value;
     private EvaluationException lastEvaluationException;
 
     public ScriptVariable(int disk, Path path, String member, IScriptingNetwork scriptingNetwork) {
@@ -64,15 +66,21 @@ public class ScriptVariable extends VariableAdapter<IValue> {
 
         // If the script is still null, then we have a non-available script.
         if (this.script == null) {
-            throw new EvaluationException(Component.translatable("script.integratedscripting.error.path_not_in_network", this.disk, this.path.toString()));
+            this.lastEvaluationException = new EvaluationException(Component.translatable("script.integratedscripting.error.path_not_in_network", this.disk, this.path.toString()));
+            throw this.lastEvaluationException;
         }
 
         // Fetch the script member.
-        IScriptMember scriptMember = this.script.getMember(member);
-        if (scriptMember == null) {
-            throw new EvaluationException(Component.translatable("script.integratedscripting.error.member_not_in_network", member, path.toString()));
+        if (this.value == null) {
+            IScriptMember scriptMember = this.script.getMember(member);
+            if (scriptMember == null) {
+                this.lastEvaluationException = new EvaluationException(Component.translatable("script.integratedscripting.error.member_not_in_network", member, path.toString()));
+                throw this.lastEvaluationException;
+            }
+            this.value = scriptMember.getValue();
         }
-        return scriptMember.getValue();
+
+        return this.value;
     }
 
     @Override
@@ -84,6 +92,7 @@ public class ScriptVariable extends VariableAdapter<IValue> {
 
         // Reset state
         this.script = null;
+        this.value = null;
         this.lastEvaluationException = null;
 
         super.invalidate();
