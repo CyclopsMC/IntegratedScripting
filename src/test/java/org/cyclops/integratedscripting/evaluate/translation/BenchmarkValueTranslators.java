@@ -1,20 +1,18 @@
 package org.cyclops.integratedscripting.evaluate.translation;
 
+import net.minecraft.DetectedVersion;
+import net.minecraft.SharedConstants;
+import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.StringTag;
+import net.minecraft.server.Bootstrap;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
 import org.cyclops.integrateddynamics.core.evaluate.operator.Operators;
-import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeBoolean;
-import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeDouble;
-import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeInteger;
-import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeList;
-import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeListProxyFactories;
-import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeLong;
-import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeNbt;
-import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeOperator;
-import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeString;
+import org.cyclops.integrateddynamics.core.evaluate.variable.*;
 import org.cyclops.integratedscripting.evaluate.ScriptHelpers;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
@@ -24,6 +22,12 @@ import org.graalvm.polyglot.Value;
  * @author rubensworks
  */
 public class BenchmarkValueTranslators {
+
+    static {
+        SharedConstants.setVersion(DetectedVersion.BUILT_IN);
+        Bootstrap.bootStrap();
+        Registry.ITEM.unfreeze();
+    }
 
     public static int REPLICATION = 1000000;
 
@@ -61,6 +65,7 @@ ToGraal-nbt: 0.004066ms/op
         runFromGraal("list", getJsValue("['abc', 'def', 'ghi']"), REPLICATION);
         runFromGraal("operator", getJsValue("(a, b) => true"), REPLICATION);
         runFromGraal("nbt", getJsValue("exports = { a: { b: { c: '1', d: 123 } } }"), REPLICATION);
+        runFromGraal("item", getJsValue("exports = { id_item: { id: 'minecraft:arrow', Count: 1 } }"), REPLICATION);
 
         runToGraal("int", ValueTypeInteger.ValueInteger.of(10), REPLICATION);
         runToGraal("boolean", ValueTypeBoolean.ValueBoolean.of(true), REPLICATION);
@@ -79,6 +84,7 @@ ToGraal-nbt: 0.004066ms/op
         compoundTag.put("b", compoundTagSub);
         compoundTagSub.put("c", IntTag.valueOf(123));
         runToGraal("nbt", ValueTypeNbt.ValueNbt.of(compoundTag), REPLICATION);
+        runToGraal("item", ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.ARROW)), REPLICATION);
     }
 
     public static void beforeAll() {
