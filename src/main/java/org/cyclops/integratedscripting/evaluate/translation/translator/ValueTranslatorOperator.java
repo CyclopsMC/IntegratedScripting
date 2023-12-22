@@ -2,13 +2,11 @@ package org.cyclops.integratedscripting.evaluate.translation.translator;
 
 import net.minecraft.nbt.Tag;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
-import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IVariable;
 import org.cyclops.integrateddynamics.core.evaluate.operator.OperatorBase;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeOperator;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypes;
-import org.cyclops.integrateddynamics.core.evaluate.variable.Variable;
 import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExceptionFactory;
 import org.cyclops.integratedscripting.api.evaluate.translation.IValueTranslator;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
@@ -38,17 +36,21 @@ public class ValueTranslatorOperator implements IValueTranslator<ValueTypeOperat
 
     @Override
     public Value translateToGraal(Context context, ValueTypeOperator.ValueOperator value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
-        return context.asValue((JavaRunnableFromGraal) args -> {
-            IVariable<IValue>[] variables = new IVariable[args.length];
-            for (int i = 0; i < args.length; i++) {
-                variables[i] = new Variable<>(ValueTranslators.REGISTRY.translateFromGraal(context, args[i], exceptionFactory));
-            }
-            return ValueTranslators.REGISTRY.translateToGraal(context, value.getRawValue().evaluate(variables), exceptionFactory);
-        });
+        return context.asValue(new OperatorProxyExecutable(context, value, exceptionFactory));
     }
 
     @Override
     public ValueTypeOperator.ValueOperator translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
+        // Unwrap the value if it was translated in the opposite direction before.
+        if (value.isProxyObject()) {
+            try {
+                OperatorProxyExecutable cast = value.asProxyObject();
+                return cast.getValue();
+            } catch (ClassCastException classCastException) {
+                // Fallback to case below
+            }
+        }
+
         // Determine input args of the function
         int argCount = value.getMember("length").asInt();
         IValueType[] inputValueTypes = new IValueType[argCount];
@@ -76,11 +78,6 @@ public class ValueTranslatorOperator implements IValueTranslator<ValueTypeOperat
     @Override
     public Tag translateToNbt(Context context, ValueTypeOperator.ValueOperator value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
         throw new UnsupportedOperationException("translateToNbt is not supported");
-    }
-
-    @FunctionalInterface
-    public static interface JavaRunnableFromGraal {
-        public Value run(Value... args) throws EvaluationException;
     }
 
     public static class GraalOperator extends OperatorBase {

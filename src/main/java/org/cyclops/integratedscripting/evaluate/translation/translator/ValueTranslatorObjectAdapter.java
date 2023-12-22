@@ -1,5 +1,6 @@
 package org.cyclops.integratedscripting.evaluate.translation.translator;
 
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -10,7 +11,6 @@ import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
 import org.cyclops.integrateddynamics.core.evaluate.operator.Operators;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueObjectTypeBase;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeNbt;
-import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeOperator;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypes;
 import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExceptionFactory;
 import org.cyclops.integratedscripting.api.evaluate.translation.IValueTranslator;
@@ -32,7 +32,7 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
     private final ValueObjectTypeBase<V> valueType;
 
     @Nullable
-    private Value prototypeCache;
+    private Map<String, IOperator> methodsCache;
 
     public ValueTranslatorObjectAdapter(String key, ValueObjectTypeBase<V> valueType) {
         this.key = key;
@@ -47,6 +47,14 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
 
     @Override
     public boolean canHandleGraalValue(Value value) {
+        if (value.isProxyObject()) {
+            try {
+                NbtCompoundTagProxyObject proxyObject = value.asProxyObject();
+                return proxyObject.getValue() != null && proxyObject.getValue().getType() == this.valueType;
+            } catch (ClassCastException e) {
+                // Ignore error
+            }
+        }
         return value.getMemberKeys().equals(this.keys);
     }
 
@@ -55,18 +63,10 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
         return true;
     }
 
-    /**
-     * This will create instances based on a prototype containing valuetype-specific methods.
-     * These methods are derived from the operators that are applicable for the current value type(s).
-     * @param context The context.
-     * @param exceptionFactory Factory for exceptions.
-     * @return The instance constructor.
-     * @throws EvaluationException If an evaluation error occurs.
-     */
-    protected IInstanceConstructor getInstanceConstructor(Context context, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
+    protected Map<String, IOperator> getMethods() {
         // Create a reusable prototype containing value-specific methods.
-        Value prototype = prototypeCache;
-        if (prototype == null) {
+        Map<String, IOperator> methods = methodsCache;
+        if (methods == null) {
             // Determine applicable types for this value
             Set<IValueType<?>> valueTypes = Sets.newHashSet();
             for (IValueType<?> valueType : ValueTypes.REGISTRY.getValueTypes()) {
@@ -75,35 +75,21 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
                 }
             }
 
-            // Prepare Graal values
-            Value jsBindings = context.getBindings("js");
-            Value jsObjectClass = jsBindings.getMember("Object");
-            Value jsProxyClass = jsBindings.getMember("Proxy");
-            Value operatorCurrier = context.eval("js", "(operator, thisArg, remainingArgs) => operator(thisArg, ...remainingArgs)");
-
             // Create the actual prototype and assign methods as members
-            prototype = jsObjectClass.newInstance();
+            methods = Maps.newHashMap();
             for (IValueType<?> valueType : valueTypes) {
                 Map<String, IOperator> scopedOperators = Operators.REGISTRY.getScopedInteractOperators().get(valueType);
                 if (scopedOperators != null) {
                     for (Map.Entry<String, IOperator> entry : scopedOperators.entrySet()) {
-                        // Create a JS Proxy that curries all operators.
-                        // Concretely, the "this" value in JS will be passed as first argument to the operator.
-                        // We have to do it this way because Graal does not offer a way to get the JS "this" from Java-land.
-                        Value proxyHandler = jsObjectClass.newInstance();
-                        proxyHandler.putMember("apply", operatorCurrier);
-                        Value objectMethod = jsProxyClass.newInstance(ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeOperator.ValueOperator.of(entry.getValue()), exceptionFactory), proxyHandler);
-
-                        prototype.putMember(entry.getKey(), objectMethod);
+                        methods.put(entry.getKey(), entry.getValue());
                     }
                 }
             }
-            prototypeCache = prototype;
+
+            methodsCache = methods;
         }
 
-        // Create instances based on the prototype.
-        Value finalPrototype = prototype;
-        return (subContext) -> subContext.getBindings("js").getMember("Object").invokeMember("create", finalPrototype);
+        return methods;
     }
 
     @Override
@@ -112,11 +98,21 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
         Tag subTag = this.valueType.serialize(value);
         tag.put(this.key, subTag);
 
-        return ValueTranslators.TRANSLATOR_NBT.translateCompoundTag(context, tag, getInstanceConstructor(context, exceptionFactory));
+        return ValueTranslators.TRANSLATOR_NBT.translateCompoundTag(context, tag, exceptionFactory, getMethods(), value);
     }
 
     @Override
     public V translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
+        // Unwrap the value if it was translated in the opposite direction before.
+        if (value.isProxyObject()) {
+            try {
+                NbtCompoundTagProxyObject proxy = value.asProxyObject();
+                return (V) proxy.getValue();
+            } catch (ClassCastException classCastException) {
+                // Fallback to case below
+            }
+        }
+
         Value idBlock = value.getMember(this.key);
         ValueTypeNbt.ValueNbt valueNbt = ValueTranslators.REGISTRY.translateFromGraal(context, idBlock, exceptionFactory);
         return this.valueType.deserialize(valueNbt.getRawValue().orElseThrow());
@@ -125,9 +121,5 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
     @Override
     public Tag translateToNbt(Context context, V value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
         throw new UnsupportedOperationException("translateToNbt is not supported");
-    }
-
-    public static interface IInstanceConstructor {
-        public Value construct(Context context) throws EvaluationException;
     }
 }

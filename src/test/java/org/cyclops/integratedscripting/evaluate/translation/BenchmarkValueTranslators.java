@@ -29,7 +29,7 @@ public class BenchmarkValueTranslators {
         Registry.ITEM.unfreeze();
     }
 
-    public static int REPLICATION = 10000;
+    public static int REPLICATION = 100000;
 
     private static Engine ENGINE = null;
     private static Context CTX = null;
@@ -39,22 +39,24 @@ public class BenchmarkValueTranslators {
 
         /*
 Latest results
-FromGraal-int: 5.7E-5ms/op
-FromGraal-boolean: 3.8E-5ms/op
-FromGraal-double: 7.3E-5ms/op
-FromGraal-long: 6.2E-5ms/op
-FromGraal-string: 6.8E-5ms/op
-FromGraal-list: 0.001788ms/op
-FromGraal-operator: 9.2E-4ms/op
-FromGraal-nbt: 0.006845ms/op
-ToGraal-int: 1.3E-4ms/op
-ToGraal-boolean: 1.17E-4ms/op
-ToGraal-double: 1.3E-4ms/op
-ToGraal-long: 1.17E-4ms/op
-ToGraal-string: 1.38E-4ms/op
-ToGraal-list: 6.08E-4ms/op
-ToGraal-operator: 1.76E-4ms/op
-ToGraal-nbt: 0.004066ms/op
+FromGraal-int: 1.6E-4ms/op
+FromGraal-boolean: 1.8E-4ms/op
+FromGraal-double: 3.1E-4ms/op
+FromGraal-long: 1.1E-4ms/op
+FromGraal-string: 1.3E-4ms/op
+FromGraal-list: 0.0033ms/op
+FromGraal-operator: 0.00185ms/op
+FromGraal-nbt: 0.0222ms/op
+FromGraal-item: 0.00963ms/op
+ToGraal-int: 3.1E-4ms/op
+ToGraal-boolean: 2.5E-4ms/op
+ToGraal-double: 2.9E-4ms/op
+ToGraal-long: 2.8E-4ms/op
+ToGraal-string: 2.5E-4ms/op
+ToGraal-list: 8.3E-4ms/op
+ToGraal-operator: 3.1E-4ms/op
+ToGraal-nbt: 4.2E-4ms/op
+ToGraal-item: 6.7E-4ms/op
          */
 
         runFromGraal("int", getJsValue("10"), REPLICATION);
