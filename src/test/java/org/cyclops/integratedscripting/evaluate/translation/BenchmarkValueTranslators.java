@@ -29,7 +29,7 @@ public class BenchmarkValueTranslators {
         Registry.ITEM.unfreeze();
     }
 
-    public static int REPLICATION = 1000000;
+    public static int REPLICATION = 10000;
 
     private static Engine ENGINE = null;
     private static Context CTX = null;

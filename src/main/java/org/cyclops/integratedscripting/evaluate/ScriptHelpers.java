@@ -36,13 +36,15 @@ public class ScriptHelpers {
         Context context = createBaseContext();
 
         // Create idContext field with ops
-        Value idContext = context.eval("js", "new Object()");
-        Value ops = context.eval("js", "new Object()");
+        Value jsBindings = context.getBindings("js");
+        Value jsObjectClass = jsBindings.getMember("Object");
+        Value idContext = jsObjectClass.newInstance();
+        Value ops = jsObjectClass.newInstance();
         for (Map.Entry<String, IOperator> entry : Operators.REGISTRY.getGlobalInteractOperators().entrySet()) {
             ops.putMember(entry.getKey(), ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeOperator.ValueOperator.of(entry.getValue()), getDummyEvaluationExceptionFactory()));
         }
         idContext.putMember("ops", ops);
-        context.getBindings("js").putMember("idContext", idContext);
+        jsBindings.putMember("idContext", idContext);
 
         return context;
     }

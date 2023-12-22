@@ -99,7 +99,7 @@ public class ValueTranslatorNbt implements IValueTranslator<ValueTypeNbt.ValueNb
 
     public Value translateCompoundTag(Context context, CompoundTag tag, @Nullable ValueTranslatorObjectAdapter.IInstanceConstructor instanceConstructor) throws EvaluationException {
         Value instance = instanceConstructor == null ?
-                context.eval("js", "new Object()") :
+                context.getBindings("js").getMember("Object").newInstance() :
                 instanceConstructor.construct(context);
         for (String key : tag.getAllKeys()) {
             instance.putMember(key, translateTag(context, tag.get(key)));
