@@ -1,6 +1,5 @@
 package org.cyclops.integratedscripting.evaluate.translation.translator;
 
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
@@ -19,6 +18,7 @@ import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
 
+import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.Set;
 
@@ -27,11 +27,12 @@ import java.util.Set;
  */
 public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTranslator<V> {
 
-    private final Map<Set<IValueType<?>>, Value> prototypeCache = Maps.newHashMap();
-
     private final String key;
     private final Set<String> keys;
     private final ValueObjectTypeBase<V> valueType;
+
+    @Nullable
+    private Value prototypeCache;
 
     public ValueTranslatorObjectAdapter(String key, ValueObjectTypeBase<V> valueType) {
         this.key = key;
@@ -58,15 +59,23 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
      * This will create instances based on a prototype containing valuetype-specific methods.
      * These methods are derived from the operators that are applicable for the current value type(s).
      * @param context The context.
-     * @param valueTypes Value types of the given value.
      * @param exceptionFactory Factory for exceptions.
      * @return The instance constructor.
      * @throws EvaluationException If an evaluation error occurs.
      */
-    protected IInstanceConstructor getInstanceConstructor(Context context, Set<IValueType<?>> valueTypes, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
+    protected IInstanceConstructor getInstanceConstructor(Context context, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
         // Create a reusable prototype containing value-specific methods.
-        Value prototype = prototypeCache.get(valueTypes);
+        Value prototype = prototypeCache;
         if (prototype == null) {
+            // Determine applicable types for this value
+            Set<IValueType<?>> valueTypes = Sets.newHashSet();
+            for (IValueType<?> valueType : ValueTypes.REGISTRY.getValueTypes()) {
+                if (valueType.correspondsTo(this.valueType)) {
+                    valueTypes.add(valueType);
+                }
+            }
+
+            // Prepare Graal values
             Value jsBindings = context.getBindings("js");
             Value jsObjectClass = jsBindings.getMember("Object");
             Value jsProxyClass = jsBindings.getMember("Proxy");
@@ -89,7 +98,7 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
                     }
                 }
             }
-            prototypeCache.put(valueTypes, prototype);
+            prototypeCache = prototype;
         }
 
         // Create instances based on the prototype.
@@ -103,15 +112,7 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
         Tag subTag = this.valueType.serialize(value);
         tag.put(this.key, subTag);
 
-        // Determine applicable types for this value
-        Set<IValueType<?>> valueTypes = Sets.newHashSet();
-        for (IValueType<?> valueType : ValueTypes.REGISTRY.getValueTypes()) {
-            if (valueType.correspondsTo(value.getType())) {
-                valueTypes.add(valueType);
-            }
-        }
-
-        return ValueTranslators.TRANSLATOR_NBT.translateCompoundTag(context, tag, getInstanceConstructor(context, valueTypes, exceptionFactory));
+        return ValueTranslators.TRANSLATOR_NBT.translateCompoundTag(context, tag, getInstanceConstructor(context, exceptionFactory));
     }
 
     @Override
