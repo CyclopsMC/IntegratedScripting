@@ -65,7 +65,7 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
 
     private final Int2ObjectMap<Map<Path, String>> lastScripts = new Int2ObjectAVLTreeMap<>();
     private IntList availableDisks;
-    private int activeDisk;
+    private final int activeDiskId;
     private final int activeScriptPathId;
     private final int selectionId;
 
@@ -93,7 +93,8 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
         this.clientScriptsDirty = Sets.newHashSet();
 
         this.availableDisks = initData.getAvailableDisks();
-        this.activeDisk = this.availableDisks.isEmpty() ? -1 : this.availableDisks.getInt(0);
+        this.activeDiskId = getNextValueId();
+        setActiveDisk(this.availableDisks.isEmpty() ? -1 : this.availableDisks.getInt(0));
         this.activeScriptPathId = getNextValueId();
         this.selectionId = getNextValueId();
     }
@@ -148,11 +149,11 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
     }
 
     public int getActiveDisk() {
-        return activeDisk;
+        return ValueNotifierHelpers.getValueInt(this, activeDiskId);
     }
 
     public void setActiveDisk(int activeDisk) {
-        this.activeDisk = activeDisk;
+        ValueNotifierHelpers.setValue(this, activeDiskId, activeDisk);
     }
 
     public Set<Pair<Integer, Path>> getClientScriptsDirty() {
@@ -327,7 +328,7 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
     }
 
     public boolean canWriteScriptToVariable() {
-        return !getContainerInventory().getItem(0).isEmpty() && getActiveDisk() != 0 && getActiveScriptPath() != null;
+        return !getContainerInventory().getItem(0).isEmpty() && getActiveDisk() >= 0 && getActiveScriptPath() != null;
     }
 
     @Override
