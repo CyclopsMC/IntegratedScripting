@@ -1,6 +1,5 @@
 package org.cyclops.integratedscripting.item;
 
-import com.google.common.collect.Maps;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.Tag;
@@ -15,12 +14,8 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.cyclops.integrateddynamics.IntegratedDynamics;
 import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.Reference;
-import org.cyclops.integratedscripting.api.network.IScriptingData;
-import org.cyclops.integratedscripting.core.network.ScriptingNetworkHelpers;
 
-import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Item for storing scripts.
@@ -53,14 +48,6 @@ public class ItemScriptingDisk extends Item {
         if (id < 0) {
             id = generateScriptingId();
             itemStack.getOrCreateTag().putInt(NBT_KEY_ID, id);
-
-            // TODO: for debugging
-            System.out.println("GEN DEBUG FILES FOR " + id); // TODO
-            Map<Path, String> scripts = Maps.newHashMap();
-            scripts.put(Path.of("file1.js"), "console.log('abc')");
-            scripts.put(Path.of("file2.js"), "console.log('def')");
-            scripts.put(Path.of("abc", "file3.js"), "console.log('ghi')");
-            ScriptingNetworkHelpers.getScriptingData().setScripts(id, scripts, IScriptingData.ChangeLocation.MEMORY);
         }
 
         return id;
