@@ -14,7 +14,7 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import org.apache.commons.compress.utils.Lists;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang3.tuple.Pair;
 import org.cyclops.cyclopscore.helper.ValueNotifierHelpers;
 import org.cyclops.cyclopscore.inventory.SimpleInventory;

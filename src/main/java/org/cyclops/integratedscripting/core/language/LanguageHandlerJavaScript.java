@@ -3,7 +3,7 @@ package org.cyclops.integratedscripting.core.language;
 import com.google.common.collect.Maps;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
-import org.apache.commons.compress.utils.Lists;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang3.tuple.Pair;
 import org.cyclops.cyclopscore.helper.Helpers;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;

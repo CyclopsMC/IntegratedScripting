@@ -1,6 +1,5 @@
 package org.cyclops.integratedscripting.client.gui.component.input;
 
-import com.google.common.collect.Lists;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -30,6 +29,7 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
+import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableInt;
@@ -42,6 +42,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * A widget to edit multi-line text.
@@ -573,7 +574,7 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
         if (this.markupProvider != null) {
             return this.markupProvider.markupLine(style, line);
         }
-        return Lists.newArrayList(Pair.of(style, line));
+        return Stream.of(Pair.of(style, line)).collect(Collectors.toList());
     }
 
     static int findLineFromPos(int[] p_98150_, int p_98151_) {

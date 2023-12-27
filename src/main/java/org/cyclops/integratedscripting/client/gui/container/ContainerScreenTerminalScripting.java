@@ -1,6 +1,5 @@
 package org.cyclops.integratedscripting.client.gui.container;
 
-import com.google.common.collect.Lists;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -39,6 +38,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * The crafting jobs overview gui.
@@ -112,7 +112,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         textArea.setListenerSelection(this::onSelectionModified);
         textArea.setMarkupProvider((style, line) -> {
             ILanguageHandler languageHandler = LanguageHandlers.REGISTRY.getProvider(getMenu().getActiveScriptPath());
-            return languageHandler != null ? languageHandler.markupLine(line) : Lists.newArrayList(Pair.of(style, line));
+            return languageHandler != null ? languageHandler.markupLine(line) : Stream.of(Pair.of(style, line)).collect(Collectors.toList());
         });
         addRenderableWidget(textArea);
 
