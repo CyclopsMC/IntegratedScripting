@@ -1,8 +1,8 @@
 package org.cyclops.integratedscripting.evaluate.translation;
 
+import com.google.common.collect.Lists;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import org.apache.commons.compress.utils.Lists;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
