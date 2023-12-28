@@ -12,7 +12,6 @@ import net.minecraft.world.level.Level;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.cyclops.integrateddynamics.IntegratedDynamics;
-import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.Reference;
 
 import java.util.List;
@@ -60,10 +59,10 @@ public class ItemScriptingDisk extends Item {
         if (id >= 0) {
             list.add(Component.translatable("item.integratedscripting.scripting_disk.id", id)
                     .withStyle(Style.EMPTY.withColor(ChatFormatting.GRAY)));
-            int bytes = IntegratedScripting._instance.scriptingData.getScripts(id).values()
-                    .stream().mapToInt(String::length).sum();
-            list.add(Component.translatable("item.integratedscripting.scripting_disk.bytes", bytes)
-                    .withStyle(Style.EMPTY.withColor(ChatFormatting.GRAY)));
+//            int bytes = IntegratedScripting._instance.scriptingData.getScripts(id).values()
+//                    .stream().mapToInt(String::length).sum();
+//            list.add(Component.translatable("item.integratedscripting.scripting_disk.bytes", bytes)
+//                    .withStyle(Style.EMPTY.withColor(ChatFormatting.GRAY)));
         }
         if (id >= 0 && Minecraft.getInstance().player != null && Minecraft.getInstance().player.isCreative()) {
             list.add(Component.translatable("item.integrateddynamics.variable.warning"));
