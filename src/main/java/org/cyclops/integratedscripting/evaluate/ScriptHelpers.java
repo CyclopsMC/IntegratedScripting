@@ -5,10 +5,13 @@ import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
 import org.cyclops.integrateddynamics.core.evaluate.operator.Operators;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeOperator;
+import org.cyclops.integratedscripting.GeneralConfig;
 import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExceptionFactory;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
+import org.graalvm.polyglot.EnvironmentAccess;
+import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.Value;
 
 import javax.annotation.Nullable;
@@ -28,7 +31,16 @@ public class ScriptHelpers {
         return Context
                 .newBuilder()
                 .engine(engine)
-                .allowAllAccess(true)
+//                .allowAllAccess(true)
+                .allowCreateProcess(GeneralConfig.graalAllowCreateProcess)
+                .allowCreateThread(GeneralConfig.graalAllowCreateThread)
+                .allowIO(GeneralConfig.graalAllowIo)
+                .allowHostClassLoading(GeneralConfig.graalAllowHostClassLoading)
+                .allowExperimentalOptions(GeneralConfig.graalAllowExperimentalOptions)
+                .allowEnvironmentAccess(GeneralConfig.graalAllowEnvironment ? EnvironmentAccess.INHERIT : EnvironmentAccess.NONE)
+                .allowNativeAccess(GeneralConfig.graalAllowNative)
+                .allowHostAccess(HostAccess.ALL)
+                .allowInnerContextOptions(false)
                 .build();
     }
 
