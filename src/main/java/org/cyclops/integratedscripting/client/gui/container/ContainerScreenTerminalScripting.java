@@ -111,7 +111,8 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         textArea.setListener(this::onActiveScriptModified);
         textArea.setListenerSelection(this::onSelectionModified);
         textArea.setMarkupProvider((style, line) -> {
-            ILanguageHandler languageHandler = LanguageHandlers.REGISTRY.getProvider(getMenu().getActiveScriptPath());
+            Path path = getMenu().getActiveScriptPath();
+            ILanguageHandler languageHandler = path != null ? LanguageHandlers.REGISTRY.getProvider(path) : null;
             return languageHandler != null ? languageHandler.markupLine(line) : Stream.of(Pair.of(style, line)).collect(Collectors.toList());
         });
         addRenderableWidget(textArea);
