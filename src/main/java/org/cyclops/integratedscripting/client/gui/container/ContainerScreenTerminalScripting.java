@@ -16,6 +16,7 @@ import org.cyclops.cyclopscore.client.gui.component.WidgetScrollBar;
 import org.cyclops.cyclopscore.client.gui.component.button.ButtonText;
 import org.cyclops.cyclopscore.client.gui.component.input.WidgetArrowedListField;
 import org.cyclops.cyclopscore.client.gui.container.ContainerScreenExtended;
+import org.cyclops.cyclopscore.client.gui.image.IImage;
 import org.cyclops.cyclopscore.client.gui.image.Images;
 import org.cyclops.cyclopscore.helper.Helpers;
 import org.cyclops.cyclopscore.helper.L10NHelpers;
@@ -27,6 +28,7 @@ import org.cyclops.integratedscripting.Reference;
 import org.cyclops.integratedscripting.api.language.ILanguageHandler;
 import org.cyclops.integratedscripting.client.gui.component.input.WidgetDialog;
 import org.cyclops.integratedscripting.client.gui.component.input.WidgetTextArea;
+import org.cyclops.integratedscripting.client.gui.image.ScriptImages;
 import org.cyclops.integratedscripting.core.language.LanguageHandlers;
 import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScripting;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingDeleteScriptPacket;
@@ -52,7 +54,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     public static int PATHS_Y = 18;
     public static int PATHS_WIDTH = 56;
     public static int PATHS_HEIGHT = 214;
-    public static int PATHS_ROW_HEIGHT = 5;
+    public static int PATHS_ROW_HEIGHT = 8;
     public static int PATHS_MAX_ROWS = PATHS_HEIGHT / PATHS_ROW_HEIGHT;
     public static int SCRIPT_X = 80;
     public static int SCRIPT_X_INNER = 94;
@@ -243,12 +245,25 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
                 fill(poseStack, this.leftPos + PATHS_X, this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT, this.leftPos + PATHS_X + PATHS_WIDTH, this.topPos + PATHS_Y + (i + 1) * PATHS_ROW_HEIGHT, Helpers.RGBAToInt(110, 130, 240, 255));
             }
 
+            // Draw file type icon
+            ILanguageHandler languageHandler = LanguageHandlers.REGISTRY.getProvider(path);
+            IImage icon = ScriptImages.FILE_OTHER;
+            if (languageHandler != null) {
+                icon = languageHandler.getIcon();
+            }
+            poseStack.pushPose();
+            poseStack.translate(this.leftPos + PATHS_X + 1, this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT + 1, 0);
+            poseStack.scale(0.5F, 0.5F, 0.5F);
+            icon.draw(this, poseStack, 0, 0);
+            poseStack.popPose();
+
+            // Draw filename
             RenderHelpers.drawScaledString(
                     poseStack,
                     font,
-                    StringUtil.truncateStringIfNecessary(path.toString(), 50, true),
-                    this.leftPos + PATHS_X + 1,
-                    this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT + 1,
+                    StringUtil.truncateStringIfNecessary(path.toString(), 20, true),
+                    this.leftPos + PATHS_X + 1 + 7,
+                    this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT + 1 + 1,
                     0.5f,
                     hovering && !active ? Helpers.RGBToInt(50, 50, 250) : Helpers.RGBToInt(0, 0, 0)
             );

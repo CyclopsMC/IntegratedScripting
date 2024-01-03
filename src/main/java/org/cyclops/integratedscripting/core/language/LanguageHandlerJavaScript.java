@@ -1,14 +1,16 @@
 package org.cyclops.integratedscripting.core.language;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
-import com.google.common.collect.Lists;
 import org.apache.commons.lang3.tuple.Pair;
+import org.cyclops.cyclopscore.client.gui.image.IImage;
 import org.cyclops.cyclopscore.helper.Helpers;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integratedscripting.api.language.ILanguageHandler;
 import org.cyclops.integratedscripting.api.network.IScriptFactory;
+import org.cyclops.integratedscripting.client.gui.image.ScriptImages;
 import org.cyclops.integratedscripting.core.network.GraalScriptFactory;
 
 import java.util.Arrays;
@@ -54,6 +56,11 @@ public class LanguageHandlerJavaScript implements ILanguageHandler {
     @Override
     public String getName() {
         return "JavaScript";
+    }
+
+    @Override
+    public IImage getIcon() {
+        return ScriptImages.FILE_JS;
     }
 
     @Override
