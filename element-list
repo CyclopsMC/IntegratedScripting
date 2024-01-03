@@ -9,6 +9,7 @@ org.cyclops.integratedscripting.capability
 org.cyclops.integratedscripting.capability.network
 org.cyclops.integratedscripting.client.gui.component.input
 org.cyclops.integratedscripting.client.gui.container
+org.cyclops.integratedscripting.client.gui.image
 org.cyclops.integratedscripting.command
 org.cyclops.integratedscripting.core.client.model
 org.cyclops.integratedscripting.core.evaluate
