@@ -54,7 +54,7 @@ function testFunction(a, b, c, d, e, f) {
     return 10;
 }""", "src.js").build();
             IEvaluationExceptionFactory EF = ScriptHelpers.getDummyEvaluationExceptionFactory();
-            try (Context context = ScriptHelpers.createPopulatedContext()) {
+            try (Context context = ScriptHelpers.createPopulatedContext(null)) {
 //                long timeStart = System.currentTimeMillis();
 //                for (int i = 0; i < 100; i++) {
 //                    context.eval(source);

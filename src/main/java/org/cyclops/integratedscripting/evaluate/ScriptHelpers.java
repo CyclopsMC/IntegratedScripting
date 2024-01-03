@@ -17,18 +17,19 @@ import org.graalvm.polyglot.Value;
 import javax.annotation.Nullable;
 import java.nio.file.Path;
 import java.util.Map;
+import java.util.function.Function;
 
 /**
  * @author rubensworks
  */
 public class ScriptHelpers {
 
-    public static Context createBaseContext() {
+    public static Context createBaseContext(@Nullable Function<Context.Builder, Context.Builder> contextBuilderModifier) {
         Engine engine = Engine
                 .newBuilder()
                 .option("engine.WarnInterpreterOnly", "false")
                 .build();
-        return Context
+        Context.Builder contextBuilder = Context
                 .newBuilder()
                 .engine(engine)
 //                .allowAllAccess(true)
@@ -40,12 +41,15 @@ public class ScriptHelpers {
                 .allowEnvironmentAccess(GeneralConfig.graalAllowEnvironment ? EnvironmentAccess.INHERIT : EnvironmentAccess.NONE)
                 .allowNativeAccess(GeneralConfig.graalAllowNative)
                 .allowHostAccess(HostAccess.ALL)
-                .allowInnerContextOptions(false)
-                .build();
+                .allowInnerContextOptions(false);
+        if (contextBuilderModifier != null) {
+            contextBuilder = contextBuilderModifier.apply(contextBuilder);
+        }
+        return contextBuilder.build();
     }
 
-    public static Context createPopulatedContext() throws EvaluationException {
-        Context context = createBaseContext();
+    public static Context createPopulatedContext(@Nullable Function<Context.Builder, Context.Builder> contextBuilderModifier) throws EvaluationException {
+        Context context = createBaseContext(contextBuilderModifier);
 
         // Create idContext field with ops
         Value jsBindings = context.getBindings("js");

@@ -10,6 +10,8 @@ import org.cyclops.cyclopscore.network.PacketCodec;
 import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScripting;
 
 import java.nio.file.Path;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Packet for sending modified scripts between server and client.
@@ -23,7 +25,7 @@ public class TerminalScriptingModifiedScriptPacket extends PacketCodec {
     @CodecField
     private String path;
     @CodecField
-    private String script;
+    private List<String> script;
 
     public TerminalScriptingModifiedScriptPacket() {
 
@@ -32,7 +34,11 @@ public class TerminalScriptingModifiedScriptPacket extends PacketCodec {
     public TerminalScriptingModifiedScriptPacket(int disk, Path path, String script) {
         this.disk = disk;
         this.path = path.toString();
-        this.script = script;
+        this.script = Arrays.stream(script.split("\n")).toList();
+    }
+
+    public String getScript() {
+        return String.join("\n", script);
     }
 
     @Override
@@ -44,14 +50,14 @@ public class TerminalScriptingModifiedScriptPacket extends PacketCodec {
     @OnlyIn(Dist.CLIENT)
     public void actionClient(Level world, Player player) {
         if(player.containerMenu instanceof ContainerTerminalScripting container) {
-            container.setLastScript(disk, Path.of(path), script);
+            container.setLastScript(disk, Path.of(path), getScript());
         }
     }
 
     @Override
     public void actionServer(Level world, ServerPlayer player) {
         if(player.containerMenu instanceof ContainerTerminalScripting container) {
-            container.setServerScript(disk, Path.of(path), script);
+            container.setServerScript(disk, Path.of(path), getScript());
         }
     }
 }

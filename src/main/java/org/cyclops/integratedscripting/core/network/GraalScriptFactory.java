@@ -1,11 +1,13 @@
 package org.cyclops.integratedscripting.core.network;
 
 import net.minecraft.network.chat.Component;
+import org.apache.commons.lang3.tuple.Pair;
 import org.cyclops.cyclopscore.datastructure.Wrapper;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integratedscripting.api.network.IScript;
 import org.cyclops.integratedscripting.api.network.IScriptFactory;
 import org.cyclops.integratedscripting.api.network.IScriptingData;
+import org.cyclops.integratedscripting.evaluate.ScriptHelpers;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
@@ -13,6 +15,7 @@ import org.graalvm.polyglot.Value;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.file.Path;
 
 /**
@@ -21,28 +24,34 @@ import java.nio.file.Path;
  */
 public class GraalScriptFactory implements IScriptFactory {
 
-    private final Context graalContext;
-    private final Value languageBinding;
     private final String languageId;
 
-    public GraalScriptFactory(Context graalContext, Value languageBinding, String languageId) {
-        this.graalContext = graalContext;
-        this.languageBinding = languageBinding;
+    public GraalScriptFactory(String languageId) {
         this.languageId = languageId;
     }
 
     @Nullable
     @Override
     public IScript getScript(int disk, Path path) throws EvaluationException {
+        // Construct stdout and stderr output streams
+        Pair<OutputStream, OutputStream> outputStreams = ScriptingNetworkHelpers.getScriptingData().getOutputStreams(disk, path);
+
+        // Construct graal context
+        Context graalContext = ScriptHelpers.createPopulatedContext((contextBuilder) -> contextBuilder
+                .out(outputStreams.getLeft())
+                .err(outputStreams.getRight()));
+        Value languageBinding = graalContext.getBindings("js");
+
         try {
+            // Read script
             Source source = Source.newBuilder(this.languageId, ScriptingNetworkHelpers.getScriptingData().getScripts(disk).get(path), path.toString()).build();
             try {
-                this.graalContext.eval(source);
+                graalContext.eval(source);
             } catch (PolyglotException e) {
                 throw new EvaluationException(Component.translatable("script.integratedscripting.error.script_read", path.toString(), disk, e.getMessage()));
             }
             Wrapper<IScriptingData.IDiskScriptsChangeListener> diskListener = new Wrapper<>();
-            return new GraalScript(this.graalContext, this.languageBinding, scriptInvalidateListener -> {
+            return new GraalScript(graalContext, languageBinding, scriptInvalidateListener -> {
                 // Register script invalidate listener
                 // Delegate the script invalidation listener to the disk change listener.
                 diskListener.set(scriptPathRelative -> {

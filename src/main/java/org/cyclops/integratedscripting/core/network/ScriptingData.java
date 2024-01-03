@@ -13,7 +13,9 @@ import org.cyclops.integratedscripting.api.network.IScriptingData;
 
 import javax.annotation.Nullable;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.FileSystems;
@@ -304,6 +306,15 @@ public class ScriptingData implements IScriptingData {
                 scriptChangeListeners.remove(disk);
             }
         }
+    }
+
+    @Override
+    public Pair<OutputStream, OutputStream> getOutputStreams(int disk, Path scriptPathRelative) {
+        Path scriptPathAbsolute = getDiskPath(disk).resolve(scriptPathRelative);
+        return Pair.of(
+                new LazyOutputStream(() -> new FileOutputStream(scriptPathAbsolute + ".stdout", true)),
+                new LazyOutputStream(() -> new FileOutputStream(scriptPathAbsolute + ".stderr", true))
+        );
     }
 
     protected void flushScript(int disk, Path scriptPathRelative) {

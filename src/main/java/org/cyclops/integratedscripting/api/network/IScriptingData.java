@@ -1,8 +1,10 @@
 package org.cyclops.integratedscripting.api.network;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.cyclops.integratedscripting.IntegratedScripting;
 
 import javax.annotation.Nullable;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Map;
@@ -26,6 +28,8 @@ public interface IScriptingData {
     public void addListener(int disk, IDiskScriptsChangeListener listener);
 
     public void removeListener(int disk, IDiskScriptsChangeListener listener);
+
+    public Pair<OutputStream, OutputStream> getOutputStreams(int disk, Path scriptPathRelative);
 
     public static interface IDiskScriptsChangeListener {
         public void onChange(Path scriptPathRelative);

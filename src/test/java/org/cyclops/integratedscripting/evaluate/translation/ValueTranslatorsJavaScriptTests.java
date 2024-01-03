@@ -57,7 +57,7 @@ public class ValueTranslatorsJavaScriptTests {
         ValueTranslators.load();
 
         try {
-            CTX = ScriptHelpers.createPopulatedContext();
+            CTX = ScriptHelpers.createPopulatedContext(null);
         } catch (EvaluationException e) {
             e.printStackTrace();
         }

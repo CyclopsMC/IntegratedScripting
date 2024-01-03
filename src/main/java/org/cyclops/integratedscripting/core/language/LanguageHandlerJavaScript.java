@@ -10,8 +10,6 @@ import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integratedscripting.api.language.ILanguageHandler;
 import org.cyclops.integratedscripting.api.network.IScriptFactory;
 import org.cyclops.integratedscripting.core.network.GraalScriptFactory;
-import org.cyclops.integratedscripting.evaluate.ScriptHelpers;
-import org.graalvm.polyglot.Context;
 
 import java.util.Arrays;
 import java.util.List;
@@ -97,7 +95,6 @@ public class LanguageHandlerJavaScript implements ILanguageHandler {
 
     @Override
     public IScriptFactory getScriptFactory() throws EvaluationException {
-        Context context = ScriptHelpers.createPopulatedContext();
-        return new GraalScriptFactory(context, context.getBindings("js"), "js");
+        return new GraalScriptFactory("js");
     }
 }
