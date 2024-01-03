@@ -1,5 +1,6 @@
 package org.cyclops.integratedscripting.client.gui.container;
 
+import com.google.common.base.Strings;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
@@ -37,6 +38,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -110,6 +112,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         textArea = new WidgetTextArea(Minecraft.getInstance().font, this.leftPos + SCRIPT_X + 1, this.topPos + SCRIPT_Y + 1, SCRIPT_WIDTH, SCRIPT_HEIGHT, Component.translatable("gui.integratedscripting.script"), true);
         textArea.setListener(this::onActiveScriptModified);
         textArea.setListenerSelection(this::onSelectionModified);
+        textArea.setListenerCursor(this::onSelectionModified);
         textArea.setMarkupProvider((style, line) -> {
             Path path = getMenu().getActiveScriptPath();
             ILanguageHandler languageHandler = path != null ? LanguageHandlers.REGISTRY.getProvider(path) : null;
@@ -367,7 +370,27 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     }
 
     private void onSelectionModified() {
-        getMenu().setSelection(this.textArea.getSelected());
+        String selected = this.textArea.getSelected();
+        if (Strings.isNullOrEmpty(selected)) {
+            // If nothing was selected, derive the member around the current cursor position
+            int cursorPos = this.textArea.getCursorPos();
+            if (cursorPos >= 0) {
+                String value = this.textArea.getValue();
+                Matcher matcherToEnd = ContainerTerminalScripting.INVALID_MEMBER_NAME.matcher(value);
+                int endPos = value.length();
+                if (matcherToEnd.find(cursorPos)) {
+                    endPos = matcherToEnd.end() - 1;
+                }
+                Matcher matcherToStart = ContainerTerminalScripting.INVALID_MEMBER_NAME.matcher(new StringBuilder(value).reverse().toString());
+                int startPos = 0;
+                if (matcherToStart.find(value.length() - cursorPos)) {
+                    startPos = value.length() - matcherToStart.end() + 1;
+                }
+                selected = value.substring(startPos, endPos);
+            }
+        }
+
+        getMenu().setSelection(selected);
     }
 
     private void removeScript(Path path) {

@@ -1,5 +1,6 @@
 package org.cyclops.integratedscripting.client.gui.component.input;
 
+import com.google.common.collect.Lists;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
@@ -29,7 +30,6 @@ import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
-import com.google.common.collect.Lists;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableInt;
@@ -74,6 +74,8 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
     @Nullable
     private IInputListener listenerSelection;
     @Nullable
+    private IInputListener listenerCursor;
+    @Nullable
     private IMarkupProvider markupProvider;
     @Nullable
     private WidgetTextArea.DisplayCache displayCache = WidgetTextArea.DisplayCache.EMPTY;
@@ -86,7 +88,7 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
     public WidgetTextArea(Font font, int x, int y, int width, int height, Component narrationMessage, boolean scrollBar) {
         super(x, y, width, height, narrationMessage);
         this.font = font;
-        this.textFieldHelper = new TextFieldHelperExtended(this::getValue, this::setValuePassive, this::getClipboard, this::setClipboard, s -> true, this::setSelected);
+        this.textFieldHelper = new TextFieldHelperExtended(this::getValue, this::setValuePassive, this::getClipboard, this::setClipboard, s -> true, this::setSelected, this::onCursorPosChanged);
         if (scrollBar) {
             this.scrollBar = new WidgetScrollBar(x + width - 14, y, height,
                     Component.translatable("gui.cyclopscore.scrollbar"), firstRow -> setFirstRow(firstRow, false), height / ROW_HEIGHT) {
@@ -133,6 +135,10 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
         this.listenerSelection = listenerSelection;
     }
 
+    public void setListenerCursor(@Nullable IInputListener listenerCursor) {
+        this.listenerCursor = listenerCursor;
+    }
+
     public void setMarkupProvider(@Nullable IMarkupProvider markupProvider) {
         this.markupProvider = markupProvider;
     }
@@ -171,6 +177,16 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
 
     public String getSelected() {
         return selected;
+    }
+
+    public int getCursorPos() {
+        return this.textFieldHelper.getCursorPos();
+    }
+
+    private void onCursorPosChanged(int cursorPos) {
+        if (listenerCursor != null) {
+            listenerCursor.onChanged();
+        }
     }
 
     public void updateNarration(NarrationElementOutput narrationElementOutput) {

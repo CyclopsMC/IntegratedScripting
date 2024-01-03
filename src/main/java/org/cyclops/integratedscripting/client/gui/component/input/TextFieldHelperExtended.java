@@ -13,13 +13,16 @@ public class TextFieldHelperExtended extends TextFieldHelper {
 
     private final Supplier<String> getMessageFn;
     private final Consumer<String> setSelectionFn;
+    private final Consumer<Integer> setCursorFn;
 
     public TextFieldHelperExtended(Supplier<String> getMessageFn, Consumer<String> setMessageFn,
                                    Supplier<String> getClipboardFn, Consumer<String> setClipboardFn,
-                                   Predicate<String> stringValidator, Consumer<String> setSelectionFn) {
+                                   Predicate<String> stringValidator, Consumer<String> setSelectionFn,
+                                   Consumer<Integer> setCursorFn) {
         super(getMessageFn, setMessageFn, getClipboardFn, setClipboardFn, stringValidator);
         this.getMessageFn = getMessageFn;
         this.setSelectionFn = setSelectionFn;
+        this.setCursorFn = setCursorFn;
     }
 
     public String getSelected() {
@@ -109,5 +112,6 @@ public class TextFieldHelperExtended extends TextFieldHelper {
         if (!selectedBefore.equals(selectedAfter)) {
             this.setSelectionFn.accept(selectedAfter);
         }
+        this.setCursorFn.accept(p_95180_);
     }
 }

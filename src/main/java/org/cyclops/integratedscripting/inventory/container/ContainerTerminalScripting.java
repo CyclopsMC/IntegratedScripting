@@ -1,5 +1,6 @@
 package org.cyclops.integratedscripting.inventory.container;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
@@ -14,7 +15,6 @@ import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
-import com.google.common.collect.Lists;
 import org.apache.commons.lang3.tuple.Pair;
 import org.cyclops.cyclopscore.helper.ValueNotifierHelpers;
 import org.cyclops.cyclopscore.inventory.SimpleInventory;
@@ -48,12 +48,16 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Pattern;
 
 /**
  * Container for the crafting jobs overview gui.
  * @author rubensworks
  */
 public class ContainerTerminalScripting extends InventoryContainer implements IDirtyMarkListener {
+
+    public static Pattern INVALID_MEMBER_NAME = Pattern.compile("[^0-9a-zA-Z_]");
+    public static Pattern VALID_MEMBER_NAME = Pattern.compile("[0-9a-zA-Z_]+");
 
     private final PartTarget target;
     private final Optional<IPartContainer> partContainer;
@@ -270,8 +274,17 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
         ValueNotifierHelpers.setValue(this, activeScriptPathId, activeScriptPath.toString());
     }
 
-    public String getSelection() {
+    public String getSelectedMember() {
         String str = ValueNotifierHelpers.getValueString(this, selectionId);
+
+        if (str != null) {
+            // If "func(abc, ...)" is selected, splice of everything after "("
+            int openBracketsPos = str.indexOf("(");
+            if (openBracketsPos >= 0) {
+                str = str.substring(0, openBracketsPos);
+            }
+        }
+
         return str == null ? "" : str;
     }
 
@@ -280,7 +293,7 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
     }
 
     public boolean isMemberSelected() {
-        return getSelection().matches("[0-9a-zA-Z_]+");
+        return VALID_MEMBER_NAME.matcher(getSelectedMember()).matches();
     }
 
     @Nullable
@@ -322,6 +335,7 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
         if (canWriteScriptToVariable()) {
             if (!isMemberSelected()) {
                 list.add(Component.translatable("gui.integratedscripting.error.invalid_member"));
+                list.add(Component.translatable("gui.integratedscripting.error.invalid_member.current", getSelectedMember()));
             }
         }
         return list;
@@ -336,7 +350,7 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
         SimpleInventory writeInv = (SimpleInventory) getContainerInventory();
         ItemStack itemStack = writeInv.getItem(0);
         if (canWriteScriptToVariable() && !itemStack.isEmpty() && isMemberSelected()) {
-            ItemStack outputStack = writeScriptVariable(!world.isClientSide, itemStack.copy(), getActiveDisk(), getActiveScriptPath(), getSelection());
+            ItemStack outputStack = writeScriptVariable(!world.isClientSide, itemStack.copy(), getActiveDisk(), getActiveScriptPath(), getSelectedMember());
             writeInv.removeDirtyMarkListener(this);
             writeInv.setItem(0, outputStack);
             writeInv.addDirtyMarkListener(this);
