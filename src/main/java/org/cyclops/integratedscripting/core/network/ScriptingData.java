@@ -9,6 +9,7 @@ import net.minecraft.world.level.storage.LevelResource;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.filefilter.FileFilterUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.cyclops.integratedscripting.GeneralConfig;
 import org.cyclops.integratedscripting.api.network.IScriptingData;
 
 import javax.annotation.Nullable;
@@ -25,12 +26,14 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author rubensworks
@@ -215,6 +218,22 @@ public class ScriptingData implements IScriptingData {
             }
         }
         if (changeLocation == ChangeLocation.DISK) {
+            // Limit length of log files
+            if (GeneralConfig.maxLogLines != -1) {
+                for (Path modifiedScript : modifiedScripts) {
+                    String modifiedScriptStr = modifiedScript.toString();
+                    if (modifiedScriptStr.endsWith(".stdout") || modifiedScriptStr.endsWith(".stderr")) {
+                        String data = scripts.get(modifiedScript);
+                        String[] lines = data.split("\n");
+                        if (lines.length > GeneralConfig.maxLogLines + 100) {
+                            String dataNew = Arrays.stream(lines).skip(lines.length - GeneralConfig.maxLogLines).collect(Collectors.joining("\n")) + "\n";
+                            scripts.put(modifiedScript, dataNew);
+                            this.flushScript(disk, modifiedScript);
+                        }
+                    }
+                }
+            }
+
             // Invoke listeners
             List<IDiskScriptsChangeListener> listeners = scriptChangeListeners.get(disk);
             if (listeners != null) {
