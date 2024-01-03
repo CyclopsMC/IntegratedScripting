@@ -234,16 +234,6 @@ public class ScriptingData implements IScriptingData {
                 }
             }
 
-            // Invoke listeners
-            List<IDiskScriptsChangeListener> listeners = scriptChangeListeners.get(disk);
-            if (listeners != null) {
-                for (IDiskScriptsChangeListener listener : Lists.newArrayList(listeners.listIterator())) {
-                    for (Path scriptPathRelative : modifiedScripts) {
-                        listener.onChange(scriptPathRelative);
-                    }
-                }
-            }
-
             // Unregister old watchers
             if (oldScripts != null) {
                 for (Path path : oldScripts.keySet()) {
@@ -254,6 +244,16 @@ public class ScriptingData implements IScriptingData {
             // Register watchers for all directories
             for (Path path : scripts.keySet()) {
                 this.registerPathWatcher(disk, path.getParent());
+            }
+        }
+
+        // Invoke listeners
+        List<IDiskScriptsChangeListener> listeners = scriptChangeListeners.get(disk);
+        if (listeners != null) {
+            for (IDiskScriptsChangeListener listener : Lists.newArrayList(listeners.listIterator())) {
+                for (Path scriptPathRelative : modifiedScripts) {
+                    listener.onChange(scriptPathRelative);
+                }
             }
         }
     }
@@ -277,16 +277,16 @@ public class ScriptingData implements IScriptingData {
             this.markDirty(disk, scriptPathRelative);
         }
         if (changeLocation == ChangeLocation.DISK) {
-            // Invoke listeners
-            List<IDiskScriptsChangeListener> listeners = scriptChangeListeners.get(disk);
-            if (listeners != null) {
-                for (IDiskScriptsChangeListener listener : listeners) {
-                    listener.onChange(scriptPathRelative);
-                }
-            }
-
             // Register watcher
             this.registerPathWatcher(disk, scriptPathRelative.getParent());
+        }
+
+        // Invoke listeners
+        List<IDiskScriptsChangeListener> listeners = scriptChangeListeners.get(disk);
+        if (listeners != null) {
+            for (IDiskScriptsChangeListener listener : listeners) {
+                listener.onChange(scriptPathRelative);
+            }
         }
     }
 
