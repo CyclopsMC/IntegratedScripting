@@ -33,15 +33,17 @@
 
   "_comment": "Items",
   "item.integratedscripting.scripting_disk": "Scripting Disk",
+  "item.integratedscripting.scripting_disk.info": "Store scripts.",
   "item.integratedscripting.scripting_disk.id": "ID: %s",
   "item.integratedscripting.scripting_disk.bytes": "Bytes: %s",
 
   "_comment": "Blocks",
   "block.integratedscripting.scripting_drive": "Scripting Drive",
+  "block.integratedscripting.scripting_drive.info": "Expose Scripting Disks to the network.",
 
   "_comment": "Part types",
   "parttype.integratedscripting.terminal_scripting": "Scripting Terminal",
-  "parttype.integratedscripting.terminal_scripting.info": "Manage scripts inside the network.",
+  "parttype.integratedscripting.terminal_scripting.info": "Manage scripts from Scripting Drives in the network.",
 
   "_comment": "------ On the Dynamics of Integration contents ------",
 
