@@ -29,6 +29,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 /**
@@ -193,10 +194,23 @@ public class ScriptingData implements IScriptingData {
         // Update script data
         Map<Path, String> oldScripts = diskScripts.put(disk, scripts);
 
+        // Determine scripts that actually changed
+        List<Path> modifiedScripts = Lists.newLinkedList();
+        Set<Path> keys = Sets.newHashSet();
+        keys.addAll(scripts.keySet());
+        if (oldScripts != null) {
+            keys.addAll(oldScripts.keySet());
+        }
+        for (Path path : keys) {
+            if (oldScripts == null || !Objects.equals(oldScripts.get(path), scripts.get(path))) {
+                modifiedScripts.add(path);
+            }
+        }
+
         // Propagate changes
         if (changeLocation == ChangeLocation.MEMORY) {
             // Mark dirty
-            for (Path path : scripts.keySet()) {
+            for (Path path : modifiedScripts) {
                 this.markDirty(disk, path);
             }
         }
@@ -205,7 +219,7 @@ public class ScriptingData implements IScriptingData {
             List<IDiskScriptsChangeListener> listeners = scriptChangeListeners.get(disk);
             if (listeners != null) {
                 for (IDiskScriptsChangeListener listener : Lists.newArrayList(listeners.listIterator())) {
-                    for (Path scriptPathRelative : scripts.keySet()) {
+                    for (Path scriptPathRelative : modifiedScripts) {
                         listener.onChange(scriptPathRelative);
                     }
                 }
