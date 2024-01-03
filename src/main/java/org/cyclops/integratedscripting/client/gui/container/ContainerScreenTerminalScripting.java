@@ -54,9 +54,10 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     public static int PATHS_HEIGHT = 214;
     public static int PATHS_ROW_HEIGHT = 5;
     public static int PATHS_MAX_ROWS = PATHS_HEIGHT / PATHS_ROW_HEIGHT;
-    public static int SCRIPT_X = 88;
+    public static int SCRIPT_X = 80;
+    public static int SCRIPT_X_INNER = 94;
     public static int SCRIPT_Y = 18;
-    public static int SCRIPT_WIDTH = 160;
+    public static int SCRIPT_WIDTH = 168;
     public static int SCRIPT_HEIGHT = 115;
 
     private final Player player;
@@ -109,7 +110,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             }
         };
 
-        textArea = new WidgetTextArea(Minecraft.getInstance().font, this.leftPos + SCRIPT_X + 1, this.topPos + SCRIPT_Y + 1, SCRIPT_WIDTH, SCRIPT_HEIGHT, Component.translatable("gui.integratedscripting.script"), true);
+        textArea = new WidgetTextArea(Minecraft.getInstance().font, this.leftPos + SCRIPT_X + 1, this.topPos + SCRIPT_Y + 1, SCRIPT_WIDTH, SCRIPT_HEIGHT, Component.translatable("gui.integratedscripting.script"), true, true);
         textArea.setListener(this::onActiveScriptModified);
         textArea.setListenerSelection(this::onSelectionModified);
         textArea.setListenerCursor(this::onSelectionModified);
@@ -203,7 +204,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         if (this.getMenu().getActiveScript() == null) {
             // Gray-out editor and file list
             RenderSystem.setShaderColor(0.3F, 0.3F, 0.3F, 0.3F);
-            fill(matrixStack, leftPos + SCRIPT_X, topPos + SCRIPT_Y, leftPos + SCRIPT_X + SCRIPT_WIDTH, topPos + SCRIPT_Y + SCRIPT_HEIGHT, Helpers.RGBAToInt(50, 50, 50, 100));
+            fill(matrixStack, leftPos + SCRIPT_X_INNER, topPos + SCRIPT_Y, leftPos + SCRIPT_X_INNER + SCRIPT_WIDTH, topPos + SCRIPT_Y + SCRIPT_HEIGHT, Helpers.RGBAToInt(50, 50, 50, 100));
             RenderSystem.setShaderColor(1, 1, 1, 1);
         }
 

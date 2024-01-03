@@ -36,6 +36,8 @@ import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.lang3.tuple.Pair;
 import org.cyclops.cyclopscore.client.gui.component.WidgetScrollBar;
 import org.cyclops.cyclopscore.client.gui.component.input.IInputListener;
+import org.cyclops.cyclopscore.helper.Helpers;
+import org.cyclops.cyclopscore.helper.RenderHelpers;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
@@ -65,6 +67,7 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
 
     private final TextFieldHelperExtended textFieldHelper;
     private final Font font;
+    private final boolean showLineNumbers;
 
     private int frameTick;
     private String value = "";
@@ -85,9 +88,10 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
     private WidgetScrollBar scrollBar;
     private int firstRow;
 
-    public WidgetTextArea(Font font, int x, int y, int width, int height, Component narrationMessage, boolean scrollBar) {
+    public WidgetTextArea(Font font, int x, int y, int width, int height, Component narrationMessage, boolean scrollBar, boolean showLineNumbers) {
         super(x, y, width, height, narrationMessage);
         this.font = font;
+        this.showLineNumbers = showLineNumbers;
         this.textFieldHelper = new TextFieldHelperExtended(this::getValue, this::setValuePassive, this::getClipboard, this::setClipboard, s -> true, this::setSelected, this::onCursorPosChanged);
         if (scrollBar) {
             this.scrollBar = new WidgetScrollBar(x + width - 14, y, height,
@@ -426,8 +430,22 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
         int offsetY = 0;
 
         // Draw lines
+        int lastLineNumber = -1;
         for(LineInfo line : lines) {
             this.font.draw(poseStack, line.asComponent, (float)line.x, (float)line.y - offsetY, -16777216);
+            // Draw line number
+            if (this.showLineNumbers && lastLineNumber != line.lineNumber) {
+                RenderHelpers.drawScaledString(
+                        poseStack,
+                        font,
+                        String.valueOf(line.lineNumber),
+                        this.x,
+                        line.y - offsetY + 2,
+                        0.5f,
+                        line.hasCursor ? 0 : Helpers.RGBToInt(120, 120, 120)
+                );
+            }
+            lastLineNumber = line.lineNumber;
         }
 
         // Show highlighting and cursor
@@ -482,12 +500,16 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
         RenderSystem.setShaderColor(1, 1, 1, 1);
     }
 
+    private int getLinesXOffset() {
+        return this.showLineNumbers ? 14 : 0;
+    }
+
     private Pos2i convertScreenToLocal(Pos2i posScreen) {
-        return new Pos2i(posScreen.x - this.x, posScreen.y - this.y);
+        return new Pos2i(posScreen.x - this.x - getLinesXOffset(), posScreen.y - this.y);
     }
 
     private Pos2i convertLocalToScreen(Pos2i posLocal) {
-        return new Pos2i(this.x + posLocal.x, this.y + posLocal.y);
+        return new Pos2i(this.x + posLocal.x + getLinesXOffset(), this.y + posLocal.y);
     }
 
     private DisplayCache getDisplayCache() {
@@ -514,15 +536,20 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
             MutableInt mutableint = new MutableInt();
             MutableBoolean mutableboolean = new MutableBoolean();
             StringSplitter stringsplitter = this.font.getSplitter();
-            stringsplitter.splitLines(s, this.getWidth() /* changed: constant width */, Style.EMPTY, true, (style, startPos, endPos) -> {
+            MutableInt lineNumber = new MutableInt();
+            stringsplitter.splitLines(s, this.getWidth() - getLinesXOffset() /* changed */, Style.EMPTY, true, (style, startPos, endPos) -> {
                 int k3 = mutableint.getAndIncrement();
                 String stringPart = s.substring(startPos, endPos);
-                mutableboolean.setValue(stringPart.endsWith("\n"));
+                boolean hasNewLine = stringPart.endsWith("\n");
+                mutableboolean.setValue(hasNewLine);
                 String s3 = StringUtils.stripEnd(stringPart, " \n");
                 int l3 = (k3 - this.firstRow) * 9; // Offset firstRow!
                 Pos2i bookeditscreen$pos2i1 = this.convertLocalToScreen(new Pos2i(0, l3));
                 linePositionsOld.add(startPos);
-                linesAll.add(new LineInfo(this.markupLine(style, s3), bookeditscreen$pos2i1.x, bookeditscreen$pos2i1.y));
+                linesAll.add(new LineInfo(this.markupLine(style, s3), bookeditscreen$pos2i1.x, bookeditscreen$pos2i1.y, lineNumber.getValue(), cursorPos >= startPos && cursorPos < (hasNewLine ? endPos : s.indexOf("\n", endPos))));
+                if (hasNewLine) {
+                    lineNumber.increment();
+                }
             });
 
             // --- Changed ---
@@ -618,7 +645,7 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
 
     @OnlyIn(Dist.CLIENT)
     static class DisplayCache {
-        static final DisplayCache EMPTY = new DisplayCache("", new Pos2i(0, 0), true, new int[]{0}, new LineInfo[]{new LineInfo(Collections.emptyList(), 0, 0)}, new LineInfo[]{new LineInfo(Collections.emptyList(), 0, 0)}, new Rect2i[0], 0, 0);
+        static final DisplayCache EMPTY = new DisplayCache("", new Pos2i(0, 0), true, new int[]{0}, new LineInfo[]{new LineInfo(Collections.emptyList(), 0, 0, 0, false)}, new LineInfo[]{new LineInfo(Collections.emptyList(), 0, 0, 0, false)}, new Rect2i[0], 0, 0);
         private final String fullText;
         @Nullable
         final Pos2i cursor;
@@ -687,12 +714,16 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
         final Component asComponent;
         final int x;
         final int y;
+        final int lineNumber;
+        final boolean hasCursor;
 
-        public LineInfo(List<Pair<Style, String>> contentsStyled, int x, int y) {
+        public LineInfo(List<Pair<Style, String>> contentsStyled, int x, int y, int lineNumber, boolean hasCursor) {
             this.contentsStyled = contentsStyled;
             this.contents = contentsStyled.stream().map(Pair::getRight).collect(Collectors.joining());
             this.x = x;
             this.y = y;
+            this.lineNumber = lineNumber;
+            this.hasCursor = hasCursor;
 
             MutableComponent component = Component.literal("");
             for (Pair<Style, String> value : contentsStyled) {
