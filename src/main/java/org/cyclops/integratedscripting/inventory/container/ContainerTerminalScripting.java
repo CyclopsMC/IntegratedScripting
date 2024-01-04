@@ -11,6 +11,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.StringUtil;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -267,11 +268,11 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
     @Nullable
     public Path getActiveScriptPath() {
         String str = ValueNotifierHelpers.getValueString(this, activeScriptPathId);
-        return str == null ? null : Path.of(str);
+        return StringUtil.isNullOrEmpty(str) ? null : Path.of(str);
     }
 
     public void setActiveScriptPath(Path activeScriptPath) {
-        ValueNotifierHelpers.setValue(this, activeScriptPathId, activeScriptPath.toString());
+        ValueNotifierHelpers.setValue(this, activeScriptPathId, activeScriptPath == null ? "" : activeScriptPath.toString());
     }
 
     public String getSelectedMember() {

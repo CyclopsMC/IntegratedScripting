@@ -361,6 +361,10 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             getMenu().setActiveDisk(disk);
             scrollBar.scrollTo(0); // Reset scrollbar
 
+            // Reset active script
+            getMenu().setActiveScriptPath(null);
+            this.onActiveScriptSelected();
+
             playButtonClickSound();
 
             return true;
@@ -378,7 +382,8 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     }
 
     private void onActiveScriptSelected() {
-        this.textArea.setValue(getMenu().getActiveScript());
+        String script = getMenu().getActiveScript();
+        this.textArea.setValue(script == null ? "" : script);
     }
 
     private void onActiveScriptModified() {
