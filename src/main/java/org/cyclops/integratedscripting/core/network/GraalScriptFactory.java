@@ -68,7 +68,7 @@ public class GraalScriptFactory implements IScriptFactory {
                 }
             }, disk, path, null);
         } catch (IOException e) {
-            throw new EvaluationException(Component.literal(e.getMessage()));
+            throw new EvaluationException(Component.translatable("script.integratedscripting.error.script_read", path.toString(), disk, e.getMessage()));
         }
     }
 }
