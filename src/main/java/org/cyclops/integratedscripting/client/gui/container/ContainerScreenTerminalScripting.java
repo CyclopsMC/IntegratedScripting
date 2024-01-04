@@ -273,9 +273,9 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
                 poseStack.pushPose();
                 float scale = 0.4F;
                 int size = (int) (Images.ERROR.getWidth() * scale);
-                poseStack.translate(this.leftPos + PATHS_X + PATHS_WIDTH - size, this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT, 0);
+                poseStack.translate(this.leftPos + PATHS_X + PATHS_WIDTH - size - 1, this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT + 1, 0);
                 poseStack.scale(scale, scale, 4F);
-                if (isHovering(PATHS_X + PATHS_WIDTH - size, PATHS_Y + i * PATHS_ROW_HEIGHT, PATHS_X + PATHS_WIDTH - size + size, PATHS_Y + i * PATHS_ROW_HEIGHT + size, mouseX, mouseY)) {
+                if (isHovering(PATHS_X + PATHS_WIDTH - size - 1, PATHS_Y + i * PATHS_ROW_HEIGHT, PATHS_X + PATHS_WIDTH - size + size - 1, PATHS_Y + i * PATHS_ROW_HEIGHT + size, mouseX, mouseY)) {
                     Images.ERROR.draw(this, poseStack, 0, 0);
                 } else {
                     Images.ERROR.drawWithColor(this, poseStack, 0, 0, 0.7F, 0.7F, 0.7F, 1F);
@@ -321,7 +321,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         Path hoveredScriptPath = getHoveredScriptPath(mouseX, mouseY);
         if (hoveredScriptPath != null) {
             // Handle script removal clicks
-            if (mouseX >= this.leftPos + PATHS_X + PATHS_WIDTH - (int) (Images.ERROR.getWidth() * 0.4F)) {
+            if (mouseX >= this.leftPos + PATHS_X + PATHS_WIDTH - (int) (Images.ERROR.getWidth() * 0.4F) - 1) {
                 this.fieldDisk.playDownSound(Minecraft.getInstance().getSoundManager());
 
                 // Show confirmation dialog
