@@ -80,8 +80,9 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
     private IInputListener listenerCursor;
     @Nullable
     private IMarkupProvider markupProvider;
+    private WidgetTextArea.DisplayCache emptyDisplayCache = createEmptyDisplayCache();
     @Nullable
-    private WidgetTextArea.DisplayCache displayCache = WidgetTextArea.DisplayCache.EMPTY;
+    private WidgetTextArea.DisplayCache displayCache = emptyDisplayCache;
     private long lastClickTime;
     private int lastIndex = -1;
     @Nullable
@@ -110,6 +111,11 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
                 }
             };
         }
+    }
+
+    private DisplayCache createEmptyDisplayCache() {
+        Pos2i pos = convertLocalToScreen(new Pos2i(0, 0));
+        return new DisplayCache("", pos, true, new int[]{0}, new LineInfo[]{new LineInfo(Collections.emptyList(), pos.x, pos.y, 0, false)}, new LineInfo[]{new LineInfo(Collections.emptyList(), pos.x, pos.y, 0, false)}, new Rect2i[0], 0, 0);
     }
 
     public void setFirstRow(int firstRow, boolean propagateToScrollbar) {
@@ -527,7 +533,7 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
     private DisplayCache rebuildDisplayCache() {
         String s = this.getValue();
         if (s.isEmpty()) {
-            return DisplayCache.EMPTY;
+            return emptyDisplayCache;
         } else {
             int cursorPos = this.textFieldHelper.getCursorPos();
             int selectionPos = this.textFieldHelper.getSelectionPos();
@@ -645,7 +651,6 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
 
     @OnlyIn(Dist.CLIENT)
     static class DisplayCache {
-        static final DisplayCache EMPTY = new DisplayCache("", new Pos2i(0, 0), true, new int[]{0}, new LineInfo[]{new LineInfo(Collections.emptyList(), 0, 0, 0, false)}, new LineInfo[]{new LineInfo(Collections.emptyList(), 0, 0, 0, false)}, new Rect2i[0], 0, 0);
         private final String fullText;
         @Nullable
         final Pos2i cursor;
