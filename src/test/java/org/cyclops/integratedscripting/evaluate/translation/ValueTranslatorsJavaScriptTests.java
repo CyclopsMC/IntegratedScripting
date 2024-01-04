@@ -203,6 +203,16 @@ public class ValueTranslatorsJavaScriptTests {
     }
 
     @Test
+    public void testOperatorBidirectional() throws EvaluationException {
+        ValueTypeOperator.ValueOperator operatorValue = ValueTypeOperator.ValueOperator.of(Operators.ARITHMETIC_ADDITION);
+        Value operatorValueJava = ValueTranslators.REGISTRY.translateToGraal(CTX, operatorValue, EF);
+        IValue operatorValueJs = ValueTranslators.REGISTRY.translateFromGraal(CTX, operatorValueJava, EF);
+
+        assertThat(operatorValueJs, equalTo(operatorValue));
+        assertThat(operatorValueJava.isProxyObject(), equalTo(true));
+    }
+
+    @Test
     public void testOperatorExecuteJavaInJs() throws EvaluationException, IOException {
         Source source = Source.newBuilder("js", "function myFunc(arg0, arg1, arg2) { return arg0(arg1, arg2); }", "src.js").build();
         CTX.eval(source);
@@ -318,7 +328,14 @@ public class ValueTranslatorsJavaScriptTests {
         compoundTag.put("a", StringTag.valueOf("bla"));
         compoundTag.put("b", compoundTagSub);
         compoundTagSub.put("c", IntTag.valueOf(123));
-        assertThat(ValueTranslators.REGISTRY.translateFromGraal(CTX, getJsValue("exports = { 'a': 'bla', 'b': { 'c': 123 } }"), EF), equalTo(ValueTypeNbt.ValueNbt.of(compoundTag)));
+        compoundTagSub.put("d", LongTag.valueOf(2147483648L));
+        compoundTagSub.put("e", DoubleTag.valueOf(2.2D));
+        ListTag listTag = new ListTag();
+        listTag.add(IntTag.valueOf(1));
+        listTag.add(IntTag.valueOf(2));
+        listTag.add(IntTag.valueOf(3));
+        compoundTagSub.put("f", listTag);
+        assertThat(ValueTranslators.REGISTRY.translateFromGraal(CTX, getJsValue("exports = { 'a': 'bla', 'b': { 'c': 123, 'd': 2147483648, 'e': 2.2, 'f': [1, 2, 3] } }"), EF), equalTo(ValueTypeNbt.ValueNbt.of(compoundTag)));
 
         Value translated = ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeNbt.ValueNbt.of(compoundTag), EF);
         assertThat(translated.hasMembers(), is(true));
@@ -326,6 +343,42 @@ public class ValueTranslatorsJavaScriptTests {
         assertThat(translated.getMember("a").asString(), equalTo(CTX.asValue("bla").asString()));
         Value translatedSub = translated.getMember("b");
         assertThat(translatedSub.getMember("c"), equalTo(CTX.asValue(123)));
+        assertThat(translatedSub.getMember("d").asLong(), equalTo(CTX.asValue(2147483648L).asLong()));
+        assertThat(translatedSub.getMember("e").asDouble(), equalTo(CTX.asValue(2.2D).asDouble()));
+        Value listValue = translatedSub.getMember("f");
+        assertThat(listValue.hasArrayElements(), equalTo(true));
+        assertThat(listValue.getArrayElement(0), equalTo(CTX.asValue(1)));
+        assertThat(listValue.getArrayElement(1), equalTo(CTX.asValue(2)));
+        assertThat(listValue.getArrayElement(2), equalTo(CTX.asValue(3)));
+    }
+
+    @Test
+    public void testNbtCompoundBidirectional() throws EvaluationException {
+        CompoundTag compoundTag = new CompoundTag();
+        CompoundTag compoundTagSub = new CompoundTag();
+        compoundTag.put("a", StringTag.valueOf("bla"));
+        compoundTag.put("b", compoundTagSub);
+        compoundTagSub.put("c", IntTag.valueOf(123));
+
+        Value translated1 = ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeNbt.ValueNbt.of(compoundTag), EF);
+        IValue translated2 = ValueTranslators.REGISTRY.translateFromGraal(CTX, translated1, EF);
+
+        assertThat(translated2, equalTo(ValueTypeNbt.ValueNbt.of(compoundTag)));
+        assertThat(translated1.isProxyObject(), equalTo(true));
+    }
+
+    @Test
+    public void testNbtCompoundModifyInJs() throws EvaluationException {
+        CompoundTag compoundTag = new CompoundTag();
+        CompoundTag compoundTagSub = new CompoundTag();
+        compoundTag.put("a", StringTag.valueOf("bla"));
+        compoundTag.put("b", compoundTagSub);
+        compoundTagSub.put("c", IntTag.valueOf(123));
+
+        Value translated1 = ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeNbt.ValueNbt.of(compoundTag), EF);
+        translated1.putMember("c", CTX.asValue(456));
+
+        assertThat(compoundTag.getInt("c"), equalTo(456));
     }
 
     @Test
@@ -398,6 +451,15 @@ public class ValueTranslatorsJavaScriptTests {
         assertThat(translated.getMember("id_item").getMemberKeys(), equalTo(Sets.newHashSet("id", "Count")));
         assertThat(translated.getMember("id_item").getMember("id").asString(), equalTo("minecraft:arrow"));
         assertThat(translated.getMember("id_item").getMember("Count").asInt(), equalTo(1));
+    }
+
+    @Test
+    public void testObjectItemBidirectional() throws EvaluationException {
+        ValueObjectTypeItemStack.ValueItemStack value = ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.ARROW));
+        Value translated1 = ValueTranslators.REGISTRY.translateToGraal(CTX, value, EF);
+        IValue translated2 = ValueTranslators.REGISTRY.translateFromGraal(CTX, translated1, EF);
+        assertThat(translated2, equalTo(value));
+        assertThat(translated1.isProxyObject(), equalTo(true));
     }
 
     @Test

@@ -74,6 +74,7 @@ public class NbtCompoundTagProxyObject implements ProxyObject {
     @SneakyThrows
     @Override
     public void putMember(String key, Value value) {
-        tag.put(key, ValueTranslators.TRANSLATOR_NBT.translateFromGraal(context, value, exceptionFactory).getRawValue().get());
+        IValue idValue = ValueTranslators.REGISTRY.translateFromGraal(context, value, exceptionFactory);
+        tag.put(key, ValueTranslators.REGISTRY.translateToNbt(context, idValue, exceptionFactory));
     }
 }
