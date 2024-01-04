@@ -193,10 +193,22 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
         return this.textFieldHelper.getCursorPos();
     }
 
+    public void setCursorPos(int pos) {
+        this.textFieldHelper.setCursorPos(pos, true);
+    }
+
     private void onCursorPosChanged(int cursorPos) {
         if (listenerCursor != null) {
             listenerCursor.onChanged();
         }
+    }
+
+    public int getSelectionPos() {
+        return this.textFieldHelper.getSelectionPos();
+    }
+
+    public void setSelectionPos(int pos) {
+        this.textFieldHelper.setSelectionPos(pos);
     }
 
     public void updateNarration(NarrationElementOutput narrationElementOutput) {

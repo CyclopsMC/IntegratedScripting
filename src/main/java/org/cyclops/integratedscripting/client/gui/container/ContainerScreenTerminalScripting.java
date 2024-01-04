@@ -1,8 +1,11 @@
 package org.cyclops.integratedscripting.client.gui.container;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.Maps;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
@@ -72,6 +75,10 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     private WidgetDialog pendingScriptRemovalDialog;
     private int lastClientSyncTick;
     private final DisplayErrorsComponent displayErrors = new DisplayErrorsComponent();
+
+    private final Map<Path, Integer> lastScriptCursorPos = Maps.newHashMap();
+    private final Map<Path, Integer> lastScriptSelectionPos = Maps.newHashMap();
+    private final Int2ObjectMap<Path> lastDiskScript = new Int2ObjectAVLTreeMap<>();
 
     public ContainerScreenTerminalScripting(ContainerTerminalScripting container, Inventory inventory, Component title) {
         super(container, inventory, title);
@@ -342,28 +349,36 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
                 addRenderableWidget(pendingScriptRemovalDialog);
 
                 return true;
-            } else{
+            } else {
+                // Save script state
+                this.saveCursorPos();
+
+                // Select another script
                 getMenu().setActiveScriptPath(hoveredScriptPath);
                 this.onActiveScriptSelected();
+
+                // Restore script state
+                this.restoreCursorPos();
+
                 this.fieldDisk.playDownSound(Minecraft.getInstance().getSoundManager());
                 return true;
             }
         }
 
-        // Update channel when changing channel field
+        // Update disk when changing disk field
+        int previousDisk = getActiveDisk();
         if (this.fieldDisk.mouseClicked(mouseX, mouseY, mouseButton)) {
-            int disk;
-            try {
-                disk = this.fieldDisk.getActiveElement();
-            } catch (NumberFormatException e) {
-                disk = -1;
-            }
-            getMenu().setActiveDisk(disk);
+            // Save script state
+            this.saveCursorPos();
+            this.saveDiskScript(previousDisk);
+
+            // Set new disk
+            getMenu().setActiveDisk(getActiveDisk());
             scrollBar.scrollTo(0); // Reset scrollbar
 
-            // Reset active script
-            getMenu().setActiveScriptPath(null);
-            this.onActiveScriptSelected();
+            // Restore script state
+            this.restoreDiskScript();
+            this.restoreCursorPos();
 
             playButtonClickSound();
 
@@ -371,6 +386,59 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         }
 
         return super.mouseClicked(mouseX, mouseY, mouseButton);
+    }
+
+    public int getActiveDisk() {
+        try {
+            return this.fieldDisk.getActiveElement();
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
+    private void saveCursorPos() {
+        Path currentScriptPath = getMenu().getActiveScriptPath();
+        if (currentScriptPath != null) {
+            lastScriptCursorPos.put(currentScriptPath, textArea.getCursorPos());
+            lastScriptSelectionPos.put(currentScriptPath, textArea.getSelectionPos());
+        }
+    }
+
+    private void restoreCursorPos() {
+        Path currentScriptPath = getMenu().getActiveScriptPath();
+
+        Integer scriptCursorPos = lastScriptCursorPos.get(currentScriptPath);
+        if (scriptCursorPos != null) {
+            textArea.setCursorPos(scriptCursorPos);
+        } else {
+            textArea.setCursorPos(0);
+            if (textArea.isFocused()) {
+                textArea.changeFocus(false);
+            }
+        }
+
+        Integer scriptSelectionPos = lastScriptSelectionPos.get(currentScriptPath);
+        if (scriptSelectionPos != null) {
+            textArea.setSelectionPos(scriptSelectionPos);
+        } else {
+            textArea.setSelectionPos(0);
+        }
+    }
+
+    private void saveDiskScript(int disk) {
+        Path currentScriptPath = getMenu().getActiveScriptPath();
+        if (disk >= 0 && currentScriptPath != null) {
+            lastDiskScript.put(disk, currentScriptPath);
+        }
+    }
+
+    private void restoreDiskScript() {
+        int disk = getActiveDisk();
+        if (disk >= 0) {
+            Path scriptPath = lastDiskScript.get(disk); // This may be null, but that's fine, as that will reset the selected active path
+            getMenu().setActiveScriptPath(scriptPath);
+            this.onActiveScriptSelected();
+        }
     }
 
     protected void playButtonClickSound() {
