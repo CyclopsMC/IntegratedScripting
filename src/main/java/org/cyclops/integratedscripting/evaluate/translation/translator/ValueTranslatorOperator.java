@@ -63,10 +63,16 @@ public class ValueTranslatorOperator implements IValueTranslator<ValueTypeOperat
             IVariable[] variables = args.getVariables();
             Value[] values = new Value[variables.length];
             for (int i = 0; i < variables.length; i++) {
-                values[i] = ValueTranslators.REGISTRY.translateToGraal(context, variables[i].getValue(), exceptionFactory);
+                try {
+                    context.resetLimits();
+                    values[i] = ValueTranslators.REGISTRY.translateToGraal(context, variables[i].getValue(), exceptionFactory);
+                } catch (PolyglotException e) {
+                    throw exceptionFactory.createError(e.getMessage());
+                }
             }
             Value returnValue;
             try {
+                context.resetLimits();
                 returnValue = value.execute((Object[]) values);
             } catch (PolyglotException e) {
                 throw exceptionFactory.createError(e.getMessage());

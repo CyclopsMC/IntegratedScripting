@@ -12,6 +12,7 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.EnvironmentAccess;
 import org.graalvm.polyglot.HostAccess;
+import org.graalvm.polyglot.ResourceLimits;
 import org.graalvm.polyglot.Value;
 
 import javax.annotation.Nullable;
@@ -42,6 +43,11 @@ public class ScriptHelpers {
                 .allowNativeAccess(GeneralConfig.graalAllowNative)
                 .allowHostAccess(HostAccess.ALL)
                 .allowInnerContextOptions(false);
+        if (GeneralConfig.graalStatementLimit > 0) {
+            contextBuilder = contextBuilder.resourceLimits(ResourceLimits.newBuilder()
+                    .statementLimit(GeneralConfig.graalStatementLimit, null)
+                    .build());
+        }
         if (contextBuilderModifier != null) {
             contextBuilder = contextBuilderModifier.apply(contextBuilder);
         }

@@ -64,6 +64,7 @@ public class GraalScript implements IScript, IScriptMember {
     public IValue getValue() throws EvaluationException {
         IEvaluationExceptionFactory exceptionFactory = ScriptHelpers.getEvaluationExceptionFactory(disk, path, member);
         try {
+            this.graalContext.resetLimits();
             return ValueTranslators.REGISTRY.translateFromGraal(this.graalContext, graalValue, exceptionFactory);
         } catch (PolyglotException e) {
             throw exceptionFactory.createError(e.getMessage());

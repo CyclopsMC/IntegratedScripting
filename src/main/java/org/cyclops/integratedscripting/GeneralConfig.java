@@ -36,6 +36,8 @@ public class GeneralConfig extends DummyConfig {
     public static boolean graalAllowEnvironment = false;
     @ConfigurableProperty(category = "general", comment = "If the native interface can be accessed from guest languages.", configLocation = ModConfig.Type.SERVER)
     public static boolean graalAllowNative = false;
+    @ConfigurableProperty(category = "general", comment = "The maximum number of statements that can be executed in one evaluation. This is to avoid infinite loops or very complex programs. Set to -1 to disable limit (not recommended).", configLocation = ModConfig.Type.SERVER, minimalValue = -1)
+    public static int graalStatementLimit = 16384;
     @ConfigurableProperty(category = "general", comment = "The maximum number of lines in stdout and stderr script log files. Set to -1 to disable limit.", minimalValue = -1, configLocation = ModConfig.Type.SERVER)
     public static int maxLogLines = 2096;
 
