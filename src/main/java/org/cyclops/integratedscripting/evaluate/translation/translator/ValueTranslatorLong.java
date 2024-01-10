@@ -15,9 +15,10 @@ import org.graalvm.polyglot.Value;
  * @author rubensworks
  */
 public class ValueTranslatorLong implements IValueTranslator<ValueTypeLong.ValueLong> {
+
     @Override
-    public boolean canHandleValueType(IValueType<?> valueType) {
-        return valueType == ValueTypes.LONG;
+    public IValueType<?> getValueType() {
+        return ValueTypes.LONG;
     }
 
     @Override

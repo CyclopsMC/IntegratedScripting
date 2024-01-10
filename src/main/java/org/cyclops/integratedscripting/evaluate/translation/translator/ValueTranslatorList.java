@@ -23,9 +23,10 @@ import java.util.List;
  * @author rubensworks
  */
 public class ValueTranslatorList implements IValueTranslator<ValueTypeList.ValueList> {
+
     @Override
-    public boolean canHandleValueType(IValueType<?> valueType) {
-        return valueType == ValueTypes.LIST;
+    public IValueType<?> getValueType() {
+        return ValueTypes.LIST;
     }
 
     @Override

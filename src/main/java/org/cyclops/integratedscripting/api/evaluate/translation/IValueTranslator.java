@@ -13,7 +13,7 @@ import org.graalvm.polyglot.Value;
  */
 public interface IValueTranslator<V extends IValue> {
 
-    public boolean canHandleValueType(IValueType<?> valueType);
+    public IValueType<?> getValueType();
 
     public boolean canHandleGraalValue(Value value);
 

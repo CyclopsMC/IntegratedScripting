@@ -26,8 +26,8 @@ import java.util.Map;
 public class ValueTranslatorNbt implements IValueTranslator<ValueTypeNbt.ValueNbt> {
 
     @Override
-    public boolean canHandleValueType(IValueType<?> valueType) {
-        return valueType == ValueTypes.NBT;
+    public IValueType<?> getValueType() {
+        return ValueTypes.NBT;
     }
 
     @Override

@@ -15,9 +15,10 @@ import org.graalvm.polyglot.Value;
  * @author rubensworks
  */
 public class ValueTranslatorString implements IValueTranslator<ValueTypeString.ValueString> {
+
     @Override
-    public boolean canHandleValueType(IValueType<?> valueType) {
-        return valueType == ValueTypes.STRING;
+    public IValueType<?> getValueType() {
+        return ValueTypes.STRING;
     }
 
     @Override

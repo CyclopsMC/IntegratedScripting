@@ -41,8 +41,8 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
     }
 
     @Override
-    public boolean canHandleValueType(IValueType<?> valueType) {
-        return valueType == this.valueType;
+    public IValueType<?> getValueType() {
+        return this.valueType;
     }
 
     @Override

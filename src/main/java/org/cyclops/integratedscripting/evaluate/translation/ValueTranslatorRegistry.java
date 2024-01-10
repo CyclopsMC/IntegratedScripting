@@ -1,6 +1,7 @@
 package org.cyclops.integratedscripting.evaluate.translation;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
@@ -13,6 +14,7 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author rubensworks
@@ -22,6 +24,7 @@ public class ValueTranslatorRegistry implements IValueTranslatorRegistry {
     private static ValueTranslatorRegistry INSTANCE = new ValueTranslatorRegistry();
 
     private final List<IValueTranslator> translators = Lists.newArrayList();
+    private final Map<IValueType<?>, IValueTranslator> valueTypeTranslators = Maps.newIdentityHashMap();
 
     private ValueTranslatorRegistry() {
     }
@@ -36,16 +39,12 @@ public class ValueTranslatorRegistry implements IValueTranslatorRegistry {
     @Override
     public void register(IValueTranslator translator) {
         translators.add(translator);
+        valueTypeTranslators.put(translator.getValueType(), translator);
     }
 
     @Override
     public <V extends IValue> IValueTranslator getValueTypeTranslator(IValueType<V> valueType) {
-        for (IValueTranslator translator : translators) {
-            if (translator.canHandleValueType(valueType)) {
-                return translator;
-            }
-        }
-        return null;
+        return valueTypeTranslators.get(valueType);
     }
 
     @Override

@@ -20,8 +20,8 @@ import org.graalvm.polyglot.Value;
 public class ValueTranslatorOperator implements IValueTranslator<ValueTypeOperator.ValueOperator> {
 
     @Override
-    public boolean canHandleValueType(IValueType<?> valueType) {
-        return valueType == ValueTypes.OPERATOR;
+    public IValueType<?> getValueType() {
+        return ValueTypes.OPERATOR;
     }
 
     @Override
@@ -62,9 +62,9 @@ public class ValueTranslatorOperator implements IValueTranslator<ValueTypeOperat
         return ValueTypeOperator.ValueOperator.of(new GraalOperator(inputValueTypes, args -> {
             IVariable[] variables = args.getVariables();
             Value[] values = new Value[variables.length];
+            context.resetLimits();
             for (int i = 0; i < variables.length; i++) {
                 try {
-                    context.resetLimits();
                     values[i] = ValueTranslators.REGISTRY.translateToGraal(context, variables[i].getValue(), exceptionFactory);
                 } catch (PolyglotException e) {
                     throw exceptionFactory.createError(e.getMessage());
@@ -72,7 +72,6 @@ public class ValueTranslatorOperator implements IValueTranslator<ValueTypeOperat
             }
             Value returnValue;
             try {
-                context.resetLimits();
                 returnValue = value.execute((Object[]) values);
             } catch (PolyglotException e) {
                 throw exceptionFactory.createError(e.getMessage());

@@ -15,9 +15,14 @@ import org.graalvm.polyglot.Value;
  * @author rubensworks
  */
 public class ValueTranslatorBoolean implements IValueTranslator<ValueTypeBoolean.ValueBoolean> {
+
+    private boolean valuesInitialized = false;
+    private Value valueTrue;
+    private Value valueFalse;
+
     @Override
-    public boolean canHandleValueType(IValueType<?> valueType) {
-        return valueType == ValueTypes.BOOLEAN;
+    public IValueType<?> getValueType() {
+        return ValueTypes.BOOLEAN;
     }
 
     @Override
@@ -32,7 +37,11 @@ public class ValueTranslatorBoolean implements IValueTranslator<ValueTypeBoolean
 
     @Override
     public Value translateToGraal(Context context, ValueTypeBoolean.ValueBoolean value, IEvaluationExceptionFactory exceptionFactory) {
-        return context.asValue(value.getRawValue());
+        if (!valuesInitialized) {
+            valueTrue = context.asValue(true);
+            valueFalse = context.asValue(false);
+        }
+        return value.getRawValue() ? valueTrue : valueFalse;
     }
 
     @Override
