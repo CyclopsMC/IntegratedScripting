@@ -38,6 +38,7 @@ public class ValueTranslatorBoolean implements IValueTranslator<ValueTypeBoolean
     @Override
     public Value translateToGraal(Context context, ValueTypeBoolean.ValueBoolean value, IEvaluationExceptionFactory exceptionFactory) {
         if (!valuesInitialized) {
+            valuesInitialized = true;
             valueTrue = context.asValue(true);
             valueFalse = context.asValue(false);
         }

@@ -2,7 +2,6 @@ package org.cyclops.integratedscripting.evaluate.translation.translator;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
@@ -49,7 +48,7 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
     public boolean canHandleGraalValue(Value value) {
         if (value.isProxyObject()) {
             try {
-                NbtCompoundTagProxyObject proxyObject = value.asProxyObject();
+                ValueObjectProxyObject<?> proxyObject = value.asProxyObject();
                 return proxyObject.getValue() != null && proxyObject.getValue().getType() == this.valueType;
             } catch (ClassCastException e) {
                 // Ignore error
@@ -80,9 +79,7 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
             for (IValueType<?> valueType : valueTypes) {
                 Map<String, IOperator> scopedOperators = Operators.REGISTRY.getScopedInteractOperators().get(valueType);
                 if (scopedOperators != null) {
-                    for (Map.Entry<String, IOperator> entry : scopedOperators.entrySet()) {
-                        methods.put(entry.getKey(), entry.getValue());
-                    }
+                    methods.putAll(scopedOperators);
                 }
             }
 
@@ -94,11 +91,7 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
 
     @Override
     public Value translateToGraal(Context context, V value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
-        CompoundTag tag = new CompoundTag();
-        Tag subTag = this.valueType.serialize(value);
-        tag.put(this.key, subTag);
-
-        return ValueTranslators.TRANSLATOR_NBT.translateCompoundTag(context, tag, exceptionFactory, getMethods(), value);
+        return context.asValue(new ValueObjectProxyObject<>(context, exceptionFactory, this.key, getMethods(), this.valueType, value));
     }
 
     @Override
@@ -106,9 +99,9 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
         // Unwrap the value if it was translated in the opposite direction before.
         if (value.isProxyObject()) {
             try {
-                NbtCompoundTagProxyObject proxy = value.asProxyObject();
-                return (V) proxy.getValue();
-            } catch (ClassCastException classCastException) {
+                ValueObjectProxyObject proxyObject = value.asProxyObject();
+                return (V) proxyObject.getValue();
+            } catch (ClassCastException e) {
                 // Fallback to case below
             }
         }
