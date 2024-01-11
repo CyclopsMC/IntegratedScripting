@@ -30,6 +30,7 @@ public class LanguageHandlerJavaScript implements ILanguageHandler {
     public static final Style KEYWORD = Style.EMPTY.withColor(TextColor.fromRgb(Helpers.RGBToInt(167, 29, 93))); // Red-purple
 
     public final Map<String, Style> tokenStyles;
+    private final IScriptFactory scriptFactory;
 
     public LanguageHandlerJavaScript() {
         this.tokenStyles = Maps.newHashMap();
@@ -51,6 +52,8 @@ public class LanguageHandlerJavaScript implements ILanguageHandler {
         this.tokenStyles.put(".", SYMBOL);
         this.tokenStyles.put(";", SYMBOL);
         this.tokenStyles.put("=", SYMBOL);
+
+        this.scriptFactory = new GraalScriptFactory("js");
     }
 
     @Override
@@ -102,6 +105,6 @@ public class LanguageHandlerJavaScript implements ILanguageHandler {
 
     @Override
     public IScriptFactory getScriptFactory() throws EvaluationException {
-        return new GraalScriptFactory("js");
+        return this.scriptFactory;
     }
 }

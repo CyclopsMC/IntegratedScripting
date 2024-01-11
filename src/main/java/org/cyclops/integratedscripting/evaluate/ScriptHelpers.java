@@ -25,14 +25,15 @@ import java.util.function.Function;
  */
 public class ScriptHelpers {
 
+    private static final Engine ENGINE = Engine
+            .newBuilder()
+            .option("engine.WarnInterpreterOnly", "false")
+            .build();
+
     public static Context createBaseContext(@Nullable Function<Context.Builder, Context.Builder> contextBuilderModifier) {
-        Engine engine = Engine
-                .newBuilder()
-                .option("engine.WarnInterpreterOnly", "false")
-                .build();
         Context.Builder contextBuilder = Context
                 .newBuilder()
-                .engine(engine)
+                .engine(ENGINE)
 //                .allowAllAccess(true)
                 .allowCreateProcess(GeneralConfig.graalAllowCreateProcess)
                 .allowCreateThread(GeneralConfig.graalAllowCreateThread)
