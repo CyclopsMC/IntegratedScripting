@@ -1,12 +1,20 @@
 package org.cyclops.integratedscripting.evaluate.translation.translator;
 
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
+import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
+import org.cyclops.integrateddynamics.api.evaluate.operator.IOperatorSerializer;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IVariable;
 import org.cyclops.integrateddynamics.core.evaluate.operator.OperatorBase;
+import org.cyclops.integrateddynamics.core.evaluate.operator.Operators;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeOperator;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypes;
+import org.cyclops.integratedscripting.Reference;
 import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExceptionFactory;
 import org.cyclops.integratedscripting.api.evaluate.translation.IValueTranslator;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
@@ -92,8 +100,51 @@ public class ValueTranslatorOperator implements IValueTranslator<ValueTypeOperat
 
         @Override
         protected String getUnlocalizedType() {
-            return "graal";
+            return "integratedscript";
         }
+
+        @Override
+        protected String getModId() {
+            return Reference.MOD_ID;
+        }
+
+        public static class Serializer implements IOperatorSerializer<GraalOperator> {
+
+            @Override
+            public boolean canHandle(IOperator operator) {
+                return operator instanceof GraalOperator;
+            }
+
+            @Override
+            public ResourceLocation getUniqueName() {
+                return new ResourceLocation(Reference.MOD_ID, "graal");
+            }
+
+            @Override
+            public Tag serialize(GraalOperator operator) {
+                ListTag list = new ListTag();
+                for (int i = 0; i < operator.getInputTypes().length; i++) {
+                    list.add(StringTag.valueOf(operator.getInputTypes()[i].getUniqueName().toString()));
+                }
+                return list;
+            }
+
+            @Override
+            public GraalOperator deserialize(Tag value) throws EvaluationException {
+                ListTag listTag = (ListTag) value;
+                IValueType[] inputTypes = new IValueType[listTag.size()];
+                for (int i = 0; i < listTag.size(); i++) {
+                    inputTypes[i] = ValueTypes.REGISTRY.getValueType(new ResourceLocation(listTag.getString(i)));
+                }
+                return new GraalOperator(inputTypes, (variables) -> {
+                    throw new EvaluationException(Component.translatable("operator.integratedscripting.error.no_graal_serialization"));
+                });
+            }
+        }
+    }
+
+    static {
+        Operators.REGISTRY.registerSerializer(new GraalOperator.Serializer());
     }
 
 }

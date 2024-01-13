@@ -13,12 +13,18 @@
   "gui.integratedscripting.error.invalid_member": "Select a valid function name or variable name inside the script editor to bind with.",
   "gui.integratedscripting.error.invalid_member.current": "Current selection: \"%s\"",
 
+  "_comment": "Value Type Translation",
   "valuetype.integratedscripting.error.translation.unknown_to_graal": "Could not find a translator from %s values to Graal.",
   "valuetype.integratedscripting.error.translation.unknown_to_graal_nbt": "Could not find a translator from %s values to Graal during NBT translation.",
   "valuetype.integratedscripting.error.translation.unknown_from_graal": "Could not find a translator from %s Graal values.",
   "valuetype.integratedscripting.error.translation.list_infinite": "Can not translate an infinite list into a scripting language.",
   "valuetype.integratedscripting.error.translation.nbt_unknown": "Can not translate NBT members of type %s.",
   "valuetype.integratedscripting.error.translation.nbt_unmatched": "Could not interpret the field %s as NBT.",
+
+  "_comment": "Operators",
+  "operator.integratedscripting.integratedscript.basename": "Integrated Script %s",
+  "operator.integratedscripting.integratedscript.graal": "Graal Function",
+  "operator.integratedscripting.error.no_graal_serialization": "Integrated Scripts can not be serialized",
 
   "_comment": "Script Variable",
   "script.integratedscripting.tooltip.disk": "§e§oDisk ID: §r§o%s",
