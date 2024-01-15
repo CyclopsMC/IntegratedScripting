@@ -79,13 +79,13 @@ public class TypeScriptTypingsGenerator {
 
     private void handleDescriptionComment(StringBuilder sb, String unlocalizedKey) {
         DistExecutor.callWhenOn(Dist.CLIENT, () -> () -> {
-            sb.append("  /**\n");
-            sb.append("   * ");
             if (I18n.exists(unlocalizedKey)) {
+                sb.append("  /**\n");
+                sb.append("   * ");
                 sb.append(L10NHelpers.localize(unlocalizedKey));
+                sb.append("\n");
+                sb.append("   */\n");
             }
-            sb.append("\n");
-            sb.append("   */\n");
             return null;
         });
     }
