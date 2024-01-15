@@ -39,6 +39,10 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
         this.valueType = valueType;
     }
 
+    public String getKey() {
+        return key;
+    }
+
     @Override
     public IValueType<?> getValueType() {
         return this.valueType;

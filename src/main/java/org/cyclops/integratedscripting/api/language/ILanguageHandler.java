@@ -27,4 +27,6 @@ public interface ILanguageHandler {
 
     public IScriptFactory getScriptFactory() throws EvaluationException;
 
+    public void onServerStarted();
+
 }

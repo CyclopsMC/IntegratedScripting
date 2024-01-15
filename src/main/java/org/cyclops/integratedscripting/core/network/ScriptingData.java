@@ -56,6 +56,10 @@ public class ScriptingData implements IScriptingData {
         this.rootPath = rootDirectory;
     }
 
+    public Path getRootPath() {
+        return rootPath;
+    }
+
     public void tick() {
         // Initialize once
         if (!this.initialized) {

@@ -4,15 +4,21 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.cyclops.cyclopscore.client.gui.image.IImage;
 import org.cyclops.cyclopscore.helper.Helpers;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
+import org.cyclops.integratedscripting.IntegratedScripting;
+import org.cyclops.integratedscripting.Reference;
 import org.cyclops.integratedscripting.api.language.ILanguageHandler;
 import org.cyclops.integratedscripting.api.network.IScriptFactory;
 import org.cyclops.integratedscripting.client.gui.image.ScriptImages;
 import org.cyclops.integratedscripting.core.network.GraalScriptFactory;
 
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
@@ -106,5 +112,19 @@ public class LanguageHandlerJavaScript implements ILanguageHandler {
     @Override
     public IScriptFactory getScriptFactory() throws EvaluationException {
         return this.scriptFactory;
+    }
+
+    @Override
+    public void onServerStarted() {
+        this.generateTypeScriptTypes();
+    }
+
+    private void generateTypeScriptTypes() {
+        Path path = IntegratedScripting._instance.scriptingData.getRootPath().resolve(Reference.MOD_ID + ".d.ts");
+        try {
+            FileUtils.write(path.toFile(), new TypeScriptTypingsGenerator().generate(), StandardCharsets.UTF_8);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 }
