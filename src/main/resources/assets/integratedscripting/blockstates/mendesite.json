@@ -1,0 +1,5 @@
+{
+  "variants": {
+    "": { "model": "integratedscripting:block/mendesite" }
+  }
+}

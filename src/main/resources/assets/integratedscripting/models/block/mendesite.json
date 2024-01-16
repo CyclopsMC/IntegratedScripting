@@ -1,0 +1,33 @@
+{
+    "render_type": "minecraft:translucent",
+    "parent": "block/block",
+    "textures": {
+        "particle": "integratedscripting:block/mendesite",
+        "texture": "integratedscripting:block/mendesite",
+        "textureandesite": "block/andesite"
+    },
+    "elements": [
+        {   "from": [ 1, 1, 1 ],
+            "to": [ 15, 15, 15 ],
+            "faces": {
+                "down":  { "uv": [ 1, 1, 15, 15 ], "texture": "#textureandesite" },
+                "up":    { "uv": [ 1, 1, 15, 15 ], "texture": "#textureandesite" },
+                "north": { "uv": [ 1, 1, 15, 15 ], "texture": "#textureandesite" },
+                "south": { "uv": [ 1, 1, 15, 15 ], "texture": "#textureandesite" },
+                "west":  { "uv": [ 1, 1, 15, 15 ], "texture": "#textureandesite" },
+                "east":  { "uv": [ 1, 1, 15, 15 ], "texture": "#textureandesite" }
+            }
+        },
+        {   "from": [ 0, 0, 0 ],
+            "to": [ 16, 16, 16 ],
+            "faces": {
+                "down":  { "uv": [ 0, 0, 16, 16 ], "texture": "#texture", "cullface": "down" },
+                "up":    { "uv": [ 0, 0, 16, 16 ], "texture": "#texture", "cullface": "up" },
+                "north": { "uv": [ 0, 0, 16, 16 ], "texture": "#texture", "cullface": "north" },
+                "south": { "uv": [ 0, 0, 16, 16 ], "texture": "#texture", "cullface": "south" },
+                "west":  { "uv": [ 0, 0, 16, 16 ], "texture": "#texture", "cullface": "west" },
+                "east":  { "uv": [ 0, 0, 16, 16 ], "texture": "#texture", "cullface": "east" }
+            }
+        }
+    ]
+}

@@ -2,6 +2,9 @@
   "_comment": "General",
   "itemGroup.integratedscripting": "Integrated Scripting",
 
+  "_comment": "Blocks",
+  "block.integratedscripting.mendesite": "Mendesite",
+
   "_comment": "Gui",
   "gui.integratedscripting.disk": "Disk",
   "gui.integratedscripting.script": "Script",
