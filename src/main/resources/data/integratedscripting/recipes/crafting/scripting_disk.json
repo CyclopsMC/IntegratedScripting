@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    " V ",
+    "VMV",
+    " V "
+  ],
+  "key": {
+    "V": {
+      "item": "integrateddynamics:variable"
+    },
+    "M": {
+      "item": "integratedscripting:mendesite"
+    }
+  },
+  "result": {
+    "item": "integratedscripting:scripting_disk",
+    "count": 8
+  }
+}

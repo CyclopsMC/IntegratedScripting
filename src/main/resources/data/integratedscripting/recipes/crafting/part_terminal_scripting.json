@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "RMR",
+    "VDW",
+    "R R"
+  ],
+  "key": {
+    "R": {
+      "tag": "forge:dusts/redstone"
+    },
+    "M": {
+      "item": "integratedscripting:mendesite"
+    },
+    "V": {
+      "item": "integrateddynamics:variable_transformer_output"
+    },
+    "D": {
+      "item": "integrateddynamics:part_display_panel"
+    },
+    "W": {
+      "item": "integrateddynamics:variable_transformer_input"
+    }
+  },
+  "result": {
+    "item": "integratedscripting:part_terminal_scripting"
+  }
+}
