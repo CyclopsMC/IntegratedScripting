@@ -5,4 +5,64 @@
         <paragraph>info_book.integratedscripting.introduction.text2</paragraph>
         <paragraph>info_book.integratedscripting.introduction.text3</paragraph>
     </section>
+
+    <section name="info_book.integratedscripting.materials">
+        <tag>integratedscripting:mendesite</tag>
+        <paragraph>info_book.integratedscripting.materials.text1</paragraph>
+        <appendix type="integrateddynamics:drying_basin">integratedscripting:drying_basin/mendesite</appendix>
+        <appendix type="integrateddynamics:mechanical_drying_basin">integratedscripting:mechanical_drying_basin/mendesite</appendix>
+    </section>
+
+    <section name="info_book.integratedscripting.concepts">
+        <paragraph>info_book.integratedscripting.concepts.text1</paragraph>
+        <paragraph>info_book.integratedscripting.concepts.text2</paragraph>
+        <paragraph>info_book.integratedscripting.concepts.text3</paragraph>
+        <paragraph>info_book.integratedscripting.concepts.text4</paragraph>
+        <paragraph>info_book.integratedscripting.concepts.text5</paragraph>
+    </section>
+
+    <section name="info_book.integratedscripting.disk">
+        <tag>integratedscripting:scripting_disk</tag>
+        <paragraph>info_book.integratedscripting.disk.text1</paragraph>
+        <paragraph>info_book.integratedscripting.disk.text2</paragraph>
+        <paragraph>info_book.integratedscripting.disk.text3</paragraph>
+        <paragraph>info_book.integratedscripting.disk.text4</paragraph>
+        <appendix type="minecraft:crafting">integratedscripting:crafting/scripting_disk</appendix>
+    </section>
+
+    <section name="info_book.integratedscripting.drive">
+        <tag>integratedscripting:scripting_drive</tag>
+        <paragraph>info_book.integratedscripting.drive.text1</paragraph>
+        <paragraph>info_book.integratedscripting.drive.text2</paragraph>
+        <appendix type="minecraft:crafting">integratedscripting:crafting/scripting_drive</appendix>
+    </section>
+
+    <section name="info_book.integratedscripting.terminal">
+        <tag>integratedscripting:part_terminal_scripting</tag>
+        <paragraph>info_book.integratedscripting.terminal.text1</paragraph>
+        <paragraph>info_book.integratedscripting.terminal.text2</paragraph>
+        <paragraph>info_book.integratedscripting.terminal.text3</paragraph>
+        <paragraph>info_book.integratedscripting.terminal.text4</paragraph>
+        <paragraph>info_book.integratedscripting.terminal.text5</paragraph>
+        <paragraph>info_book.integratedscripting.terminal.text6</paragraph>
+        <paragraph>info_book.integratedscripting.terminal.text7</paragraph>
+        <paragraph>info_book.integratedscripting.terminal.text8</paragraph>
+        <paragraph>info_book.integratedscripting.terminal.text9</paragraph>
+        <paragraph>info_book.integratedscripting.terminal.text10</paragraph>
+        <paragraph>info_book.integratedscripting.terminal.text11</paragraph>
+        <paragraph>info_book.integratedscripting.terminal.text12</paragraph>
+        <appendix type="minecraft:crafting">integratedscripting:crafting/part_terminal_scripting</appendix>
+    </section>
+
+    <section name="info_book.integratedscripting.writing">
+        <section name="info_book.integratedscripting.writing.variables">
+            <paragraph>info_book.integratedscripting.writing.variables.text1</paragraph>
+            <paragraph>info_book.integratedscripting.writing.variables.text2</paragraph>
+        </section>
+
+        <section name="info_book.integratedscripting.writing.functions">
+            <paragraph>info_book.integratedscripting.writing.functions.text1</paragraph>
+            <paragraph>info_book.integratedscripting.writing.functions.text2</paragraph>
+        </section>
+    </section>
 </section>

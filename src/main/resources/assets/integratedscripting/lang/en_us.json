@@ -60,7 +60,52 @@
   "info_book.integratedscripting.section.main": "Scripting",
 
   "info_book.integratedscripting.introduction": "Introduction",
-  "info_book.integratedscripting.introduction.text1": "TODO",
-  "info_book.integratedscripting.introduction.text2": "TODO",
-  "info_book.integratedscripting.introduction.text3": "TODO"
+  "info_book.integratedscripting.introduction.text1": "&lIntegrated Scripting&r is an extension to &lIntegrated Dynamics&r for creating scripts to handle operations in &lIntegrated Dynamics&r networks. By default, this mod ships with support for the JavaScript scripting language.",
+  "info_book.integratedscripting.introduction.text2": "It allows you to define &lIntegrated Dynamics&r logic operations using a convenient scripting syntax instead of the standard visual variable card-based method, which can become cumbersome for advanced chains of operations.",
+  "info_book.integratedscripting.introduction.text3": "For example, it allows you to easily define complex item list filters such as &o\"items that are damageable, are owned by mod X, and correspond to blocks that can be only mined with a diamond pickaxe.\"&r. Or &o\"get the item in this list with the second-largest stack size.\"&r",
+  "info_book.integratedscripting.introduction.text4": "Basic programming knowledge is recommended when using this mod, but may be learnable through the tutorials later in this book.",
+
+  "info_book.integratedscripting.materials": "Materials",
+  "info_book.integratedscripting.materials.text1": "Before getting started with scripting, you will need some &lMendesite&r blocks. These blocks are very malleable, and form a good basis for the storage and handling of scripts. &lMendesite&r is created by combining &lMenril Resin&r and &lAndesite&r in a &lDrying Basin&r.",
+
+  "info_book.integratedscripting.concepts": "Concepts",
+  "info_book.integratedscripting.concepts.text1": "Editing, storing, and serving scripts to the network requires 3 elements: the &lScripting Terminal&r, &lScripting Disk&r, and &lScripting Drive&r",
+  "info_book.integratedscripting.concepts.text2": "The &lScripting Disk&r is used to store raw script contents, but can not do anything on its own.",
+  "info_book.integratedscripting.concepts.text3": "The &lScripting Drive&r allows you to insert a single &lScripting Disk&r, which will expose its contents to the network.",
+  "info_book.integratedscripting.concepts.text4": "The &lScripting Terminal&r allows you to view, manage, and edit all scripts in the current network that are exposed by &lScripting Drives&r.",
+  "info_book.integratedscripting.concepts.text5": "Each of these elements will be discussed in more detail hereafter.",
+
+  "info_book.integratedscripting.disk": "Scripting Disk",
+  "info_book.integratedscripting.disk.text1": "&lScripting Disks&r are responsible for storing scripts, and are to be inserted into &lScripting Drives&r. They can be created by combining some &lVariable Cards&r with &lMendesite&r.",
+  "info_book.integratedscripting.disk.text2": "Once a &lScripting Disk&r has been inserted into a &lScripting Drive&r, they will obtain a unique numerical identifier. This identifier will be used to modify scripts on this disk from within the &lScripting Terminal&r. The identifier is also used to link script elements to &lVariable Cards&r.",
+  "info_book.integratedscripting.disk.text3": "A &lScripting Disk&r can safely be moved to another &lScripting Disk&r without loss of script data, even when on a different network. &lVariable Cards&r that refer to this script's identifier will however start throwing errors when not on the same network anymore.",
+  "info_book.integratedscripting.disk.text4": "A &lScripting Disk&r has no limit in terms of its storage size, but splitting up scripts across multiple disks is recommended for management reasons.",
+
+  "info_book.integratedscripting.drive": "Scripting Drive",
+  "info_book.integratedscripting.drive.text1": "Each &lScripting Drive&r is a block that is connected to your &lIntegrated Dynamics&r network that accepts a single &lScripting Disk&r, which allows the disk's script contents to be exposed to the network.",
+  "info_book.integratedscripting.drive.text2": "It is crafted by combining a &lVariable Store&r and &lJukebox&r with some &lScripting Disks&r.",
+
+  "info_book.integratedscripting.terminal": "Scripting Terminal",
+  "info_book.integratedscripting.terminal.text1": "The &lScripting Terminal&r is a part that must be connected to your &lIntegrated Dynamics&r network to manage the scripts stored in the &lScripting Disks&r of this network.",
+  "info_book.integratedscripting.terminal.text2": "When right-clicking on a placed terminal, a simplified &oIntegrated Development Environment&r (IDE) will be shown using which you can edit scripts.",
+  "info_book.integratedscripting.terminal.text3": "On the top-left side of the screen, you can select the identifier of a &lScripting Disk&r that is connected to the network, after which all script files stored in this disk will be shown in the script file list below.",
+  "info_book.integratedscripting.terminal.text4": "If the disk does not contain any script files yet, you can create them by clicking on the \"+\"-button on the bottom-left side of the screen.",
+  "info_book.integratedscripting.terminal.text5": "The script file list on the left-hand side of the screen is used to select a script for editing. When clicking on a script, its editable contents will show up on the right-hand-side of the screen.",
+  "info_book.integratedscripting.terminal.text6": "The text field on the right-hand side of the screen allows you to edit the contents of script files, which will be saved automatically after each modification.",
+  "info_book.integratedscripting.terminal.text7": "While the editor will perform limited syntax highlighting, it is not able to detect syntax errors at this time. Syntax errors will be reported when executing scripts via &lVariable Cards&r.",
+  "info_book.integratedscripting.terminal.text8": "In order to use a script member as &lIntegrated Dynamics&r logic, you can bind it to a &lVariable Cards&r.",
+  "info_book.integratedscripting.terminal.text9": "You can do this by first selecting a script member in the text editor by selecting it with your cursor, such as a variable name or function name.",
+  "info_book.integratedscripting.terminal.text10": "After that, you can insert a &lVariable Card&r into the slot on the right-hand side of the screen to bind it to this script member.",
+  "info_book.integratedscripting.terminal.text11": "This &lVariable Card&r can now be used elsewhere in the network, by for example showing a variable member inside a &lDisplay Panel&r, or by using a function member as operator in an item list filter.",
+  "info_book.integratedscripting.terminal.text12": "The next chapter will provide more details on how to write scripts.",
+
+  "info_book.integratedscripting.writing": "Writing Scripts",
+
+  "info_book.integratedscripting.writing.variables": "Constants and Variables",
+  "info_book.integratedscripting.writing.variables.text1": "TODO",
+  "info_book.integratedscripting.writing.variables.text2": "TODO",
+
+  "info_book.integratedscripting.writing.functions": "Functions",
+  "info_book.integratedscripting.writing.functions.text1": "TODO",
+  "info_book.integratedscripting.writing.functions.text2": "TODO"
 }
