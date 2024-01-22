@@ -101,11 +101,26 @@
 
   "info_book.integratedscripting.writing": "Writing Scripts",
 
+  "info_book.integratedscripting.writing.js": "JavaScript",
+  "info_book.integratedscripting.writing.js.text1": "Scripts can be written in the JavaScript syntax. All features allowed by ECMAScript (ECMA-262) are available.",
+  "info_book.integratedscripting.writing.js.text2": "Note that Node.js-specific functionality such as &orequire&r and &ofs&r is not available. If you're used to developing Node.js applications, you can make them compatible using external tools such as Webpack.",
+
   "info_book.integratedscripting.writing.variables": "Constants and Variables",
-  "info_book.integratedscripting.writing.variables.text1": "TODO",
-  "info_book.integratedscripting.writing.variables.text2": "TODO",
+  "info_book.integratedscripting.writing.variables.text1": "All Integrated Dynamics value types that you're used to (such as &6Integers&0, &9Booleans&0, &8Items&0, ...) are available in JavaScript, and vice versa.",
+  "info_book.integratedscripting.writing.variables.text2": "The most straightforward way to create a value in JavaScript and make it available in a static &lVariable Card&r value, is by defining a variable member in JavaScript using &olet&r or &oconst&r.",
+  "info_book.integratedscripting.writing.variables.text3": "&olet&r defines variables that are re-assignable later in the script, such as counters. &oconst&r defines variables that can not be re-assigned.",
+  "info_book.integratedscripting.writing.variables.text4": "In order to use this value in a &lVariable Card&r, you need to select the variable member name inside the Scripting Terminal text editor, and then insert an empty &lVariable Card&r in the right-hand slot. You can now use this &lVariable Card&r as you're used to, such as visualizing its value in a &lDisplay Panel&r.",
+  "info_book.integratedscripting.writing.variables.text5": "Creating variables via JavaScript is mainly useful if you need to create complex values that are not easy to create using the &lLogic Programmer&r, such as long &4Strings&0 with a specific value.",
 
   "info_book.integratedscripting.writing.functions": "Functions",
   "info_book.integratedscripting.writing.functions.text1": "TODO",
-  "info_book.integratedscripting.writing.functions.text2": "TODO"
+  "info_book.integratedscripting.writing.functions.text2": "TODO",
+
+  "info_book.integratedscripting.writing.methods": "Object value methods",
+  "info_book.integratedscripting.writing.methods.text1": "TODO",
+  "info_book.integratedscripting.writing.methods.text2": "TODO",
+
+  "info_book.integratedscripting.writing.globals": "Global values",
+  "info_book.integratedscripting.writing.globals.text1": "TODO",
+  "info_book.integratedscripting.writing.globals.text2": "TODO"
 }

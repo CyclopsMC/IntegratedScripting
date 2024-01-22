@@ -55,14 +55,41 @@
     </section>
 
     <section name="info_book.integratedscripting.writing">
+        <section name="info_book.integratedscripting.writing.js">
+            <paragraph>info_book.integratedscripting.writing.js.text1</paragraph>
+        </section>
+
         <section name="info_book.integratedscripting.writing.variables">
             <paragraph>info_book.integratedscripting.writing.variables.text1</paragraph>
             <paragraph>info_book.integratedscripting.writing.variables.text2</paragraph>
+            <paragraph>info_book.integratedscripting.writing.variables.text3</paragraph>
+            <paragraph>info_book.integratedscripting.writing.variables.text4</paragraph>
+            <paragraph>info_book.integratedscripting.writing.variables.text5</paragraph>
+            <appendix type="textfield" scale="0.8">const myBoolean = true;
+
+let myInt = 123 + 456;
+
+let myString = "";
+for (let i = 0; i &lt; 50; i++) {
+  myString =+ ".";
+}
+
+const myList = [ 1, 1, 2, 3, 5 ];</appendix>
         </section>
 
         <section name="info_book.integratedscripting.writing.functions">
             <paragraph>info_book.integratedscripting.writing.functions.text1</paragraph>
             <paragraph>info_book.integratedscripting.writing.functions.text2</paragraph>
+        </section>
+
+        <section name="info_book.integratedscripting.writing.methods">
+            <paragraph>info_book.integratedscripting.writing.methods.text1</paragraph>
+            <paragraph>info_book.integratedscripting.writing.methods.text2</paragraph>
+        </section>
+
+        <section name="info_book.integratedscripting.writing.globals">
+            <paragraph>info_book.integratedscripting.writing.globals.text1</paragraph>
+            <paragraph>info_book.integratedscripting.writing.globals.text2</paragraph>
         </section>
     </section>
 </section>
