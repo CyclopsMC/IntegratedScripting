@@ -80,16 +80,38 @@ const myList = [ 1, 1, 2, 3, 5 ];</appendix>
         <section name="info_book.integratedscripting.writing.functions">
             <paragraph>info_book.integratedscripting.writing.functions.text1</paragraph>
             <paragraph>info_book.integratedscripting.writing.functions.text2</paragraph>
-        </section>
+            <paragraph>info_book.integratedscripting.writing.functions.text3</paragraph>
+            <paragraph>info_book.integratedscripting.writing.functions.text4</paragraph>
+            <paragraph>info_book.integratedscripting.writing.functions.text5</paragraph>
+            <paragraph>info_book.integratedscripting.writing.functions.text6</paragraph>
+            <appendix type="textfield" scale="0.8">function isEven(value) {
+  return value % 2 === 0;
+}
 
-        <section name="info_book.integratedscripting.writing.methods">
-            <paragraph>info_book.integratedscripting.writing.methods.text1</paragraph>
-            <paragraph>info_book.integratedscripting.writing.methods.text2</paragraph>
+const isOdd = (value) => value % 2 !== 0;</appendix>
+            <appendix type="textfield" scale="0.8">function fibonacci(limit) {
+  const values = [];
+  let n1 = 0;
+  let n2 = 1;
+  let nextTerm = 0;
+  for (let i = 1; i &lt;= number; i++) {
+    values.push(n1);
+    nextTerm = n1 + n2;
+    n1 = n2;
+    n2 = nextTerm;
+  }
+  return values;
+}</appendix>
         </section>
 
         <section name="info_book.integratedscripting.writing.globals">
             <paragraph>info_book.integratedscripting.writing.globals.text1</paragraph>
             <paragraph>info_book.integratedscripting.writing.globals.text2</paragraph>
+        </section>
+
+        <section name="info_book.integratedscripting.writing.methods">
+            <paragraph>info_book.integratedscripting.writing.methods.text1</paragraph>
+            <paragraph>info_book.integratedscripting.writing.methods.text2</paragraph>
         </section>
     </section>
 </section>
