@@ -102,7 +102,7 @@
   "info_book.integratedscripting.writing": "Writing Scripts",
 
   "info_book.integratedscripting.writing.js": "JavaScript",
-  "info_book.integratedscripting.writing.js.text1": "Scripts can be written in the JavaScript syntax. All features allowed by ECMAScript (ECMA-262) are available.",
+  "info_book.integratedscripting.writing.js.text1": "This mod allows scripts to be written in the JavaScript syntax. All features allowed by ECMAScript (ECMA-262) are available.",
   "info_book.integratedscripting.writing.js.text2": "Note that Node.js-specific functionality such as &orequire&r and &ofs&r is not available. If you're used to developing Node.js applications, you can make them compatible using external tools such as Webpack.",
 
   "info_book.integratedscripting.writing.variables": "Constants and Variables",
@@ -120,13 +120,16 @@
   "info_book.integratedscripting.writing.functions.text5": "For example, you can create a function with a single &8Item&0 argument that returns a &9Boolean&0 to use as filter &2Operator&0 for filtering a list of items that you read from a Chest.",
   "info_book.integratedscripting.writing.functions.text6": "Below, you can find examples of different types of functions that could be created.",
 
-  "info_book.integratedscripting.writing.globals": "Global operators",
+  "info_book.integratedscripting.writing.globals": "Global functions",
   "info_book.integratedscripting.writing.globals.text1": "When writing JavaScript code, you can make use of the global &oidContext&r variable to access all Integrated Dynamics operators as functions through the &oops&r field. This allows you to make use of built-in operators when creating new ones.",
   "info_book.integratedscripting.writing.globals.text2": "For example, you can write an &8Item&0 filter that checks if an item is stackable and if it has a stack size of at least 16, as shown below.",
   "info_book.integratedscripting.writing.globals.text3": "To know what the name is of the operator you want to execute, you can look at their global name via the operator tooltips inside the &lLogic Programmer&r or in the list of operators in the Logic Programming section of this book.",
   "info_book.integratedscripting.writing.globals.text4": "Since invoking operators via &oidContext&r can become quite verbose, you can choose to store operators in a custom constant variable, as shown in the second example. Alternatively, you can make use of &oobject methods&r, which are discussed in the next section.",
 
   "info_book.integratedscripting.writing.methods": "Object methods",
-  "info_book.integratedscripting.writing.methods.text1": "TODO",
-  "info_book.integratedscripting.writing.methods.text2": "TODO"
+  "info_book.integratedscripting.writing.methods.text1": "To counter the verbosity of global functions, you can write code more compactly using &lobject methods&r.",
+  "info_book.integratedscripting.writing.methods.text2": "Object value types such as &8Blocks&0, &8Items&0, &8Fluids&0, ... will have &lmethods&r attached to them when used in JavaScript.",
+  "info_book.integratedscripting.writing.methods.text3": "Object methods are just plain functions, but their first argument is tied to the object value.",
+  "info_book.integratedscripting.writing.methods.text4": "For example, the global function &oitemstackStackable&r takes a single &8Item&0 argument and outputs a &9Boolean&0. This function is available as a method on &8Item&0 values via the name &ostackable&r, which takes zero arguments.",
+  "info_book.integratedscripting.writing.methods.text5": "Global functions that accept two or more arguments will be available as method on object values, with all arguments shifted by one. For example, the global function &oitemstackStrength&r accepts an &8Item&0 and a &8Block&0 argument, but is also available as method on &8Items&0 with a single &8Block&0 argument."
 }

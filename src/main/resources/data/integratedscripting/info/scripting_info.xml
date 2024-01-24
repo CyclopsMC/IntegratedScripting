@@ -112,8 +112,7 @@ const isOdd = (value) => value % 2 !== 0;</appendix>
             <appendix type="textfield" scale="0.8">function filterItem(item) {
   return idContext.ops.itemstackStackable(item) &amp;&amp; idContext.ops.itemstackStacksize(item) >= 16;
 }</appendix>
-            <appendix type="textfield" scale="0.8">
-const stackable = idContext.ops.itemstackStackable;
+            <appendix type="textfield" scale="0.8">const stackable = idContext.ops.itemstackStackable;
 const stacksize = idContext.ops.itemstackStacksize;
 function filterItemCompact(item) {
   return stackable(item) &amp;&amp; stacksize(item) >= 16;
@@ -123,6 +122,15 @@ function filterItemCompact(item) {
         <section name="info_book.integratedscripting.writing.methods">
             <paragraph>info_book.integratedscripting.writing.methods.text1</paragraph>
             <paragraph>info_book.integratedscripting.writing.methods.text2</paragraph>
+            <paragraph>info_book.integratedscripting.writing.methods.text3</paragraph>
+            <paragraph>info_book.integratedscripting.writing.methods.text4</paragraph>
+            <paragraph>info_book.integratedscripting.writing.methods.text5</paragraph>
+            <appendix type="textfield" scale="0.8">function filterItemMethods(item) {
+  return item.stackable() &amp;&amp; item.stacksize() >= 16;
+}</appendix>
+            <appendix type="textfield" scale="0.8">function filterItemMethods2(item, block) {
+  return item.strength(block) > 10;
+}</appendix>
         </section>
     </section>
 </section>
