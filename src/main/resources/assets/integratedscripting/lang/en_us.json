@@ -131,5 +131,19 @@
   "info_book.integratedscripting.writing.methods.text2": "Object value types such as &8Blocks&0, &8Items&0, &8Fluids&0, ... will have &lmethods&r attached to them when used in JavaScript.",
   "info_book.integratedscripting.writing.methods.text3": "Object methods are just plain functions, but their first argument is tied to the object value.",
   "info_book.integratedscripting.writing.methods.text4": "For example, the global function &oitemstackStackable&r takes a single &8Item&0 argument and outputs a &9Boolean&0. This function is available as a method on &8Item&0 values via the name &ostackable&r, which takes zero arguments.",
-  "info_book.integratedscripting.writing.methods.text5": "Global functions that accept two or more arguments will be available as method on object values, with all arguments shifted by one. For example, the global function &oitemstackStrength&r accepts an &8Item&0 and a &8Block&0 argument, but is also available as method on &8Items&0 with a single &8Block&0 argument."
+  "info_book.integratedscripting.writing.methods.text5": "Global functions that accept two or more arguments will be available as method on object values, with all arguments shifted by one. For example, the global function &oitemstackStrength&r accepts an &8Item&0 and a &8Block&0 argument, but is also available as method on &8Items&0 with a single &8Block&0 argument.",
+
+  "info_book.integratedscripting.advanced": "Advanced",
+
+  "info_book.integratedscripting.advanced.transient_storage": "Transient Storage",
+  "info_book.integratedscripting.advanced.transient_storage.text1": "TODO",
+
+  "info_book.integratedscripting.advanced.remote_editing": "Remote Editing",
+  "info_book.integratedscripting.advanced.remote_editing.text1": "TODO",
+
+  "info_book.integratedscripting.advanced.logging": "Logging",
+  "info_book.integratedscripting.advanced.logging.text1": "TODO",
+
+  "info_book.integratedscripting.advanced.typescript": "TypeScript",
+  "info_book.integratedscripting.advanced.typescript.text1": "TODO"
 }

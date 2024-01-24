@@ -133,4 +133,22 @@ function filterItemCompact(item) {
 }</appendix>
         </section>
     </section>
+
+    <section name="info_book.integratedscripting.advanced">
+        <section name="info_book.integratedscripting.advanced.transient_storage">
+            <paragraph>info_book.integratedscripting.advanced.transient_storage.text1</paragraph>
+        </section>
+
+        <section name="info_book.integratedscripting.advanced.remote_editing">
+            <paragraph>info_book.integratedscripting.advanced.remote_editing.text1</paragraph>
+        </section>
+
+        <section name="info_book.integratedscripting.advanced.logging">
+            <paragraph>info_book.integratedscripting.advanced.logging.text1</paragraph>
+        </section>
+
+        <section name="info_book.integratedscripting.advanced.typescript">
+            <paragraph>info_book.integratedscripting.advanced.typescript.text1</paragraph>
+        </section>
+    </section>
 </section>
