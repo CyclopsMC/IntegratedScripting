@@ -158,5 +158,8 @@
   "info_book.integratedscripting.advanced.logging.text6": "To avoid log files to become too large, they are capped in their size. By default, they are limited to 2096 lines. Consult your server admin if you are in need of more lines.",
 
   "info_book.integratedscripting.advanced.typescript": "TypeScript",
-  "info_book.integratedscripting.advanced.typescript.text1": "TODO"
+  "info_book.integratedscripting.advanced.typescript.text1": "The TypeScript language is a well-known superset of the JavaScript language that adds typing support. This allows developers to write type-safe JavaScript, by defining the types of variables and functions.",
+  "info_book.integratedscripting.advanced.typescript.text2": "While Integrated Scripting only supports pure JavaScript, a TypeScript &otypings file&r is available for all available global functions, value types, and their methods.",
+  "info_book.integratedscripting.advanced.typescript.text3": "When editing your scripts through an external IDE, this typings file could be loaded to create type-safe scripts. This is only recommended if you know TypeScript and know how to use it.",
+  "info_book.integratedscripting.advanced.typescript.text4": "The typings file is available at &oworld/integratedscripting/integratedscripting.d.ts&r (see &osaves/&r for singleplayer worlds). This file is automatically re-generated upon every world restart, so you should not manually adjust this file."
 }

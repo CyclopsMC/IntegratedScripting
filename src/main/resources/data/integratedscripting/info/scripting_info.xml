@@ -178,6 +178,9 @@ function getRunningAvg(value) {
 
         <section name="info_book.integratedscripting.advanced.typescript">
             <paragraph>info_book.integratedscripting.advanced.typescript.text1</paragraph>
+            <paragraph>info_book.integratedscripting.advanced.typescript.text2</paragraph>
+            <paragraph>info_book.integratedscripting.advanced.typescript.text3</paragraph>
+            <paragraph>info_book.integratedscripting.advanced.typescript.text4</paragraph>
         </section>
     </section>
 </section>
