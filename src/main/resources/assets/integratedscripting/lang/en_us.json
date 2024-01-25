@@ -144,7 +144,10 @@
   "info_book.integratedscripting.advanced.transient_storage.text6": "As such, you can not assume these values to always remain present. If you need persistent data storage, it is better to make use of the &lDelayer&r.",
 
   "info_book.integratedscripting.advanced.external_editing": "External Editing",
-  "info_book.integratedscripting.advanced.external_editing.text1": "TODO",
+  "info_book.integratedscripting.advanced.external_editing.text1": "If you have access to the file system on which your singleplayer or multiplayer game is running, you can access script files through any external editor. This allows you to create scripts using your favorite IDE (such as Vi, but definitely not Emacs).",
+  "info_book.integratedscripting.advanced.external_editing.text2": "Script files are accessible via the &oworld/integratedscripting/&r directory. In here, you will find directories for all &lScripting Disks&r by their id. Inside of each &lScripting Disk&r directory, you will find all script files stored in that disk.",
+  "info_book.integratedscripting.advanced.external_editing.text3": "You can safely modify these script files through an external editor, even if the game is running. After externally saving the file, they will be updated automatically in the game, and dependent variables will be updated as well.",
+  "info_book.integratedscripting.advanced.external_editing.text4": "If your external editor supports this (modern IDEs do), modifying a script file through the &lScripting Terminal&r will also cause the files to be updated in your external editor.",
 
   "info_book.integratedscripting.advanced.logging": "Logging",
   "info_book.integratedscripting.advanced.logging.text1": "TODO",
