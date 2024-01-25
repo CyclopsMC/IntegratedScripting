@@ -137,10 +137,26 @@ function filterItemCompact(item) {
     <section name="info_book.integratedscripting.advanced">
         <section name="info_book.integratedscripting.advanced.transient_storage">
             <paragraph>info_book.integratedscripting.advanced.transient_storage.text1</paragraph>
+            <paragraph>info_book.integratedscripting.advanced.transient_storage.text2</paragraph>
+            <paragraph>info_book.integratedscripting.advanced.transient_storage.text3</paragraph>
+            <paragraph>info_book.integratedscripting.advanced.transient_storage.text4</paragraph>
+            <paragraph>info_book.integratedscripting.advanced.transient_storage.text5</paragraph>
+            <paragraph>info_book.integratedscripting.advanced.transient_storage.text6</paragraph>
+            <appendix type="textfield" scale="0.8">let state = 0;
+function getAndIncr(value) {
+  return state += value;
+}</appendix>
+            <appendix type="textfield" scale="0.8">let sum = 0;
+let amount = 0;
+function getRunningAvg(value) {
+  amount++;
+  sum += value;
+  return sum / amount;
+}</appendix>
         </section>
 
-        <section name="info_book.integratedscripting.advanced.remote_editing">
-            <paragraph>info_book.integratedscripting.advanced.remote_editing.text1</paragraph>
+        <section name="info_book.integratedscripting.advanced.external_editing">
+            <paragraph>info_book.integratedscripting.advanced.external_editing.text1</paragraph>
         </section>
 
         <section name="info_book.integratedscripting.advanced.logging">

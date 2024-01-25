@@ -136,10 +136,15 @@
   "info_book.integratedscripting.advanced": "Advanced",
 
   "info_book.integratedscripting.advanced.transient_storage": "Transient Storage",
-  "info_book.integratedscripting.advanced.transient_storage.text1": "TODO",
+  "info_book.integratedscripting.advanced.transient_storage.text1": "Since Integrated Dynamics is based on functional programming principles, keeping track of states is mainly non-existent, except through external approaches such as the &lDelayer&r.",
+  "info_book.integratedscripting.advanced.transient_storage.text2": "As the JavaScript language offers a mix of both functional and imperative programming, keeping track of states becomes partially possible.",
+  "info_book.integratedscripting.advanced.transient_storage.text3": "Concretely, if you declare a mutable variable outside of functions (for example using &olet&r), you can modify its values through function invocations.",
+  "info_book.integratedscripting.advanced.transient_storage.text4": "This way, you can keep track of states, such as counting the number of function calls, or calculating the running average of specific values.",
+  "info_book.integratedscripting.advanced.transient_storage.text5": "An important catch to these variables is that their state is only transient. Concretely, this means that their values can be reset any time a variable card in the network is re-inserted, or when the server restarted.",
+  "info_book.integratedscripting.advanced.transient_storage.text6": "As such, you can not assume these values to always remain present. If you need persistent data storage, it is better to make use of the &lDelayer&r.",
 
-  "info_book.integratedscripting.advanced.remote_editing": "Remote Editing",
-  "info_book.integratedscripting.advanced.remote_editing.text1": "TODO",
+  "info_book.integratedscripting.advanced.external_editing": "External Editing",
+  "info_book.integratedscripting.advanced.external_editing.text1": "TODO",
 
   "info_book.integratedscripting.advanced.logging": "Logging",
   "info_book.integratedscripting.advanced.logging.text1": "TODO",
