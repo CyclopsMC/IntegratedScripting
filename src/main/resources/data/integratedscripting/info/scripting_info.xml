@@ -157,10 +157,23 @@ function getRunningAvg(value) {
 
         <section name="info_book.integratedscripting.advanced.external_editing">
             <paragraph>info_book.integratedscripting.advanced.external_editing.text1</paragraph>
+            <paragraph>info_book.integratedscripting.advanced.external_editing.text2</paragraph>
+            <paragraph>info_book.integratedscripting.advanced.external_editing.text3</paragraph>
+            <paragraph>info_book.integratedscripting.advanced.external_editing.text4</paragraph>
         </section>
 
         <section name="info_book.integratedscripting.advanced.logging">
             <paragraph>info_book.integratedscripting.advanced.logging.text1</paragraph>
+            <paragraph>info_book.integratedscripting.advanced.logging.text2</paragraph>
+            <paragraph>info_book.integratedscripting.advanced.logging.text3</paragraph>
+            <paragraph>info_book.integratedscripting.advanced.logging.text4</paragraph>
+            <paragraph>info_book.integratedscripting.advanced.logging.text5</paragraph>
+            <paragraph>info_book.integratedscripting.advanced.logging.text6</paragraph>
+            <appendix type="textfield" scale="0.8">function myComplexFunc(value) {
+  console.log('Hello world!');
+  console.log(`I received value ${value}`);
+  return value + 42;
+}</appendix>
         </section>
 
         <section name="info_book.integratedscripting.advanced.typescript">
