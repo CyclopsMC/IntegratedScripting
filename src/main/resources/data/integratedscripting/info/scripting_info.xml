@@ -19,6 +19,7 @@
         <paragraph>info_book.integratedscripting.concepts.text3</paragraph>
         <paragraph>info_book.integratedscripting.concepts.text4</paragraph>
         <paragraph>info_book.integratedscripting.concepts.text5</paragraph>
+        <appendix type="image" width="71" height="67">integratedscripting:textures/gui/infobook/scriptingnetwork.png</appendix>
     </section>
 
     <section name="info_book.integratedscripting.disk">
