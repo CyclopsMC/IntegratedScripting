@@ -133,6 +133,10 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
                 .registerSection(this,
                         OnTheDynamicsOfIntegrationBook.getInstance(), "info_book.integrateddynamics.manual",
                         "/data/" + Reference.MOD_ID + "/info/scripting_info.xml");
+        IntegratedDynamics._instance.getRegistryManager().getRegistry(IInfoBookRegistry.class)
+                .registerSection(this,
+                        OnTheDynamicsOfIntegrationBook.getInstance(), "info_book.integrateddynamics.tutorials",
+                        "/data/" + Reference.MOD_ID + "/info/scripting_tutorials.xml");
     }
 
     @Override

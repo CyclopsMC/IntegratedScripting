@@ -1,0 +1,37 @@
+{
+  "display": {
+    "icon": {
+      "item": "integratedscripting:scripting_disk"
+    },
+    "title": {
+      "translate": "itemGroup.integratedscripting"
+    },
+    "description": {
+      "translate": "general.integratedscripting.description"
+    },
+    "show_toast": false,
+    "announce_to_chat": false
+  },
+  "parent": "integrateddynamics:network_foundations/variables",
+  "rewards": {
+    "recipes": [
+      "integratedscripting:crafting/part_terminal_scripting",
+      "integratedscripting:crafting/scripting_disk",
+      "integratedscripting:crafting/scripting_drive"
+    ]
+  },
+  "criteria": {
+    "criteria_0": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "integrateddynamics:variable"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}

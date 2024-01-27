@@ -1,6 +1,7 @@
 {
   "_comment": "General",
   "itemGroup.integratedscripting": "Integrated Scripting",
+  "general.integratedscripting.description": "Create scripts for handling complex operations in Integrated Dynamics.",
 
   "_comment": "Blocks",
   "block.integratedscripting.mendesite": "Mendesite",
@@ -60,7 +61,7 @@
   "info_book.integratedscripting.section.main": "Scripting",
 
   "info_book.integratedscripting.introduction": "Introduction",
-  "info_book.integratedscripting.introduction.text1": "&lIntegrated Scripting&r is an extension to &lIntegrated Dynamics&r for creating scripts to handle operations in &lIntegrated Dynamics&r networks. By default, this mod ships with support for the JavaScript scripting language.",
+  "info_book.integratedscripting.introduction.text1": "&lIntegrated Scripting&r is an extension to &lIntegrated Dynamics&r for creating scripts to handle complex operations in &lIntegrated Dynamics&r networks. By default, this mod ships with support for the JavaScript scripting language.",
   "info_book.integratedscripting.introduction.text2": "It allows you to define &lIntegrated Dynamics&r logic operations using a convenient scripting syntax instead of the standard visual variable card-based method, which can become cumbersome for advanced chains of operations.",
   "info_book.integratedscripting.introduction.text3": "For example, it allows you to easily define complex item list filters such as &o\"items that are damageable, are owned by mod X, and correspond to blocks that can be only mined with a diamond pickaxe.\"&r. Or &o\"get the item in this list with the second-largest stack size.\"&r",
   "info_book.integratedscripting.introduction.text4": "Basic programming knowledge is recommended when using this mod, but may be learnable through the tutorials later in this book.",
@@ -161,5 +162,10 @@
   "info_book.integratedscripting.advanced.typescript.text1": "The TypeScript language is a well-known superset of the JavaScript language that adds typing support. This allows developers to write type-safe JavaScript, by defining the types of variables and functions.",
   "info_book.integratedscripting.advanced.typescript.text2": "While Integrated Scripting only supports pure JavaScript, a TypeScript &otypings file&r is available for all available global functions, value types, and their methods.",
   "info_book.integratedscripting.advanced.typescript.text3": "When editing your scripts through an external IDE, this typings file could be loaded to create type-safe scripts. This is only recommended if you know TypeScript and know how to use it.",
-  "info_book.integratedscripting.advanced.typescript.text4": "The typings file is available at &oworld/integratedscripting/integratedscripting.d.ts&r (see &osaves/&r for singleplayer worlds). This file is automatically re-generated upon every world restart, so you should not manually adjust this file."
+  "info_book.integratedscripting.advanced.typescript.text4": "The typings file is available at &oworld/integratedscripting/integratedscripting.d.ts&r (see &osaves/&r for singleplayer worlds). This file is automatically re-generated upon every world restart, so you should not manually adjust this file.",
+
+  "info_book.integratedscripting.section.tutorials": "Scripting Tutorials",
+
+  "info_book.integratedscripting.tutorials.introduction": "Introduction",
+  "info_book.integratedscripting.tutorials.introduction.text1": "This section contains several tutorials that help you to learn &lIntegrated Scripting&r, the &lIntegrated Dynamics&r add-on for creating scripts to handle complex operations."
 }
