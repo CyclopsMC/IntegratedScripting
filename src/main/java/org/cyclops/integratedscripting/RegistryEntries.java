@@ -19,6 +19,8 @@ public class RegistryEntries {
 
     @ObjectHolder(registryName = "block", value = "integratedscripting:scripting_drive")
     public static final Block BLOCK_SCRIPTING_DRIVE = null;
+    @ObjectHolder(registryName = "block", value = "integratedscripting:part_terminal_scripting")
+    public static final Block BLOCK_PART_TERMINAL_SCRIPTING = null;
 
     @ObjectHolder(registryName = "block_entity_type", value = "integratedscripting:scripting_drive")
     public static final BlockEntityType<BlockEntityVariablestore> BLOCK_ENTITY_SCRIPTING_DRIVE = null;

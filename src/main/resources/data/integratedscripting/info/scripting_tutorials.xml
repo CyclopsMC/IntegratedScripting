@@ -23,4 +23,25 @@
             </rewards>
         </appendix>
     </section>
+
+    <section name="info_book.integratedscripting.tutorials.terminal">
+        <paragraph>info_book.integratedscripting.tutorials.terminal.text1</paragraph>
+        <paragraph>info_book.integratedscripting.tutorials.terminal.text2</paragraph>
+        <paragraph>info_book.integratedscripting.tutorials.terminal.text3</paragraph>
+        <paragraph>info_book.integratedscripting.tutorials.terminal.text4</paragraph>
+        <paragraph>info_book.integratedscripting.tutorials.terminal.text5</paragraph>
+        <paragraph>info_book.integratedscripting.tutorials.terminal.text6</paragraph>
+        <appendix type="minecraft:crafting">integratedscripting:crafting/scripting_terminal</appendix>
+        <appendix type="advancement_rewards" id="integratedscripting:terminal">
+            <advancements>
+                <advancement id="integratedscripting:terminal/open" />
+                <advancement id="integratedscripting:terminal/bind" />
+                <advancement id="integratedscripting:terminal/display" />
+            </advancements>
+            <rewards>
+                <reward type="item" amount="1">integratedscripting:part_terminal_scripting</reward>
+                <reward type="item" amount="16">integrateddynamics:variable</reward>
+            </rewards>
+        </appendix>
+    </section>
 </section>

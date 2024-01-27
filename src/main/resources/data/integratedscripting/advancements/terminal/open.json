@@ -1,0 +1,22 @@
+{
+  "display": {
+    "icon": {
+      "item": "integratedscripting:part_terminal_scripting"
+    },
+    "title": {
+      "translate": "advancement.integratedscripting.terminal_open"
+    },
+    "description": {
+      "translate": "advancement.integratedscripting.terminal_open.desc"
+    }
+  },
+  "parent": "integratedscripting:basics/scripting_drive",
+  "criteria": {
+    "criteria_0": {
+      "trigger": "cyclopscore:container_gui_open",
+      "conditions": {
+        "container_class": "org.cyclops.integratedscripting.inventory.container.ContainerTerminalScripting"
+      }
+    }
+  }
+}

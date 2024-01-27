@@ -370,7 +370,7 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
             public IScriptVariableFacade create(int id) {
                 return new ScriptVariableFacade(id, disk, path, member);
             }
-        }, player, world.getBlockState(getTarget().getCenter().getPos().getBlockPos()));
+        }, player, RegistryEntries.BLOCK_PART_TERMINAL_SCRIPTING.defaultBlockState());
     }
 
     @Override

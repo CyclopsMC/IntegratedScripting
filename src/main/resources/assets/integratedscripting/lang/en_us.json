@@ -10,6 +10,12 @@
   "advancement.integratedscripting.scripting_disk.desc": "Craft a Scripting Disk, which is used to store scripting data.",
   "advancement.integratedscripting.scripting_drive": "They see me drivin'",
   "advancement.integratedscripting.scripting_drive.desc": "Craft a Scripting Drive, so you can load scripts into your network.",
+  "advancement.integratedscripting.terminal_open": "The Discovery of the Scripts",
+  "advancement.integratedscripting.terminal_open.desc": "Open the Scripting Terminal GUI.",
+  "advancement.integratedscripting.terminal_bind": "The Rise of the Scripts",
+  "advancement.integratedscripting.terminal_bind.desc": "Create a script, and bind it to a Variable Card.",
+  "advancement.integratedscripting.terminal_display": "The Unleashing of the Scripts",
+  "advancement.integratedscripting.terminal_display.desc": "Display a scripted value in a Display Panel",
 
   "_comment": "Blocks",
   "block.integratedscripting.mendesite": "Mendesite",
@@ -179,5 +185,14 @@
 
   "info_book.integratedscripting.tutorials.basics": "The basics of Scripting",
   "info_book.integratedscripting.tutorials.basics.text1": "&lMendesite&r blocks are the foundational crafting materials for scripting-related items. Let's create some using the &lDrying Basin&r!",
-  "info_book.integratedscripting.tutorials.basics.text2": "Next, we will create some &lScripting Disks&r and &lScripting Drives&r using these &lMendesite&r blocks. &lScripting Disks&r will be able to store scripting data, and &lScripting Drives&r will allow you to insert these disks into your network."
+  "info_book.integratedscripting.tutorials.basics.text2": "Next, we will create some &lScripting Disks&r and &lScripting Drives&r using these &lMendesite&r blocks. &lScripting Disks&r will be able to store scripting data, and &lScripting Drives&r will allow you to insert these disks into your network.",
+  "info_book.integratedscripting.tutorials.basics.text3": "Finally, let's place a &lScripting Drive&r and store a &lScripting Disk&r in it. This will allow us to store scripts in the next tutorial.",
+
+  "info_book.integratedscripting.tutorials.terminal": "Using the Scripting Terminal",
+  "info_book.integratedscripting.tutorials.terminal.text1": "In the previous step, we created and placed a &lScripting Disk&r and &lScripting Drive&r. In this tutorial, we will see how we can actually &owrite&r scripts and bind them to &lVariable Cards&r",
+  "info_book.integratedscripting.tutorials.terminal.text2": "First, let us craft a &lScripting Terminal&r, place it on a cable connected to the &lScripting Drive&r, and right-click on the &lScripting Terminal&r to open it.",
+  "info_book.integratedscripting.tutorials.terminal.text3": "You will see an editor in which you can access all script files stored in the different &lScripting Disk&r that are accessible to the network. You can toggle through the different &lScripting Disks&r by clicking on the arrows on the top-left of the screen.",
+  "info_book.integratedscripting.tutorials.terminal.text4": "At this stage, you will not have any script files in your network yet, so let's create a new file by clicking on the \"+\" button on the bottom-left of the screen. Now click on the new file to open it, and click on the text field at the right-hand side of the screen to edit the file.",
+  "info_book.integratedscripting.tutorials.terminal.text5": "To keep it simple for now, we will create a constant value. Let's write something like &oconst myVar = 123;&r",
+  "info_book.integratedscripting.tutorials.terminal.text6": "As a final step, let's bind this constant to a &lVariable Card&r by inserting an empty &lVariable Card&r into slot at the right-hand side of the screen, and select the variable by double-clicking it with your cursor. Your &lVariable Card&r will now be bound to the constant value. You can use this &lVariable Card&r now anywhere in your network. Let's try showing it in a &lDisplay Panel&r!"
 }
