@@ -31,7 +31,7 @@
         <paragraph>info_book.integratedscripting.tutorials.terminal.text4</paragraph>
         <paragraph>info_book.integratedscripting.tutorials.terminal.text5</paragraph>
         <paragraph>info_book.integratedscripting.tutorials.terminal.text6</paragraph>
-        <appendix type="minecraft:crafting">integratedscripting:crafting/scripting_terminal</appendix>
+        <appendix type="minecraft:crafting">integratedscripting:crafting/part_terminal_scripting</appendix>
         <appendix type="advancement_rewards" id="integratedscripting:terminal">
             <advancements>
                 <advancement id="integratedscripting:terminal/open" />
@@ -40,6 +40,30 @@
             </advancements>
             <rewards>
                 <reward type="item" amount="1">integratedscripting:part_terminal_scripting</reward>
+                <reward type="item" amount="16">integrateddynamics:variable</reward>
+            </rewards>
+        </appendix>
+    </section>
+
+    <section name="info_book.integratedscripting.tutorials.functions">
+        <paragraph>info_book.integratedscripting.tutorials.functions.text1</paragraph>
+        <paragraph>info_book.integratedscripting.tutorials.functions.text2</paragraph>
+        <paragraph>info_book.integratedscripting.tutorials.functions.text3</paragraph>
+        <paragraph>info_book.integratedscripting.tutorials.functions.text4</paragraph>
+        <paragraph>info_book.integratedscripting.tutorials.functions.text5</paragraph>
+        <paragraph>info_book.integratedscripting.tutorials.functions.text6</paragraph>
+        <paragraph>info_book.integratedscripting.tutorials.functions.text7</paragraph>
+        <appendix type="integrateddynamics:operator">integrateddynamics:operator_filter</appendix>
+        <appendix type="integrateddynamics:aspect">integrateddynamics:read_list_inventory_itemstacks</appendix>
+        <appendix type="textfield" scale="0.8">function filterItemMethods(item) {
+  return item.isStackable() &amp;&amp; item.stacksize() >= 16;
+}</appendix>
+        <appendix type="advancement_rewards" id="integratedscripting:functions">
+            <advancements>
+                <advancement id="integratedscripting:functions/filter_chest" />
+            </advancements>
+            <rewards>
+                <reward type="item" amount="4">integratedscripting:scripting_disk</reward>
                 <reward type="item" amount="16">integrateddynamics:variable</reward>
             </rewards>
         </appendix>

@@ -1,8 +1,7 @@
 {
   "display": {
     "icon": {
-      "item": "integrateddynamics:variable",
-      "nbt": "{_type:\"integratedscripting:script\",disk:1,path:\"p\",member:\"m\",_id:1}"
+      "item": "integrateddynamics:part_display_panel"
     },
     "title": {
       "translate": "advancement.integratedscripting.terminal_display"

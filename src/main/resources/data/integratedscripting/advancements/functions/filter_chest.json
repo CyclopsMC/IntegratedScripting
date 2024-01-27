@@ -1,0 +1,35 @@
+{
+  "display": {
+    "icon": {
+      "item": "minecraft:chest"
+    },
+    "title": {
+      "translate": "advancement.integratedscripting.filter_chest"
+    },
+    "description": {
+      "translate": "advancement.integratedscripting.filter_chest.desc"
+    }
+  },
+  "parent": "integratedscripting:terminal/bind",
+  "criteria": {
+    "criteria_0": {
+      "trigger": "integrateddynamics:part_variable_driven",
+      "conditions": {
+        "parttype": "integrateddynamics:display_panel",
+        "variable": {
+          "type": "integrateddynamics:operator",
+          "operator": "integrateddynamics:operator_filter",
+          "input": {
+            "0": {
+              "type": "integratedscripting:script"
+            },
+            "1": {
+              "type": "integrateddynamics:aspect",
+              "aspect": "integrateddynamics:read_list_inventory_itemstacks"
+            }
+          }
+        }
+      }
+    }
+  }
+}

@@ -16,6 +16,8 @@
   "advancement.integratedscripting.terminal_bind.desc": "Create a script, and bind it to a Variable Card.",
   "advancement.integratedscripting.terminal_display": "The Unleashing of the Scripts",
   "advancement.integratedscripting.terminal_display.desc": "Display a scripted value in a Display Panel",
+  "advancement.integratedscripting.filter_chest": "Overpowered item list filtering",
+  "advancement.integratedscripting.filter_chest.desc": "Filter a list of items read from a chest using a script-based function.",
 
   "_comment": "Blocks",
   "block.integratedscripting.mendesite": "Mendesite",
@@ -192,7 +194,16 @@
   "info_book.integratedscripting.tutorials.terminal.text1": "In the previous step, we created and placed a &lScripting Disk&r and &lScripting Drive&r. In this tutorial, we will see how we can actually &owrite&r scripts and bind them to &lVariable Cards&r",
   "info_book.integratedscripting.tutorials.terminal.text2": "First, let us craft a &lScripting Terminal&r, place it on a cable connected to the &lScripting Drive&r, and right-click on the &lScripting Terminal&r to open it.",
   "info_book.integratedscripting.tutorials.terminal.text3": "You will see an editor in which you can access all script files stored in the different &lScripting Disk&r that are accessible to the network. You can toggle through the different &lScripting Disks&r by clicking on the arrows on the top-left of the screen.",
-  "info_book.integratedscripting.tutorials.terminal.text4": "At this stage, you will not have any script files in your network yet, so let's create a new file by clicking on the \"+\" button on the bottom-left of the screen. Now click on the new file to open it, and click on the text field at the right-hand side of the screen to edit the file.",
+  "info_book.integratedscripting.tutorials.terminal.text4": "At this stage, you will not have any script files in your network yet, so let's create a new file by clicking on the \"+\" button on the bottom-left of the screen. Now click on the new file to open it, and click on the text field at the right-hand side of the screen to edit the file and write &oJavaScript&r code.",
   "info_book.integratedscripting.tutorials.terminal.text5": "To keep it simple for now, we will create a constant value. Let's write something like &oconst myVar = 123;&r",
-  "info_book.integratedscripting.tutorials.terminal.text6": "As a final step, let's bind this constant to a &lVariable Card&r by inserting an empty &lVariable Card&r into slot at the right-hand side of the screen, and select the variable by double-clicking it with your cursor. Your &lVariable Card&r will now be bound to the constant value. You can use this &lVariable Card&r now anywhere in your network. Let's try showing it in a &lDisplay Panel&r!"
+  "info_book.integratedscripting.tutorials.terminal.text6": "As a final step, let's bind this constant to a &lVariable Card&r by inserting an empty &lVariable Card&r into slot at the right-hand side of the screen, and select the variable by double-clicking it with your cursor. Your &lVariable Card&r will now be bound to the constant value. You can use this &lVariable Card&r now anywhere in your network. Let's try showing it in a &lDisplay Panel&r!",
+
+  "info_book.integratedscripting.tutorials.functions": "Scripting functions",
+  "info_book.integratedscripting.tutorials.functions.text1": "While creating constant values through JavaScript might be fun, the real power of these scripts become apparent when creating &ofunctions&r.",
+  "info_book.integratedscripting.tutorials.functions.text2": "Functions created through JavaScript can be bound to &lVariable Cards&r as &2Operator&0, which can then be used in Integrated Dynamics logic as usual. For example, you could use them for defining Integrated Tunnels exporter filters, or for calculating complex values such as the median stack size of items in a list.",
+  "info_book.integratedscripting.tutorials.functions.text3": "In this tutorial, we'll create a function that accepts a single &8Item&0 argument, and returns a &9Boolean&0 as output. This function will act as a filter operator, which we can use when for example filtering a list of items.",
+  "info_book.integratedscripting.tutorials.functions.text4": "Concretely, we will read the list of items using the &lInventory Reader&r, and &lFilter&r it using our newly created function. You can bind the function to a &lVariable Card&r by selecting it in the editor and inserting an empty &lVariable Card&r, which will store it as &2Operator&0.",
+  "info_book.integratedscripting.tutorials.functions.text5": "You are free to use any implementation of the filter function for this tutorial. Hereafter, you can find a valid example script which you are free to copy.",
+  "info_book.integratedscripting.tutorials.functions.text6": "To complete the tutorial, show the result of the filtered list in a &lDisplay Panel&r.",
+  "info_book.integratedscripting.tutorials.functions.text7": "In this example script, you will see that you can invoke built-in methods on items such as &oisStackable()&r and &ostacksize()&r. More details on which methods are available can be found later in the full manual."
 }
