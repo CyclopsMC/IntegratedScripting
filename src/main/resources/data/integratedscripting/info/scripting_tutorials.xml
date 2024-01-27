@@ -3,4 +3,24 @@
     <section name="info_book.integratedscripting.tutorials.introduction">
         <paragraph>info_book.integratedscripting.tutorials.introduction.text1</paragraph>
     </section>
+
+    <section name="info_book.integratedscripting.tutorials.basics">
+        <paragraph>info_book.integratedscripting.tutorials.basics.text1</paragraph>
+        <paragraph>info_book.integratedscripting.tutorials.basics.text2</paragraph>
+        <appendix type="integrateddynamics:drying_basin">integratedscripting:drying_basin/mendesite</appendix>
+        <appendix type="minecraft:crafting">integratedscripting:crafting/scripting_disk</appendix>
+        <appendix type="minecraft:crafting">integratedscripting:crafting/scripting_drive</appendix>
+        <appendix type="advancement_rewards" id="integratedscripting:basics">
+            <advancements>
+                <advancement id="integratedscripting:basics/mendesite" />
+                <advancement id="integratedscripting:basics/scripting_disk" />
+                <advancement id="integratedscripting:basics/scripting_drive" />
+            </advancements>
+            <rewards>
+                <reward type="item" amount="16">integratedscripting:mendesite</reward>
+                <reward type="item" amount="4">integratedscripting:scripting_disk</reward>
+                <reward type="item" amount="2">integratedscripting:scripting_drive</reward>
+            </rewards>
+        </appendix>
+    </section>
 </section>

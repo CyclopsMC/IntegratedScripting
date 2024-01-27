@@ -1,0 +1,28 @@
+{
+  "display": {
+    "icon": {
+      "item": "integratedscripting:scripting_drive"
+    },
+    "title": {
+      "translate": "advancement.integratedscripting.scripting_drive"
+    },
+    "description": {
+      "translate": "advancement.integratedscripting.scripting_drive.desc"
+    }
+  },
+  "parent": "integratedscripting:basics/scripting_disk",
+  "criteria": {
+    "criteria_0": {
+      "trigger": "cyclopscore:item_crafted",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "integratedscripting:scripting_drive"
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
