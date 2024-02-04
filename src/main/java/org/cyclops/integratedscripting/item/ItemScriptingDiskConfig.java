@@ -14,8 +14,7 @@ public class ItemScriptingDiskConfig extends ItemConfig {
         super(
                 IntegratedScripting._instance,
                 "scripting_disk",
-                eConfig -> new ItemScriptingDisk(new Item.Properties()
-                        .tab(IntegratedScripting._instance.getDefaultItemGroup()))
+                eConfig -> new ItemScriptingDisk(new Item.Properties())
         );
     }
 }

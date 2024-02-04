@@ -3,7 +3,6 @@ package org.cyclops.integratedscripting.evaluate.translation;
 import com.google.common.collect.Sets;
 import net.minecraft.DetectedVersion;
 import net.minecraft.SharedConstants;
-import net.minecraft.core.Registry;
 import net.minecraft.nbt.*;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -44,7 +43,6 @@ public class ValueTranslatorsJavaScriptTests {
     static {
         SharedConstants.setVersion(DetectedVersion.BUILT_IN);
         Bootstrap.bootStrap();
-        Registry.ITEM.unfreeze();
     }
 
     private static Context CTX = null;

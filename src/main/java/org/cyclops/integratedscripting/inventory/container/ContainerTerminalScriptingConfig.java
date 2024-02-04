@@ -3,6 +3,7 @@ package org.cyclops.integratedscripting.inventory.container;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.MenuAccess;
+import net.minecraft.world.flag.FeatureFlags;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.cyclops.cyclopscore.client.gui.ScreenFactorySafe;
@@ -20,7 +21,7 @@ public class ContainerTerminalScriptingConfig extends GuiConfig<ContainerTermina
     public ContainerTerminalScriptingConfig() {
         super(IntegratedScripting._instance,
                 "part_terminal_scripting",
-                eConfig -> new ContainerTypeData<>(ContainerTerminalScripting::new));
+                eConfig -> new ContainerTypeData<>(ContainerTerminalScripting::new, FeatureFlags.VANILLA_SET));
     }
 
     @OnlyIn(Dist.CLIENT)

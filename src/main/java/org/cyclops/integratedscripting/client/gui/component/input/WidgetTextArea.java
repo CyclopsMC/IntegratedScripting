@@ -5,7 +5,6 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -15,14 +14,14 @@ import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.StringSplitter;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiComponent;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.Widget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.font.TextFieldHelper;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.inventory.BookEditScreen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
@@ -48,7 +47,7 @@ import java.util.stream.Stream;
 
 /**
  * A widget to edit multi-line text.
- * Inspired by {@link WidgetTextArea}.
+ * Inspired by {@link BookEditScreen}.
  *
  * The using screen must add this as a child and call the following method from its respective method:
  * * {@link #tick()}
@@ -61,7 +60,7 @@ import java.util.stream.Stream;
  * @author rubensworks
  */
 @OnlyIn(Dist.CLIENT)
-public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventListener {
+public class WidgetTextArea extends AbstractWidget implements GuiEventListener {
 
     public static final int ROW_HEIGHT = 9;
 
@@ -103,10 +102,10 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
                 }
 
                 @Override
-                public void drawGuiContainerBackgroundLayer(PoseStack matrixStack, float partialTicks, int mouseX, int mouseY) {
+                public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
                     // Only show scrollbar if needed
                     if (this.needsScrollBars()) {
-                        super.drawGuiContainerBackgroundLayer(matrixStack, partialTicks, mouseX, mouseY);
+                        super.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
                     }
                 }
             };
@@ -211,7 +210,8 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
         this.textFieldHelper.setSelectionPos(pos);
     }
 
-    public void updateNarration(NarrationElementOutput narrationElementOutput) {
+    @Override
+    protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
         narrationElementOutput.add(NarratedElementType.TITLE, Component.translatable("narration.edit_box", this.getValue()));
     }
 
@@ -230,15 +230,15 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
-        if (mouseButton == 1 && mouseX >= this.x && mouseX < this.x + this.width
-                && mouseY >= this.y && mouseY < this.y + this.height) {
+        if (mouseButton == 1 && mouseX >= this.getX() && mouseX < this.getX() + this.width
+                && mouseY >= this.getY() && mouseY < this.getY() + this.height) {
             // Select everything
             this.setFocused(true);
             textFieldHelper.selectAll();
             return true;
         } else {
-            if (mouseButton == 0 && mouseX >= this.x && mouseX < this.x + this.width
-                    && mouseY >= this.y && mouseY < this.y + this.height) {
+            if (mouseButton == 0 && mouseX >= this.getX() && mouseX < this.getX() + this.width
+                    && mouseY >= this.getY() && mouseY < this.getY() + this.height) {
                 this.setFocused(true);
                 long i = Util.getMillis();
                 DisplayCache displayCache = this.getDisplayCache();
@@ -278,8 +278,8 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double scroll) {
-        if (this.scrollBar != null && mouseX >= this.x && mouseX < this.x + this.width
-                && mouseY >= this.y && mouseY < this.y + this.height
+        if (this.scrollBar != null && mouseX >= this.getX() && mouseX < this.getX() + this.width
+                && mouseY >= this.getY() && mouseY < this.getY() + this.height
                 && this.scrollBar.mouseScrolled(mouseX, mouseY, scroll)) {
             return true;
         }
@@ -288,13 +288,13 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double offsetX, double offsetY) {
-        if (this.scrollBar != null && mouseX >= this.x + this.width - 12 && mouseX < this.x + this.width
-                && mouseY >= this.y && mouseY < this.y + this.height) {
+        if (this.scrollBar != null && mouseX >= this.getX() + this.width - 12 && mouseX < this.getX() + this.width
+                && mouseY >= this.getY() && mouseY < this.getY() + this.height) {
             return this.scrollBar.mouseDragged(mouseX, mouseY, mouseButton, offsetX, offsetY);
         }
 
-        if (mouseButton == 0 && mouseX >= this.x && mouseX < this.x + this.width
-                && mouseY >= this.y && mouseY < this.y + this.height) {
+        if (mouseButton == 0 && mouseX >= this.getX() && mouseX < this.getX() + this.width
+                && mouseY >= this.getY() && mouseY < this.getY() + this.height) {
             DisplayCache bookeditscreen$displaycache = this.getDisplayCache();
             int i = bookeditscreen$displaycache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i((int)mouseX, (int)mouseY)));
             this.textFieldHelper.setCursorPos(i, true);
@@ -439,9 +439,7 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
     }
 
     @Override
-    public void render(PoseStack poseStack, int x, int y, float partialTicks) {
-        this.renderBg(poseStack, Minecraft.getInstance(), x, y);
-
+    protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         // Determine lines to show
         DisplayCache displayCache = this.getDisplayCache();
         List<LineInfo> lines = Arrays.asList(displayCache.lines);
@@ -450,17 +448,19 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
         // Draw lines
         int lastLineNumber = -1;
         for(LineInfo line : lines) {
-            this.font.draw(poseStack, line.asComponent, (float)line.x, (float)line.y - offsetY, -16777216);
+            guiGraphics.drawString(this.font, line.asComponent, line.x, line.y - offsetY, -16777216, false);
             // Draw line number
             if (this.showLineNumbers && lastLineNumber != line.lineNumber) {
                 RenderHelpers.drawScaledString(
-                        poseStack,
+                        guiGraphics,
                         font,
                         String.valueOf(line.lineNumber),
-                        this.x,
+                        this.getX(),
                         line.y - offsetY + 2,
                         0.5f,
-                        line.hasCursor ? 0 : Helpers.RGBToInt(120, 120, 120)
+                        line.hasCursor ? 0 : Helpers.RGBToInt(120, 120, 120),
+                        false,
+                        Font.DisplayMode.NORMAL
                 );
             }
             lastLineNumber = line.lineNumber;
@@ -469,22 +469,22 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
         // Show highlighting and cursor
         this.renderHighlight(displayCache.selection);
         if (displayCache.cursor != null) {
-            this.renderCursor(poseStack, displayCache.cursor, displayCache.cursorAtEnd);
+            this.renderCursor(guiGraphics, displayCache.cursor, displayCache.cursorAtEnd);
         }
 
         // Render scrollbar
         if (this.scrollBar != null) {
-            this.scrollBar.drawGuiContainerBackgroundLayer(poseStack, partialTicks, x, y);
+            this.scrollBar.render(guiGraphics, getX(), getY(), partialTicks);
         }
     }
 
-    private void renderCursor(PoseStack poseStack, Pos2i pos, boolean cursorAtEnd) {
+    private void renderCursor(GuiGraphics guiGraphics, Pos2i pos, boolean cursorAtEnd) {
         if (this.isFocused() && this.frameTick / 6 % 2 == 0) {
             pos = this.convertLocalToScreen(pos);
             if (!cursorAtEnd) {
-                GuiComponent.fill(poseStack, pos.x, pos.y - 1, pos.x + 1, pos.y + 9, -16777216);
+                guiGraphics.fill(pos.x, pos.y - 1, pos.x + 1, pos.y + 9, -16777216);
             } else {
-                this.font.draw(poseStack, "_", (float)pos.x, (float)pos.y, 0);
+                guiGraphics.drawString(this.font, "_", pos.x, pos.y, 0);
             }
         }
 
@@ -495,7 +495,6 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
         BufferBuilder bufferbuilder = tesselator.getBuilder();
         RenderSystem.setShader(GameRenderer::getPositionShader);
         RenderSystem.setShaderColor(0.0F, 0.0F, this.isFocused() ? 255.0F : 100.0F /* changed */, 255.0F);
-        RenderSystem.disableTexture();
         RenderSystem.enableColorLogicOp();
         RenderSystem.logicOp(GlStateManager.LogicOp.OR_REVERSE);
         bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
@@ -513,7 +512,6 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
 
         tesselator.end();
         RenderSystem.disableColorLogicOp();
-        RenderSystem.enableTexture();
 
         RenderSystem.setShaderColor(1, 1, 1, 1);
     }
@@ -523,11 +521,11 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
     }
 
     private Pos2i convertScreenToLocal(Pos2i posScreen) {
-        return new Pos2i(posScreen.x - this.x - getLinesXOffset(), posScreen.y - this.y);
+        return new Pos2i(posScreen.x - this.getX() - getLinesXOffset(), posScreen.y - this.getY());
     }
 
     private Pos2i convertLocalToScreen(Pos2i posLocal) {
-        return new Pos2i(this.x + posLocal.x + getLinesXOffset(), this.y + posLocal.y);
+        return new Pos2i(this.getX() + posLocal.x + getLinesXOffset(), this.getY() + posLocal.y);
     }
 
     private DisplayCache getDisplayCache() {
@@ -622,7 +620,7 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
             List<Rect2i> selectionNew = Lists.newArrayList();
             for (Rect2i rect2i : selection) {
                 Rect2i rect2iNew = new Rect2i(rect2i.getX(), rect2i.getY() - this.firstRow * ROW_HEIGHT, rect2i.getWidth(), rect2i.getHeight());
-                if (rect2iNew.getY() - this.y >= 0 && rect2iNew.getY() - this.y < getHeight()) {
+                if (rect2iNew.getY() - this.getY() >= 0 && rect2iNew.getY() - this.getY() < getHeight()) {
                     selectionNew.add(rect2iNew);
                 }
             }

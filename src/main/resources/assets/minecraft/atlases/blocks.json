@@ -2,6 +2,8 @@
   { "type": "minecraft:single", "resource": "integratedscripting:item/scripting_disk" },
   { "type": "minecraft:single", "resource": "integratedscripting:part/terminal_back" },
   { "type": "minecraft:single", "resource": "integratedscripting:part/terminal_scripting" },
+  { "type": "minecraft:single", "resource": "integratedscripting:customoverlay/script" },
   { "type": "minecraft:single", "resource": "integratedscripting:block/scripting_drive_top" },
+  { "type": "minecraft:single", "resource": "integratedscripting:block/mendesite" },
   { "type": "minecraft:single", "resource": "integratedscripting:block/scripting_drive_side" }
 ]}

@@ -10,6 +10,7 @@ import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
 import org.cyclops.integrateddynamics.api.evaluate.operator.IOperatorSerializer;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IVariable;
+import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
 import org.cyclops.integrateddynamics.core.evaluate.operator.OperatorBase;
 import org.cyclops.integrateddynamics.core.evaluate.operator.Operators;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeOperator;
@@ -130,7 +131,7 @@ public class ValueTranslatorOperator implements IValueTranslator<ValueTypeOperat
             }
 
             @Override
-            public GraalOperator deserialize(Tag value) throws EvaluationException {
+            public GraalOperator deserialize(ValueDeseralizationContext valueDeseralizationContext, Tag value) throws EvaluationException {
                 ListTag listTag = (ListTag) value;
                 IValueType[] inputTypes = new IValueType[listTag.size()];
                 for (int i = 0; i < listTag.size(); i++) {

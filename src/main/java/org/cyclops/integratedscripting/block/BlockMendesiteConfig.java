@@ -2,7 +2,6 @@ package org.cyclops.integratedscripting.block;
 
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
-import net.minecraft.world.level.material.Material;
 import org.cyclops.cyclopscore.config.extendedconfig.BlockConfig;
 import org.cyclops.integratedscripting.IntegratedScripting;
 
@@ -17,7 +16,7 @@ public class BlockMendesiteConfig extends BlockConfig {
         super(
                 IntegratedScripting._instance,
                 "mendesite",
-                eConfig -> new Block(Block.Properties.of(Material.CLAY)
+                eConfig -> new Block(Block.Properties.of()
                         .sound(SoundType.SNOW)
                         .strength(1.5F)
                         .noOcclusion()),

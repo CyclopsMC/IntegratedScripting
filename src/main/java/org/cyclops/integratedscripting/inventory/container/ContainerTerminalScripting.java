@@ -133,7 +133,7 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
     @Override
     public void removed(Player player) {
         super.removed(player);
-        if (!player.level.isClientSide()) {
+        if (!player.level().isClientSide()) {
             ItemStack itemStack = getContainerInventory().getItem(0);
             if(!itemStack.isEmpty()) {
                 player.drop(itemStack, false);
@@ -370,7 +370,7 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
             public IScriptVariableFacade create(int id) {
                 return new ScriptVariableFacade(id, disk, path, member);
             }
-        }, player, RegistryEntries.BLOCK_PART_TERMINAL_SCRIPTING.defaultBlockState());
+        }, getLevel(), player, RegistryEntries.BLOCK_PART_TERMINAL_SCRIPTING.defaultBlockState());
     }
 
     @Override

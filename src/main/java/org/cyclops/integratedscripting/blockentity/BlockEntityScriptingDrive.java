@@ -10,8 +10,8 @@ import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.items.CapabilityItemHandler;
 import org.cyclops.cyclopscore.datastructure.DimPos;
 import org.cyclops.cyclopscore.inventory.SimpleInventory;
 import org.cyclops.cyclopscore.persist.IDirtyMarkListener;
@@ -45,7 +45,7 @@ public class BlockEntityScriptingDrive extends BlockEntityCableConnectableInvent
         super(RegistryEntries.BLOCK_ENTITY_SCRIPTING_DRIVE, blockPos, blockState, BlockEntityScriptingDrive.INVENTORY_SIZE, 1);
         getInventory().addDirtyMarkListener(this);
 
-        addCapabilityInternal(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY, LazyOptional.of(() -> getInventory().getItemHandler()));
+        addCapabilityInternal(ForgeCapabilities.ITEM_HANDLER, LazyOptional.of(() -> getInventory().getItemHandler()));
         addCapabilityInternal(NetworkElementProviderConfig.CAPABILITY, LazyOptional.of(() -> new NetworkElementProviderSingleton() {
             @Override
             public INetworkElement createNetworkElement(Level world, BlockPos blockPos) {

@@ -2,7 +2,6 @@ package org.cyclops.integratedscripting.block;
 
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
-import net.minecraft.world.level.material.Material;
 import org.cyclops.cyclopscore.config.extendedconfig.BlockConfig;
 import org.cyclops.integratedscripting.IntegratedScripting;
 
@@ -16,7 +15,7 @@ public class BlockScriptingDriveConfig extends BlockConfig {
         super(
                 IntegratedScripting._instance,
                 "scripting_drive",
-                eConfig -> new BlockScriptingDrive(Block.Properties.of(Material.HEAVY_METAL)
+                eConfig -> new BlockScriptingDrive(Block.Properties.of()
                         .strength(2.0F, 5.0F)
                         .sound(SoundType.METAL)),
                 getDefaultItemConstructor(IntegratedScripting._instance)

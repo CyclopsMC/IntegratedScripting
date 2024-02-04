@@ -1,11 +1,10 @@
 package org.cyclops.integratedscripting.client.gui.component.input;
 
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.components.Widget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -15,14 +14,13 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import org.cyclops.cyclopscore.client.gui.component.button.ButtonText;
 import org.cyclops.cyclopscore.helper.Helpers;
-import org.cyclops.cyclopscore.helper.RenderHelpers;
 import org.cyclops.integratedscripting.Reference;
 
 /**
  * Shows a confirm/cancel dialog
  * @author rubensworks
  */
-public class WidgetDialog extends AbstractWidget implements Widget, GuiEventListener {
+public class WidgetDialog extends AbstractWidget implements GuiEventListener {
 
     private static final ResourceLocation TEXTURE = new ResourceLocation(Reference.MOD_ID, "textures/gui/dialog.png");
     public static final int WIDTH = 216;
@@ -48,27 +46,26 @@ public class WidgetDialog extends AbstractWidget implements Widget, GuiEventList
         this.buttonCancel = new ButtonText(x + WIDTH - 50 - 50, y + HEIGHT - 15 - 5, 50, 15, cancel, cancel, cancelCallback, true);
     }
 
-    protected void drawBackground(PoseStack matrixStack, int mouseX, int mouseY, float partialTicks) {
+    protected void drawBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         // Gray-out background
         RenderSystem.setShaderColor(0F, 0F, 0F, 0.95F);
-        fill(matrixStack, 0, 0, parent.width, parent.height, Helpers.RGBAToInt(50, 50, 50, 100));
+        guiGraphics.fill(0, 0, parent.width, parent.height, Helpers.RGBAToInt(50, 50, 50, 100));
         RenderSystem.setShaderColor(1, 1, 1, 1);
 
         // Draw dialog texture
-        RenderHelpers.bindTexture(TEXTURE);
-        blit(matrixStack, x, y, 0, 0, WIDTH, HEIGHT);
+        guiGraphics.blit(TEXTURE, getX(), getY(), 0, 0, WIDTH, HEIGHT);
     }
 
     @Override
-    public void renderButton(PoseStack poseStack, int mouseX, int mouseY, float partialTicks) {
-        drawBackground(poseStack, mouseX, mouseY, partialTicks);
+    protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+        drawBackground(guiGraphics, mouseX, mouseY, partialTicks);
 
-        this.buttonConfirm.render(poseStack, mouseX, mouseY, partialTicks);
-        this.buttonCancel.render(poseStack, mouseX, mouseY, partialTicks);
+        this.buttonConfirm.render(guiGraphics, mouseX, mouseY, partialTicks);
+        this.buttonCancel.render(guiGraphics, mouseX, mouseY, partialTicks);
 
-        drawCenteredString(poseStack, font, title, this.x + this.width / 2, this.y + 4, 16777215);
+        guiGraphics.drawCenteredString(font, title, this.getX() + this.width / 2, this.getY() + 4, 16777215);
         FormattedCharSequence formattedcharsequence = message.getVisualOrderText();
-        this.font.draw(poseStack, message, (float) (this.x + this.width / 2 - font.width(formattedcharsequence) / 2), (float) (this.y + 25), 4210752);
+        guiGraphics.drawString(font, message, (this.getX() + this.width / 2 - font.width(formattedcharsequence) / 2), (this.getY() + 25), 4210752, false);
     }
 
     @Override
@@ -79,7 +76,7 @@ public class WidgetDialog extends AbstractWidget implements Widget, GuiEventList
     }
 
     @Override
-    public void updateNarration(NarrationElementOutput narrationElementOutput) {
+    protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
         narrationElementOutput.add(NarratedElementType.TITLE, message);
     }
 }

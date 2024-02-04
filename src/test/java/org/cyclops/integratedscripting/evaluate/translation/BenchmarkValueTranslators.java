@@ -2,7 +2,6 @@ package org.cyclops.integratedscripting.evaluate.translation;
 
 import net.minecraft.DetectedVersion;
 import net.minecraft.SharedConstants;
-import net.minecraft.core.Registry;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.StringTag;
@@ -26,7 +25,6 @@ public class BenchmarkValueTranslators {
     static {
         SharedConstants.setVersion(DetectedVersion.BUILT_IN);
         Bootstrap.bootStrap();
-        Registry.ITEM.unfreeze();
     }
 
     public static int REPLICATION = 100000;

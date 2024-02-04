@@ -3,6 +3,7 @@ package org.cyclops.integratedscripting.core.evaluate;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
+import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
 import org.cyclops.integrateddynamics.api.item.IVariableFacadeHandler;
 import org.cyclops.integratedscripting.Reference;
 import org.cyclops.integratedscripting.api.item.IScriptVariableFacade;
@@ -34,7 +35,7 @@ public class ScriptVariableFacadeHandler implements IVariableFacadeHandler<IScri
     }
 
     @Override
-    public IScriptVariableFacade getVariableFacade(int id, CompoundTag tag) {
+    public IScriptVariableFacade getVariableFacade(ValueDeseralizationContext valueDeseralizationContext, int id, CompoundTag tag) {
         if(!tag.contains("disk", Tag.TAG_INT)) {
             return INVALID_FACADE;
         }

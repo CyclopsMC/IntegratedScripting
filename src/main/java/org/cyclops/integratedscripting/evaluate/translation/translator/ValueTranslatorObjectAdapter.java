@@ -7,6 +7,7 @@ import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
+import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
 import org.cyclops.integrateddynamics.core.evaluate.operator.Operators;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueObjectTypeBase;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeNbt;
@@ -112,7 +113,7 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
 
         Value idBlock = value.getMember(this.key);
         ValueTypeNbt.ValueNbt valueNbt = ValueTranslators.REGISTRY.translateFromGraal(context, idBlock, exceptionFactory);
-        return this.valueType.deserialize(valueNbt.getRawValue().orElseThrow());
+        return this.valueType.deserialize(ValueDeseralizationContext.ofAllEnabled(), valueNbt.getRawValue().orElseThrow());
     }
 
     @Override

@@ -3,10 +3,11 @@ package org.cyclops.integratedscripting.client.gui.container;
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -97,8 +98,6 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     public void init() {
         super.init();
 
-        this.minecraft.keyboardHandler.setSendRepeatsToGui(true);
-
         fieldDisk = new WidgetArrowedListField<>(Minecraft.getInstance().font, leftPos + 30,
                 topPos + 4, 42, 15, true,
                 Component.translatable("gui.integratedscripting.disk"), true,
@@ -167,10 +166,6 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         super.onClose();
     }
 
-    public void removed() {
-        this.minecraft.keyboardHandler.setSendRepeatsToGui(false);
-    }
-
     @Override
     protected ResourceLocation constructGuiTexture() {
         return new ResourceLocation(Reference.MOD_ID, "textures/gui/scripting_terminal.png");
@@ -195,29 +190,29 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     }
 
     @Override
-    protected void renderBg(PoseStack matrixStack, float partialTicks, int mouseX, int mouseY) {
-        super.renderBg(matrixStack, partialTicks, mouseX, mouseY);
+    protected void renderBg(GuiGraphics guiGraphics, float partialTicks, int mouseX, int mouseY) {
+        super.renderBg(guiGraphics, partialTicks, mouseX, mouseY);
         RenderHelpers.bindTexture(this.texture);
-        fieldDisk.render(matrixStack, mouseX, mouseY, partialTicks);
-        scrollBar.drawGuiContainerBackgroundLayer(matrixStack, partialTicks, mouseX, mouseY);
+        fieldDisk.render(guiGraphics, mouseX, mouseY, partialTicks);
+        scrollBar.render(guiGraphics, mouseX, mouseY, partialTicks);
 
         if (!this.getMenu().getAvailableDisks().isEmpty()) {
-            this.renderScriptPaths(matrixStack, partialTicks, mouseX, mouseY);
+            this.renderScriptPaths(guiGraphics, mouseX, mouseY, partialTicks);
         } else {
             // Gray-out editor and file list
             RenderSystem.setShaderColor(0.3F, 0.3F, 0.3F, 0.3F);
-            fill(matrixStack, leftPos + PATHS_X, topPos + PATHS_Y, leftPos + PATHS_X + PATHS_WIDTH, topPos + PATHS_Y + PATHS_HEIGHT, Helpers.RGBAToInt(50, 50, 50, 100));
+            guiGraphics.fill(leftPos + PATHS_X, topPos + PATHS_Y, leftPos + PATHS_X + PATHS_WIDTH, topPos + PATHS_Y + PATHS_HEIGHT, Helpers.RGBAToInt(50, 50, 50, 100));
             RenderSystem.setShaderColor(1, 1, 1, 1);
         }
 
         if (this.getMenu().getActiveScript() == null) {
             // Gray-out editor and file list
             RenderSystem.setShaderColor(0.3F, 0.3F, 0.3F, 0.3F);
-            fill(matrixStack, leftPos + SCRIPT_X_INNER, topPos + SCRIPT_Y, leftPos + SCRIPT_X_INNER + SCRIPT_WIDTH, topPos + SCRIPT_Y + SCRIPT_HEIGHT, Helpers.RGBAToInt(50, 50, 50, 100));
+            guiGraphics.fill(leftPos + SCRIPT_X_INNER, topPos + SCRIPT_Y, leftPos + SCRIPT_X_INNER + SCRIPT_WIDTH, topPos + SCRIPT_Y + SCRIPT_HEIGHT, Helpers.RGBAToInt(50, 50, 50, 100));
             RenderSystem.setShaderColor(1, 1, 1, 1);
         }
 
-        displayErrors.drawBackground(matrixStack, getMenu().getReadErrors(), getErrorX(), getErrorY(), getErrorX(), getErrorY(), this,
+        displayErrors.drawBackground(guiGraphics, getMenu().getReadErrors(), getErrorX(), getErrorY(), getErrorX(), getErrorY(), this,
                 this.leftPos, this.topPos, getMenu().canWriteScriptToVariable());
     }
 
@@ -240,7 +235,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         return Collections.emptyList();
     }
 
-    protected void renderScriptPaths(PoseStack poseStack, float partialTicks, int mouseX, int mouseY) {
+    protected void renderScriptPaths(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         List<Path> paths = getVisibleScriptPaths();
         int i = 0;
         for (Path path : paths) {
@@ -249,7 +244,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
             // Draw highlighted background behind script path text
             if (active) {
-                fill(poseStack, this.leftPos + PATHS_X, this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT, this.leftPos + PATHS_X + PATHS_WIDTH, this.topPos + PATHS_Y + (i + 1) * PATHS_ROW_HEIGHT, Helpers.RGBAToInt(110, 130, 240, 255));
+                guiGraphics.fill(this.leftPos + PATHS_X, this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT, this.leftPos + PATHS_X + PATHS_WIDTH, this.topPos + PATHS_Y + (i + 1) * PATHS_ROW_HEIGHT, Helpers.RGBAToInt(110, 130, 240, 255));
             }
 
             // Draw file type icon
@@ -258,36 +253,38 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             if (languageHandler != null) {
                 icon = languageHandler.getIcon();
             }
-            poseStack.pushPose();
-            poseStack.translate(this.leftPos + PATHS_X + 1, this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT + 1, 0);
-            poseStack.scale(0.5F, 0.5F, 0.5F);
-            icon.draw(this, poseStack, 0, 0);
-            poseStack.popPose();
+            guiGraphics.pose().pushPose();
+            guiGraphics.pose().translate(this.leftPos + PATHS_X + 1, this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT + 1, 0);
+            guiGraphics.pose().scale(0.5F, 0.5F, 0.5F);
+            icon.draw(guiGraphics, 0, 0);
+            guiGraphics.pose().popPose();
 
             // Draw filename
             RenderHelpers.drawScaledString(
-                    poseStack,
+                    guiGraphics,
                     font,
                     StringUtil.truncateStringIfNecessary(path.toString(), 20, true),
                     this.leftPos + PATHS_X + 1 + 7,
                     this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT + 1 + 1,
                     0.5f,
-                    hovering && !active ? Helpers.RGBToInt(50, 50, 250) : Helpers.RGBToInt(0, 0, 0)
+                    hovering && !active ? Helpers.RGBToInt(50, 50, 250) : Helpers.RGBToInt(0, 0, 0),
+                    false,
+                    Font.DisplayMode.NORMAL
             );
 
             // If hovering, render removal button
             if (hovering) {
-                poseStack.pushPose();
+                guiGraphics.pose().pushPose();
                 float scale = 0.4F;
                 int size = (int) (Images.ERROR.getWidth() * scale);
-                poseStack.translate(this.leftPos + PATHS_X + PATHS_WIDTH - size - 1, this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT + 1, 0);
-                poseStack.scale(scale, scale, 4F);
+                guiGraphics.pose().translate(this.leftPos + PATHS_X + PATHS_WIDTH - size - 1, this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT + 1, 0);
+                guiGraphics.pose().scale(scale, scale, 4F);
                 if (isHovering(PATHS_X + PATHS_WIDTH - size - 1, PATHS_Y + i * PATHS_ROW_HEIGHT, PATHS_X + PATHS_WIDTH - size + size - 1, PATHS_Y + i * PATHS_ROW_HEIGHT + size, mouseX, mouseY)) {
-                    Images.ERROR.draw(this, poseStack, 0, 0);
+                    Images.ERROR.draw(guiGraphics, 0, 0);
                 } else {
-                    Images.ERROR.drawWithColor(this, poseStack, 0, 0, 0.7F, 0.7F, 0.7F, 1F);
+                    Images.ERROR.drawWithColor(guiGraphics, 0, 0, 0.7F, 0.7F, 0.7F, 1F);
                 }
-                poseStack.popPose();
+                guiGraphics.pose().popPose();
             }
 
             i++;
@@ -308,13 +305,13 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     }
 
     @Override
-    protected void renderLabels(PoseStack poseStack, int mouseX, int mouseY) {
-        super.renderLabels(poseStack, mouseX, mouseY);
+    protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        super.renderLabels(guiGraphics, mouseX, mouseY);
 
         // Draw disk label
-        drawString(poseStack, font, L10NHelpers.localize("gui.integratedscripting.disk") + ":", 8, 6, 16777215);
+        guiGraphics.drawString(font, L10NHelpers.localize("gui.integratedscripting.disk") + ":", 8, 6, 16777215);
 
-        displayErrors.drawForeground(poseStack, getMenu().getReadErrors(), getErrorX(), getErrorY(), mouseX, mouseY, this, this.leftPos, this.topPos);
+        displayErrors.drawForeground(guiGraphics.pose(), getMenu().getReadErrors(), getErrorX(), getErrorY(), mouseX, mouseY, this, this.leftPos, this.topPos);
     }
 
     @Override
@@ -413,7 +410,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         } else {
             textArea.setCursorPos(0);
             if (textArea.isFocused()) {
-                textArea.changeFocus(false);
+                textArea.setFocused(false);
             }
         }
 

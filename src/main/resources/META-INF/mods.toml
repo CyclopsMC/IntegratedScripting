@@ -1,5 +1,5 @@
 modLoader="javafml"
-loaderVersion="[43,)"
+loaderVersion="[47,)"
 issueTrackerURL="https://github.com/CyclopsMC/IntegratedScripting/issues"
 displayURL="https://www.curseforge.com/minecraft/mc-mods/integrated-scripting"
 license="MIT"
@@ -16,30 +16,30 @@ Create scripts for handling operations in Integrated Dynamics.
 [[dependencies.integratedscripting]]
     modId="cyclopscore"
     mandatory=true
-    versionRange="[1.17.0,)"
+    versionRange="[1.19.0,)"
     ordering="NONE"
     side="BOTH"
 [[dependencies.integratedscripting]]
     modId="commoncapabilities"
     mandatory=true
-    versionRange="[2.8.3,)"
+    versionRange="[2.9.0,)"
     ordering="NONE"
     side="BOTH"
 [[dependencies.integratedscripting]]
     modId="integrateddynamics"
     mandatory=true
-    versionRange="[1.11.8,)"
+    versionRange="[1.21.0,)"
     ordering="NONE"
     side="BOTH"
 [[dependencies.integratedscripting]]
     modId="forge"
     mandatory=true
-    versionRange="[43.0.8,)"
+    versionRange="[47.0.1,)"
     ordering="NONE"
     side="BOTH"
 [[dependencies.integratedscripting]]
     modId="minecraft"
     mandatory=true
-    versionRange="[1.19.2,]"
+    versionRange="[1.20.1,]"
     ordering="NONE"
     side="BOTH"
