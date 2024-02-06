@@ -387,7 +387,8 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
     public int getActiveDisk() {
         try {
-            return this.fieldDisk.getActiveElement();
+            Integer element = this.fieldDisk.getActiveElement();
+            return element == null ? -1 : element;
         } catch (NumberFormatException e) {
             return -1;
         }
