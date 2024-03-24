@@ -169,9 +169,9 @@
   "info_book.integratedscripting.advanced.logging": "Logging",
   "info_book.integratedscripting.advanced.logging.text1": "For complex scripts, the need may arise to debug them by temporarily writing to external log files.",
   "info_book.integratedscripting.advanced.logging.text2": "JavaScript allows you to call functions such as &oconsole.log()&r and &oconsole.error()&r to write messages to respectively the &oStandard Out&r and &oStandard Error&r output streams.",
-  "info_book.integratedscripting.advanced.logging.text3": "When calling any of these functions, log messages will respectively be written to script-dependent &o.stdoutr and &o.stderr&r files.",
+  "info_book.integratedscripting.advanced.logging.text3": "When calling any of these functions, log messages will respectively be written to script-dependent &o.stdout&r and &o.stderr&r files.",
   "info_book.integratedscripting.advanced.logging.text4": "For example, if your script is located in &omyfile.js&r, log messages will be written to &omyfile.js.stdout&r.",
-  "info_book.integratedscripting.advanced.logging.text5": "These &o.stdoutr and &o.stderr&r files are accessible via your &lScripting Terminal&r or through external editing.",
+  "info_book.integratedscripting.advanced.logging.text5": "These &o.stdout&r and &o.stderr&r files are accessible via your &lScripting Terminal&r or through external editing.",
   "info_book.integratedscripting.advanced.logging.text6": "To avoid log files to become too large, they are capped in their size. By default, they are limited to 2096 lines. Consult your server admin if you are in need of more lines.",
 
   "info_book.integratedscripting.advanced.typescript": "TypeScript",
