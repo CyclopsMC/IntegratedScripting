@@ -57,6 +57,7 @@
   "script.integratedscripting.error.unsupported_language": "The language of script \"%s\" is not supported.",
   "script.integratedscripting.error.script_read": "An error occurred when reading the script \"%s\" at disk %s: %s",
   "script.integratedscripting.error.script_exec": "An error occurred when executing the member \"%s\" in script \"%s\" at disk %s: %s",
+  "script.integratedscripting.error.invalid_type": "Script with member \"%s\" in script \"%s\" at disk %s is expected to expose a variable with type %s while %s is found.",
 
   "_comment": "Items",
   "item.integratedscripting.scripting_disk": "Scripting Disk",
