@@ -118,6 +118,6 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
 
     @Override
     public Tag translateToNbt(Context context, V value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
-        throw new EvaluationException(Component.translatable("valuetype.integratedscripting.error.translation.unsupported_translateToNbt", Component.translatable(value.getType().getTranslationKey()), value.getType().toCompactString(value)));
+        throw exceptionFactory.createError(Component.translatable("valuetype.integratedscripting.error.translation.unsupported_translateToNbt", Component.translatable(value.getType().getTranslationKey()), value.getType().toCompactString(value)));
     }
 }

@@ -51,7 +51,7 @@ public class ValueTranslatorRegistry implements IValueTranslatorRegistry {
     public <V extends IValue> Value translateToGraal(Context context, V value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
         IValueTranslator translator = getValueTypeTranslator(value.getType());
         if (translator == null) {
-            throw new EvaluationException(Component.translatable("valuetype.integratedscripting.error.translation.unknown_to_graal", value.getType()));
+            throw exceptionFactory.createError(Component.translatable("valuetype.integratedscripting.error.translation.unknown_to_graal", value.getType()));
         }
         return translator.translateToGraal(context, value, exceptionFactory);
     }
@@ -70,7 +70,7 @@ public class ValueTranslatorRegistry implements IValueTranslatorRegistry {
     public <V extends IValue> V translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
         IValueTranslator translator = getScriptValueTranslator(value);
         if (translator == null) {
-            throw new EvaluationException(Component.translatable("valuetype.integratedscripting.error.translation.unknown_from_graal", value));
+            throw exceptionFactory.createError(Component.translatable("valuetype.integratedscripting.error.translation.unknown_from_graal", value));
         }
         return (V) translator.translateFromGraal(context, value, exceptionFactory);
     }
@@ -79,11 +79,11 @@ public class ValueTranslatorRegistry implements IValueTranslatorRegistry {
     public <V extends IValue> Tag translateToNbt(Context context, V value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
         IValueTranslator translator = getValueTypeTranslator(value.getType());
         if (translator == null) {
-            throw new EvaluationException(Component.translatable("valuetype.integratedscripting.error.translation.unknown_to_graal_nbt", value.getType()));
+            throw exceptionFactory.createError(Component.translatable("valuetype.integratedscripting.error.translation.unknown_to_graal_nbt", value.getType()));
         }
         if (translator.canTranslateNbt()) {
             return translator.translateToNbt(context, value, exceptionFactory);
         }
-        throw new EvaluationException(Component.translatable("valuetype.integratedscripting.error.translation.nbt_unmatched", value.getType()));
+        throw exceptionFactory.createError(Component.translatable("valuetype.integratedscripting.error.translation.nbt_unmatched", value.getType()));
     }
 }

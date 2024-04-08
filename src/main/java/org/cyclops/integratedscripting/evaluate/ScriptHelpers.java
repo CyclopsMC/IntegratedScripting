@@ -83,10 +83,10 @@ public class ScriptHelpers {
     }
 
     public static IEvaluationExceptionFactory getDummyEvaluationExceptionFactory() {
-        return message -> new EvaluationException(Component.literal(message));
+        return EvaluationException::new;
     }
 
-    public static IEvaluationExceptionFactory getEvaluationExceptionFactory(int disk, Path path,String member) {
+    public static IEvaluationExceptionFactory getEvaluationExceptionFactory(int disk, Path path, String member) {
         return message -> new EvaluationException(Component.translatable("script.integratedscripting.error.script_exec", member, path.toString(), disk, message));
     }
 

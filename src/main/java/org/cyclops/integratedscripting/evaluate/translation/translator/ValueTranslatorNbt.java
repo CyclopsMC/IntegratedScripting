@@ -95,7 +95,7 @@ public class ValueTranslatorNbt implements IValueTranslator<ValueTypeNbt.ValueNb
             case Tag.TAG_LONG_ARRAY -> {
                 return context.asValue(((LongArrayTag) tag).getAsLongArray());
             }
-            default -> throw new EvaluationException(Component.translatable("valuetype.integratedscripting.error.translation.nbt_unknown", tag.getType().getPrettyName()));
+            default -> throw exceptionFactory.createError(Component.translatable("valuetype.integratedscripting.error.translation.nbt_unknown", tag.getType().getPrettyName()));
         }
     }
 

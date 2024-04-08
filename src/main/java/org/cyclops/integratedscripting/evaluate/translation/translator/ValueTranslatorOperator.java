@@ -90,7 +90,7 @@ public class ValueTranslatorOperator implements IValueTranslator<ValueTypeOperat
 
     @Override
     public Tag translateToNbt(Context context, ValueTypeOperator.ValueOperator value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
-        throw new EvaluationException(Component.translatable("valuetype.integratedscripting.error.translation.unsupported_translateToNbt", Component.translatable(value.getType().getTranslationKey()), value.getType().toCompactString(value)));
+        throw exceptionFactory.createError(Component.translatable("valuetype.integratedscripting.error.translation.unsupported_translateToNbt", Component.translatable(value.getType().getTranslationKey()), value.getType().toCompactString(value)));
     }
 
     public static class GraalOperator extends OperatorBase {
