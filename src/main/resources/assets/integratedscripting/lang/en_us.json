@@ -40,6 +40,8 @@
   "valuetype.integratedscripting.error.translation.list_infinite": "Can not translate an infinite list into a scripting language.",
   "valuetype.integratedscripting.error.translation.nbt_unknown": "Can not translate NBT members of type %s.",
   "valuetype.integratedscripting.error.translation.nbt_unmatched": "Could not interpret the field %s as NBT.",
+  "valuetype.integratedscripting.error.translation.unsupported_translateToNbt": "Illegal conversion of %s \"%s\" to NBT.",
+  "valuetype.integratedscripting.error.translation.proxyobject_putMember": "Illegal adding of key \"%s\" to read-only %s",
 
   "_comment": "Operators",
   "operator.integratedscripting.integratedscript.basename": "Integrated Script %s",

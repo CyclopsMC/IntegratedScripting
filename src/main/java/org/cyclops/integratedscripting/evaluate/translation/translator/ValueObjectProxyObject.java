@@ -2,6 +2,8 @@ package org.cyclops.integratedscripting.evaluate.translation.translator;
 
 import lombok.SneakyThrows;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
 import org.cyclops.integrateddynamics.core.evaluate.operator.CurriedOperator;
@@ -84,6 +86,6 @@ public class ValueObjectProxyObject<V extends IValue> implements ProxyObject {
     @SneakyThrows
     @Override
     public void putMember(String key, Value value) {
-        throw new UnsupportedOperationException("Can not put members in static values of " + valueType.getTypeName());
+        throw new EvaluationException(Component.translatable("valuetype.integratedscripting.error.translation.proxyobject_putMember", key, valueType.getTypeName()));
     }
 }
