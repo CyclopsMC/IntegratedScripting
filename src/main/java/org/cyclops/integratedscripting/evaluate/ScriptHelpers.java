@@ -87,7 +87,11 @@ public class ScriptHelpers {
     }
 
     public static IEvaluationExceptionFactory getEvaluationExceptionFactory(int disk, Path path, String member) {
-        return message -> new EvaluationException(Component.translatable("script.integratedscripting.error.script_exec", member, path.toString(), disk, message));
+        EvaluationExceptionResolutionHelpers.expungeStaleEvaluationExceptions();
+
+        return message -> EvaluationExceptionResolutionHelpers.resolveOnScriptChange(
+                new EvaluationException(Component.translatable("script.integratedscripting.error.script_exec", member, path.toString(), disk, message)),
+                disk, path);
     }
 
 }

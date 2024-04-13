@@ -7,6 +7,7 @@ import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integratedscripting.api.network.IScript;
 import org.cyclops.integratedscripting.api.network.IScriptFactory;
 import org.cyclops.integratedscripting.api.network.IScriptingData;
+import org.cyclops.integratedscripting.evaluate.EvaluationExceptionResolutionHelpers;
 import org.cyclops.integratedscripting.evaluate.ScriptHelpers;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
@@ -48,7 +49,9 @@ public class GraalScriptFactory implements IScriptFactory {
             try {
                 graalContext.eval(source);
             } catch (PolyglotException e) {
-                throw new EvaluationException(Component.translatable("script.integratedscripting.error.script_read", path.toString(), disk, e.getMessage()));
+                throw EvaluationExceptionResolutionHelpers.resolveOnScriptChange(
+                        new EvaluationException(Component.translatable("script.integratedscripting.error.script_read", path.toString(), disk, e.getMessage())),
+                        disk, path);
             }
             Wrapper<IScriptingData.IDiskScriptsChangeListener> diskListener = new Wrapper<>();
             return new GraalScript(graalContext, languageBinding, scriptInvalidateListener -> {
@@ -68,7 +71,9 @@ public class GraalScriptFactory implements IScriptFactory {
                 }
             }, disk, path, null);
         } catch (IOException e) {
-            throw new EvaluationException(Component.translatable("script.integratedscripting.error.script_read", path.toString(), disk, e.getMessage()));
+            throw EvaluationExceptionResolutionHelpers.resolveOnScriptChange(
+                    new EvaluationException(Component.translatable("script.integratedscripting.error.script_read", path.toString(), disk, e.getMessage())),
+                    disk, path);
         }
     }
 }
