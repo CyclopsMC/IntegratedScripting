@@ -1,0 +1,11 @@
+As always, don't forget to backup your world before updating!
+Requires CyclopsCore version 1.19.0 or higher.
+
+Changes:
+* Add script context to errors during translation
+
+Fixes:
+* Automatically invalidate network errors on script changes, Closes #5
+* Don't hard-crash on unsupported conversions to NBT, Closes #8
+* Fix missing type checking for script variables in aspects, Closes #9
+

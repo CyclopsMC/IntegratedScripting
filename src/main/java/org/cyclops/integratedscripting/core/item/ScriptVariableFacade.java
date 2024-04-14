@@ -16,6 +16,7 @@ import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IVariable;
 import org.cyclops.integrateddynamics.api.network.INetwork;
 import org.cyclops.integrateddynamics.api.network.IPartNetwork;
+import org.cyclops.integrateddynamics.core.evaluate.variable.ValueHelpers;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypes;
 import org.cyclops.integrateddynamics.core.helper.L10NValues;
 import org.cyclops.integrateddynamics.core.item.VariableFacadeBase;
@@ -81,7 +82,16 @@ public class ScriptVariableFacade extends VariableFacadeBase implements IScriptV
             } else if (scriptingNetwork.getScript(this.disk, this.path) == null) {
                 validator.addError(Component.translatable("script.integratedscripting.error.path_not_in_network", this.disk, this.path.toString()));
             } else if (scriptingNetwork.getScript(this.disk, this.path).getMember(this.member) == null) {
-                validator.addError(Component.translatable("script.integratedscripting.error.member_not_in_network", this.disk, this.path.toString(), this.member));
+                validator.addError(Component.translatable("script.integratedscripting.error.member_not_in_network", this.disk, this.member, this.path.toString()));
+            }
+
+            // Check if the expected type corresponds to the actual value's type produced by this script.
+            IValue value = scriptingNetwork.getScript(this.disk, this.path).getMember(this.member).getValue();
+            if (!ValueHelpers.correspondsTo(containingValueType, value.getType())) {
+                validator.addError(Component.translatable("script.integratedscripting.error.invalid_type",
+                        this.member, this.path.toString(), this.disk,
+                        Component.translatable(containingValueType.getTranslationKey()),
+                        Component.translatable(value.getType().getTranslationKey())));
             }
         } catch (EvaluationException e) {
             validator.addError(e.getErrorMessage());

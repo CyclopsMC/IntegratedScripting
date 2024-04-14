@@ -3,6 +3,7 @@ package org.cyclops.integratedscripting.evaluate.translation.translator;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
@@ -118,6 +119,6 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
 
     @Override
     public Tag translateToNbt(Context context, V value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
-        throw new UnsupportedOperationException("translateToNbt is not supported");
+        throw exceptionFactory.createError(Component.translatable("valuetype.integratedscripting.error.translation.unsupported_translateToNbt", Component.translatable(value.getType().getTranslationKey()), value.getType().toCompactString(value)));
     }
 }
