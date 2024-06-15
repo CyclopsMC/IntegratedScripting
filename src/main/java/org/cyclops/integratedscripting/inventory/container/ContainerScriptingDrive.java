@@ -20,7 +20,7 @@ public class ContainerScriptingDrive extends InventoryContainer {
     }
 
     public ContainerScriptingDrive(int id, Inventory playerInventory, Container inventory) {
-        super(RegistryEntries.CONTAINER_SCRIPTING_DRIVE, id, playerInventory, inventory);
+        super(RegistryEntries.CONTAINER_SCRIPTING_DRIVE.get(), id, playerInventory, inventory);
         addInventory(inventory, 0, offsetX + 80, offsetY + 16, BlockEntityScriptingDrive.ROWS, BlockEntityScriptingDrive.COLS);
         addPlayerInventory(playerInventory, offsetX + 8, offsetY + 11 + BlockEntityScriptingDrive.ROWS * 18 + 17);
     }
@@ -30,6 +30,6 @@ public class ContainerScriptingDrive extends InventoryContainer {
         if(inventory instanceof Inventory) {
             return super.createNewSlot(inventory, index, row, column);
         }
-        return new SlotSingleItem(inventory, index, row, column, RegistryEntries.ITEM_SCRIPTING_DISK);
+        return new SlotSingleItem(inventory, index, row, column, RegistryEntries.ITEM_SCRIPTING_DISK.get());
     }
 }

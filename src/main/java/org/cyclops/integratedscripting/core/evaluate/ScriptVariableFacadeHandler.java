@@ -3,7 +3,9 @@ package org.cyclops.integratedscripting.core.evaluate;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
+import org.cyclops.integrateddynamics.api.evaluate.variable.IVariable;
 import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
+import org.cyclops.integrateddynamics.api.item.IVariableFacade;
 import org.cyclops.integrateddynamics.api.item.IVariableFacadeHandler;
 import org.cyclops.integratedscripting.Reference;
 import org.cyclops.integratedscripting.api.item.IScriptVariableFacade;
@@ -53,5 +55,15 @@ public class ScriptVariableFacadeHandler implements IVariableFacadeHandler<IScri
         tag.putInt("disk", variableFacade.getDisk());
         tag.putString("path", variableFacade.getPath().toString());
         tag.putString("member", variableFacade.getMember());
+    }
+
+    @Override
+    public boolean isInstance(IVariableFacade variableFacade) {
+        return variableFacade instanceof IScriptVariableFacade;
+    }
+
+    @Override
+    public boolean isInstance(IVariable<?> variable) {
+        return variable instanceof ScriptVariable;
     }
 }

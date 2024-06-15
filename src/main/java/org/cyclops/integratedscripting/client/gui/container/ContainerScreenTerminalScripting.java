@@ -486,11 +486,11 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double scroll) {
-        if (textArea.mouseScrolled(mouseX, mouseY, scroll)) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double mouseZ, double scroll) {
+        if (textArea.mouseScrolled(mouseX, mouseY, mouseZ, scroll)) {
             return true;
         }
-        return super.mouseScrolled(mouseX, mouseY, scroll);
+        return super.mouseScrolled(mouseX, mouseY, mouseZ, scroll);
     }
 
     @Override

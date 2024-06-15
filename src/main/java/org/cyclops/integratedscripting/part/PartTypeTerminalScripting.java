@@ -115,8 +115,8 @@ public class PartTypeTerminalScripting extends PartTypePanel<PartTypeTerminalScr
     }
 
     protected ContainerTerminalScripting.InitData createContainerInitData(PartPos pos) {
-        Optional<INetwork> network = NetworkHelpers.getNetwork(pos).resolve();
-        Optional<IScriptingNetwork> scriptingNetwork = network.flatMap(net -> ScriptingNetworkHelpers.getScriptingNetwork(net).resolve());
+        Optional<INetwork> network = NetworkHelpers.getNetwork(pos);
+        Optional<IScriptingNetwork> scriptingNetwork = network.flatMap(ScriptingNetworkHelpers::getScriptingNetwork);
         IntArrayList availableDisks = scriptingNetwork
                 .map(net -> net.getDisks().stream().sorted().collect(Collectors.toList()))
                 .map(IntArrayList::new)

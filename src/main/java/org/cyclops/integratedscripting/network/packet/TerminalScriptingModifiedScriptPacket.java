@@ -1,12 +1,14 @@
 package org.cyclops.integratedscripting.network.packet;
 
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import org.cyclops.cyclopscore.network.CodecField;
 import org.cyclops.cyclopscore.network.PacketCodec;
+import org.cyclops.integratedscripting.Reference;
 import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScripting;
 
 import java.nio.file.Path;
@@ -20,6 +22,8 @@ import java.util.List;
  */
 public class TerminalScriptingModifiedScriptPacket extends PacketCodec {
 
+    public static final ResourceLocation ID = new ResourceLocation(Reference.MOD_ID, "terminal_scripting_modified_script");
+
     @CodecField
     private int disk;
     @CodecField
@@ -28,10 +32,11 @@ public class TerminalScriptingModifiedScriptPacket extends PacketCodec {
     private List<String> script;
 
     public TerminalScriptingModifiedScriptPacket() {
-
+        super(ID);
     }
 
     public TerminalScriptingModifiedScriptPacket(int disk, Path path, String script) {
+        super(ID);
         this.disk = disk;
         this.path = path.toString();
         this.script = Arrays.stream(script.split("\n")).toList();

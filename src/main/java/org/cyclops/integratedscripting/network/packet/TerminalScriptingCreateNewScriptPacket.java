@@ -1,12 +1,14 @@
 package org.cyclops.integratedscripting.network.packet;
 
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import org.cyclops.cyclopscore.network.CodecField;
 import org.cyclops.cyclopscore.network.PacketCodec;
+import org.cyclops.integratedscripting.Reference;
 import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScripting;
 
 
@@ -17,14 +19,17 @@ import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScri
  */
 public class TerminalScriptingCreateNewScriptPacket extends PacketCodec {
 
+    public static final ResourceLocation ID = new ResourceLocation(Reference.MOD_ID, "terminal_scripting_create_new_script");
+
     @CodecField
     private int disk;
 
     public TerminalScriptingCreateNewScriptPacket() {
-
+        super(ID);
     }
 
     public TerminalScriptingCreateNewScriptPacket(int disk) {
+        super(ID);
         this.disk = disk;
     }
 

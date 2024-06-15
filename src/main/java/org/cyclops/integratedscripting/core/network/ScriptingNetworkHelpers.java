@@ -1,13 +1,13 @@
 package org.cyclops.integratedscripting.core.network;
 
-import net.minecraftforge.common.util.LazyOptional;
 import org.cyclops.integrateddynamics.api.network.INetwork;
+import org.cyclops.integratedscripting.Capabilities;
 import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.api.network.IScriptingData;
 import org.cyclops.integratedscripting.api.network.IScriptingNetwork;
-import org.cyclops.integratedscripting.capability.network.ScriptingNetworkConfig;
 
 import javax.annotation.Nullable;
+import java.util.Optional;
 
 /**
  * @author rubensworks
@@ -27,11 +27,11 @@ public class ScriptingNetworkHelpers {
      * @param network The network.
      * @return The optional scripting network.
      */
-    public static LazyOptional<IScriptingNetwork> getScriptingNetwork(@Nullable INetwork network) {
+    public static Optional<IScriptingNetwork> getScriptingNetwork(@Nullable INetwork network) {
         if (network == null) {
-            return LazyOptional.empty();
+            return Optional.empty();
         }
-        return network.getCapability(ScriptingNetworkConfig.CAPABILITY);
+        return network.getCapability(Capabilities.ScriptingNetwork.NETWORK);
     }
 
 }

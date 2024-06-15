@@ -1,12 +1,14 @@
 {
   "type": "integrateddynamics:drying_basin",
-  "item": "minecraft:andesite",
-  "fluid": {
-    "fluid": "integrateddynamics:menril_resin",
-    "amount": 1000
+  "input_item": {
+    "item": "minecraft:andesite"
+  },
+  "input_fluid": {
+    "FluidName": "integrateddynamics:menril_resin",
+    "Amount": 1000
   },
   "duration": 300,
-  "result": {
+  "output_item": {
     "item": "integratedscripting:mendesite"
   }
 }

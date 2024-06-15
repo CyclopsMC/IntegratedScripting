@@ -24,8 +24,8 @@ public class CommonProxy extends CommonProxyComponent {
     public void registerPacketHandlers(PacketHandler packetHandler) {
         super.registerPacketHandlers(packetHandler);
 
-        packetHandler.register(TerminalScriptingModifiedScriptPacket.class);
-        packetHandler.register(TerminalScriptingCreateNewScriptPacket.class);
-        packetHandler.register(TerminalScriptingDeleteScriptPacket.class);
+        packetHandler.register(TerminalScriptingModifiedScriptPacket.ID, TerminalScriptingModifiedScriptPacket::new);
+        packetHandler.register(TerminalScriptingCreateNewScriptPacket.ID, TerminalScriptingCreateNewScriptPacket::new);
+        packetHandler.register(TerminalScriptingDeleteScriptPacket.ID, TerminalScriptingDeleteScriptPacket::new);
     }
 }

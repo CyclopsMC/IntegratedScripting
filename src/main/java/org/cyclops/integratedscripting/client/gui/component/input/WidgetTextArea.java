@@ -27,8 +27,8 @@ import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableInt;
@@ -53,7 +53,7 @@ import java.util.stream.Stream;
  * * {@link #tick()}
  * * {@link #mouseClicked(double, double, int)}
  * * {@link #mouseDragged(double, double, int, double, double)}
- * * {@link #mouseScrolled(double, double, double)}
+ * * {@link #mouseScrolled(double, double, double, double)}
  * * {@link #keyPressed(int, int, int)}
  * * {@link #charTyped(char, int)}
  *
@@ -277,10 +277,10 @@ public class WidgetTextArea extends AbstractWidget implements GuiEventListener {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double scroll) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double mouseZ, double scroll) {
         if (this.scrollBar != null && mouseX >= this.getX() && mouseX < this.getX() + this.width
                 && mouseY >= this.getY() && mouseY < this.getY() + this.height
-                && this.scrollBar.mouseScrolled(mouseX, mouseY, scroll)) {
+                && this.scrollBar.mouseScrolled(mouseX, mouseY, mouseZ, scroll)) {
             return true;
         }
         return false;

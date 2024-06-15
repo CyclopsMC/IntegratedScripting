@@ -15,13 +15,9 @@
     "criteria_0": {
       "trigger": "minecraft:inventory_changed",
       "conditions": {
-        "items": [
-          {
-            "items": [
-              "integratedscripting:mendesite"
-            ]
-          }
-        ]
+        "item": {
+          "item": "integratedscripting:mendesite"
+        }
       }
     }
   }

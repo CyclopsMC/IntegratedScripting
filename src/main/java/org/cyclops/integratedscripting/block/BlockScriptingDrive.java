@@ -1,8 +1,10 @@
 package org.cyclops.integratedscripting.block;
 
+import com.mojang.serialization.MapCodec;
 import net.minecraft.core.Direction;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BaseEntityBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
@@ -23,6 +25,8 @@ import javax.annotation.Nullable;
  */
 public class BlockScriptingDrive extends BlockWithEntityGuiCabled {
 
+    public static final MapCodec<BlockScriptingDrive> CODEC = simpleCodec(BlockScriptingDrive::new);
+
     public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
 
     public BlockScriptingDrive(Properties properties) {
@@ -30,6 +34,11 @@ public class BlockScriptingDrive extends BlockWithEntityGuiCabled {
 
         this.registerDefaultState(this.stateDefinition.any()
                 .setValue(FACING, Direction.NORTH));
+    }
+
+    @Override
+    protected MapCodec<? extends BaseEntityBlock> codec() {
+        return CODEC;
     }
 
     @Override

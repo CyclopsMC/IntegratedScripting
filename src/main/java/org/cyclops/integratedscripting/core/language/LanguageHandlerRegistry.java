@@ -1,8 +1,8 @@
 package org.cyclops.integratedscripting.core.language;
 
 import com.google.common.collect.Maps;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import org.cyclops.integratedscripting.api.language.ILanguageHandler;
 import org.cyclops.integratedscripting.api.language.ILanguageHandlerRegistry;
 import org.cyclops.integratedscripting.evaluate.ScriptHelpers;
@@ -21,7 +21,7 @@ public class LanguageHandlerRegistry implements ILanguageHandlerRegistry {
     private final Map<String, ILanguageHandler> extensionToHandlerMap = Maps.newHashMap();
 
     private LanguageHandlerRegistry() {
-        MinecraftForge.EVENT_BUS.addListener(this::onServerStarted);
+        NeoForge.EVENT_BUS.addListener(this::onServerStarted);
     }
 
     /**

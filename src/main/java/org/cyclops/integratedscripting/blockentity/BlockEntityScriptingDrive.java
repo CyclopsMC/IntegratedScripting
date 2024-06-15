@@ -9,21 +9,22 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.util.LazyOptional;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import org.cyclops.cyclopscore.datastructure.DimPos;
 import org.cyclops.cyclopscore.inventory.SimpleInventory;
 import org.cyclops.cyclopscore.persist.IDirtyMarkListener;
+import org.cyclops.integrateddynamics.Capabilities;
 import org.cyclops.integrateddynamics.api.network.INetworkElement;
-import org.cyclops.integrateddynamics.capability.networkelementprovider.NetworkElementProviderConfig;
+import org.cyclops.integrateddynamics.api.network.INetworkElementProvider;
 import org.cyclops.integrateddynamics.capability.networkelementprovider.NetworkElementProviderSingleton;
 import org.cyclops.integrateddynamics.core.blockentity.BlockEntityCableConnectableInventory;
 import org.cyclops.integratedscripting.RegistryEntries;
+import org.cyclops.integratedscripting.core.network.ScriptingDriveNetworkElement;
 import org.cyclops.integratedscripting.core.network.ScriptingNetworkHelpers;
 import org.cyclops.integratedscripting.inventory.container.ContainerScriptingDrive;
 import org.cyclops.integratedscripting.item.ItemScriptingDisk;
-import org.cyclops.integratedscripting.core.network.ScriptingDriveNetworkElement;
 
 import javax.annotation.Nullable;
 
@@ -42,16 +43,33 @@ public class BlockEntityScriptingDrive extends BlockEntityCableConnectableInvent
     private int exposedDiskId = -1;
 
     public BlockEntityScriptingDrive(BlockPos blockPos, BlockState blockState) {
-        super(RegistryEntries.BLOCK_ENTITY_SCRIPTING_DRIVE, blockPos, blockState, BlockEntityScriptingDrive.INVENTORY_SIZE, 1);
+        super(RegistryEntries.BLOCK_ENTITY_SCRIPTING_DRIVE.get(), blockPos, blockState, BlockEntityScriptingDrive.INVENTORY_SIZE, 1);
         getInventory().addDirtyMarkListener(this);
+    }
 
-        addCapabilityInternal(ForgeCapabilities.ITEM_HANDLER, LazyOptional.of(() -> getInventory().getItemHandler()));
-        addCapabilityInternal(NetworkElementProviderConfig.CAPABILITY, LazyOptional.of(() -> new NetworkElementProviderSingleton() {
+    public static void registerScriptingDriveCapabilities(RegisterCapabilitiesEvent event, BlockEntityType<? extends BlockEntityScriptingDrive> blockEntityType) {
+        BlockEntityCableConnectableInventory.registerCableConnectableInventoryCapabilities(event, blockEntityType);
+
+        event.registerBlockEntity(
+                net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                blockEntityType,
+                (blockEntity, context) -> blockEntity.getInventory().getItemHandler()
+        );
+        event.registerBlockEntity(
+                Capabilities.NetworkElementProvider.BLOCK,
+                blockEntityType,
+                (blockEntity, context) -> blockEntity.getNetworkElementProvider()
+        );
+    }
+
+    @Override
+    public INetworkElementProvider getNetworkElementProvider() {
+        return new NetworkElementProviderSingleton() {
             @Override
             public INetworkElement createNetworkElement(Level world, BlockPos blockPos) {
                 return new ScriptingDriveNetworkElement(DimPos.of(world, blockPos), () -> getExposedDiskId());
             }
-        }));
+        };
     }
 
     @Override

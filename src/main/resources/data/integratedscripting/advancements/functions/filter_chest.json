@@ -17,14 +17,14 @@
       "conditions": {
         "parttype": "integrateddynamics:display_panel",
         "variable": {
-          "type": "integrateddynamics:operator",
+          "type": "operator",
           "operator": "integrateddynamics:operator_filter",
           "input": {
             "0": {
               "type": "integratedscripting:script"
             },
             "1": {
-              "type": "integrateddynamics:aspect",
+              "type": "aspect",
               "aspect": "integrateddynamics:read_list_inventory_itemstacks"
             }
           }

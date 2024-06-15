@@ -15,13 +15,9 @@
     "criteria_0": {
       "trigger": "cyclopscore:item_crafted",
       "conditions": {
-        "items": [
-          {
-            "items": [
-              "integratedscripting:scripting_disk"
-            ]
-          }
-        ]
+        "item": {
+          "item": "integratedscripting:scripting_disk"
+        }
       }
     }
   }

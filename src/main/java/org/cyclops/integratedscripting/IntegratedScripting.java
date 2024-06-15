@@ -4,18 +4,18 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.server.ServerStartedEvent;
-import net.minecraftforge.event.server.ServerStoppingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.NewRegistryEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.TickEvent;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.neoforged.neoforge.registries.NewRegistryEvent;
 import org.apache.logging.log4j.Level;
 import org.cyclops.cyclopscore.config.ConfigHandler;
 import org.cyclops.cyclopscore.helper.MinecraftHelpers;
@@ -32,7 +32,6 @@ import org.cyclops.integratedscripting.block.BlockMendesiteConfig;
 import org.cyclops.integratedscripting.block.BlockScriptingDriveConfig;
 import org.cyclops.integratedscripting.blockentity.BlockEntityScriptingDriveConfig;
 import org.cyclops.integratedscripting.capability.ScriptingNetworkCapabilityConstructors;
-import org.cyclops.integratedscripting.capability.network.ScriptingNetworkConfig;
 import org.cyclops.integratedscripting.command.CommandTestScript;
 import org.cyclops.integratedscripting.core.client.model.ScriptingVariableModelProviders;
 import org.cyclops.integratedscripting.core.evaluate.ScriptVariableFacadeHandler;
@@ -60,16 +59,17 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
 
     public ScriptingData scriptingData;
 
-    public IntegratedScripting() {
-        super(Reference.MOD_ID, (instance) -> _instance = instance);
+    public IntegratedScripting(IEventBus modEventBus) {
+        super(Reference.MOD_ID, (instance) -> _instance = instance, modEventBus);
 
         getRegistryManager().addRegistry(IValueTranslatorRegistry.class, ValueTranslatorRegistry.getInstance());
         getRegistryManager().addRegistry(ILanguageHandlerRegistry.class, LanguageHandlerRegistry.getInstance());
 
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::onRegistriesCreate);
-        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::afterSetup);
-        MinecraftForge.EVENT_BUS.addListener(this::onServerStarting);
-        MinecraftForge.EVENT_BUS.addListener(this::onServerTick);
+        modEventBus.addListener(this::onRegistriesCreate);
+        modEventBus.addListener(this::afterSetup);
+        modEventBus.register(new ScriptingNetworkCapabilityConstructors());
+        NeoForge.EVENT_BUS.addListener(this::onServerStarting);
+        NeoForge.EVENT_BUS.addListener(this::onServerTick);
     }
 
     public void onRegistriesCreate(NewRegistryEvent event) {
@@ -99,15 +99,13 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
     protected void setup(FMLCommonSetupEvent event) {
         super.setup(event);
 
-        MinecraftForge.EVENT_BUS.register(new ScriptingNetworkCapabilityConstructors());
-
         ValueTranslators.load();
         LanguageHandlers.load();
     }
 
     @SubscribeEvent
     public void onServerStarted(ServerStartedEvent event) {
-        MinecraftForge.EVENT_BUS.register(this.scriptingData = new ScriptingData(event.getServer().getWorldPath(ScriptingData.LEVEL_RESOURCE)));
+        this.scriptingData = new ScriptingData(event.getServer().getWorldPath(ScriptingData.LEVEL_RESOURCE));
     }
 
     @Override
@@ -148,8 +146,6 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
     @Override
     protected void onConfigsRegister(ConfigHandler configHandler) {
         super.onConfigsRegister(configHandler);
-
-        configHandler.addConfigurable(new ScriptingNetworkConfig());
 
         configHandler.addConfigurable(new ItemScriptingDiskConfig());
 

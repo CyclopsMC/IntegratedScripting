@@ -82,7 +82,7 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
     public ContainerTerminalScripting(int id, Inventory playerInventory,
                                       PartTarget target, Optional<IPartContainer> partContainer,
                                       PartTypeTerminalScripting partType, InitData initData) {
-        super(RegistryEntries.CONTAINER_TERMINAL_SCRIPTING, id, playerInventory, new SimpleInventory(1, 1));
+        super(RegistryEntries.CONTAINER_TERMINAL_SCRIPTING.get(), id, playerInventory, new SimpleInventory(1, 1));
 
         ((SimpleInventory) getContainerInventory()).addDirtyMarkListener(this);
         addSlot(new SlotVariable(getContainerInventory(), 0, 232, 137));
@@ -93,8 +93,8 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
         this.partContainer = partContainer;
         this.world = player.getCommandSenderWorld();
 
-        this.network = NetworkHelpers.getNetwork(getTarget().getCenter()).resolve();
-        this.scriptingNetwork = this.network.flatMap(network -> ScriptingNetworkHelpers.getScriptingNetwork(network).resolve());
+        this.network = NetworkHelpers.getNetwork(getTarget().getCenter());
+        this.scriptingNetwork = this.network.flatMap(ScriptingNetworkHelpers::getScriptingNetwork);
         this.clientScriptsDirty = Sets.newHashSet();
 
         this.availableDisks = initData.getAvailableDisks();
@@ -370,7 +370,7 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
             public IScriptVariableFacade create(int id) {
                 return new ScriptVariableFacade(id, disk, path, member);
             }
-        }, getLevel(), player, RegistryEntries.BLOCK_PART_TERMINAL_SCRIPTING.defaultBlockState());
+        }, getLevel(), player, RegistryEntries.BLOCK_PART_TERMINAL_SCRIPTING.get().defaultBlockState());
     }
 
     @Override
