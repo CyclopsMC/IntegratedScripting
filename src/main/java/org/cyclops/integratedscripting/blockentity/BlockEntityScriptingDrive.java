@@ -11,7 +11,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import org.cyclops.cyclopscore.datastructure.DimPos;
 import org.cyclops.cyclopscore.inventory.SimpleInventory;
 import org.cyclops.cyclopscore.persist.IDirtyMarkListener;
@@ -27,6 +26,7 @@ import org.cyclops.integratedscripting.inventory.container.ContainerScriptingDri
 import org.cyclops.integratedscripting.item.ItemScriptingDisk;
 
 import javax.annotation.Nullable;
+import java.util.function.Supplier;
 
 /**
  * A part entity used to store variables.
@@ -47,19 +47,24 @@ public class BlockEntityScriptingDrive extends BlockEntityCableConnectableInvent
         getInventory().addDirtyMarkListener(this);
     }
 
-    public static void registerScriptingDriveCapabilities(RegisterCapabilitiesEvent event, BlockEntityType<? extends BlockEntityScriptingDrive> blockEntityType) {
-        BlockEntityCableConnectableInventory.registerCableConnectableInventoryCapabilities(event, blockEntityType);
+    public static class CapabilityRegistrar extends BlockEntityCableConnectableInventory.CapabilityRegistrar<BlockEntityScriptingDrive> {
+        public CapabilityRegistrar(Supplier<BlockEntityType<? extends BlockEntityScriptingDrive>> blockEntityType) {
+            super(blockEntityType);
+        }
 
-        event.registerBlockEntity(
-                net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
-                blockEntityType,
-                (blockEntity, context) -> blockEntity.getInventory().getItemHandler()
-        );
-        event.registerBlockEntity(
-                Capabilities.NetworkElementProvider.BLOCK,
-                blockEntityType,
-                (blockEntity, context) -> blockEntity.getNetworkElementProvider()
-        );
+        @Override
+        public void populate() {
+            super.populate();
+
+            add(
+                    net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
+                    (blockEntity, context) -> blockEntity.getInventory().getItemHandler()
+            );
+            add(
+                    Capabilities.NetworkElementProvider.BLOCK,
+                    (blockEntity, context) -> blockEntity.getNetworkElementProvider()
+            );
+        }
     }
 
     @Override
