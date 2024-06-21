@@ -42,7 +42,7 @@ public class ValueTranslatorList implements IValueTranslator<ValueTypeList.Value
     @Override
     public Value translateToGraal(Context context, ValueTypeList.ValueList value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
         if (value.getRawValue().isInfinite()) {
-            throw new EvaluationException(Component.translatable("valuetype.integratedscripting.error.translation.list_infinite"));
+            throw exceptionFactory.createError(Component.translatable("valuetype.integratedscripting.error.translation.list_infinite"));
         }
 
         // The following should work according to the docs, but doesn't. So we fallback to a sub-optimal approach.
@@ -67,7 +67,7 @@ public class ValueTranslatorList implements IValueTranslator<ValueTypeList.Value
     @Override
     public Tag translateToNbt(Context context, ValueTypeList.ValueList value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
         if (value.getRawValue().isInfinite()) {
-            throw new EvaluationException(Component.translatable("valuetype.integratedscripting.error.translation.list_infinite"));
+            throw exceptionFactory.createError(Component.translatable("valuetype.integratedscripting.error.translation.list_infinite"));
         }
 
         ListTag tag = new ListTag();
