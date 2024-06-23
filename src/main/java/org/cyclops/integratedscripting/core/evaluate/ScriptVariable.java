@@ -74,7 +74,7 @@ public class ScriptVariable extends VariableAdapter<IValue> {
         if (this.value == null) {
             IScriptMember scriptMember = this.script.getMember(member);
             if (scriptMember == null) {
-                this.lastEvaluationException = new EvaluationException(Component.translatable("script.integratedscripting.error.member_not_in_network", member, path.toString()));
+                this.lastEvaluationException = new EvaluationException(Component.translatable("script.integratedscripting.error.member_not_in_network", this.disk, this.member, this.path.toString()));
                 throw this.lastEvaluationException;
             }
             this.value = scriptMember.getValue();
