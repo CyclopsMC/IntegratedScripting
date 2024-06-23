@@ -83,15 +83,15 @@ public class ScriptVariableFacade extends VariableFacadeBase implements IScriptV
                 validator.addError(Component.translatable("script.integratedscripting.error.path_not_in_network", this.disk, this.path.toString()));
             } else if (scriptingNetwork.getScript(this.disk, this.path).getMember(this.member) == null) {
                 validator.addError(Component.translatable("script.integratedscripting.error.member_not_in_network", this.disk, this.member, this.path.toString()));
-            }
-
-            // Check if the expected type corresponds to the actual value's type produced by this script.
-            IValue value = scriptingNetwork.getScript(this.disk, this.path).getMember(this.member).getValue();
-            if (!ValueHelpers.correspondsTo(containingValueType, value.getType())) {
-                validator.addError(Component.translatable("script.integratedscripting.error.invalid_type",
-                        this.member, this.path.toString(), this.disk,
-                        Component.translatable(containingValueType.getTranslationKey()),
-                        Component.translatable(value.getType().getTranslationKey())));
+            } else {
+                // Check if the expected type corresponds to the actual value's type produced by this script.
+                IValue value = scriptingNetwork.getScript(this.disk, this.path).getMember(this.member).getValue();
+                if (!ValueHelpers.correspondsTo(containingValueType, value.getType())) {
+                    validator.addError(Component.translatable("script.integratedscripting.error.invalid_type",
+                            this.member, this.path.toString(), this.disk,
+                            Component.translatable(containingValueType.getTranslationKey()),
+                            Component.translatable(value.getType().getTranslationKey())));
+                }
             }
         } catch (EvaluationException e) {
             validator.addError(e.getErrorMessage());
