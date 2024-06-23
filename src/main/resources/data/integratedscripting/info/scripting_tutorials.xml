@@ -56,7 +56,7 @@
         <appendix type="integrateddynamics:operator">integrateddynamics:operator_filter</appendix>
         <appendix type="integrateddynamics:aspect">integrateddynamics:read_list_inventory_itemstacks</appendix>
         <appendix type="textfield" scale="0.8">function filterItemMethods(item) {
-  return item.isStackable() &amp;&amp; item.stacksize() >= 16;
+  return item.isStackable() &amp;&amp; item.size() >= 16;
 }</appendix>
         <appendix type="advancement_rewards" id="integratedscripting:functions">
             <advancements>
