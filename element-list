@@ -6,6 +6,7 @@ org.cyclops.integratedscripting.api.network
 org.cyclops.integratedscripting.block
 org.cyclops.integratedscripting.blockentity
 org.cyclops.integratedscripting.capability
+org.cyclops.integratedscripting.capability.network
 org.cyclops.integratedscripting.client.gui.component.input
 org.cyclops.integratedscripting.client.gui.container
 org.cyclops.integratedscripting.client.gui.image
