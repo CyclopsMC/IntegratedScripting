@@ -1,0 +1,8 @@
+As always, don't forget to backup your world before updating!
+Requires CyclopsCore version 1.19.0 or higher.
+
+Fixes:
+* Fix incorrect error message for missing member
+* Fix invalid script member error not being caught, Closes #10
+* Fix stack size example errors in book, Closes #13
+
