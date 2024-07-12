@@ -10,6 +10,7 @@ org.cyclops.integratedscripting.client.gui.component.input
 org.cyclops.integratedscripting.client.gui.container
 org.cyclops.integratedscripting.client.gui.image
 org.cyclops.integratedscripting.command
+org.cyclops.integratedscripting.component
 org.cyclops.integratedscripting.core.client.model
 org.cyclops.integratedscripting.core.evaluate
 org.cyclops.integratedscripting.core.item
