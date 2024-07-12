@@ -4,6 +4,7 @@ import net.minecraft.nbt.DoubleTag;
 import net.minecraft.nbt.Tag;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
+import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeDouble;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypes;
 import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExceptionFactory;
@@ -32,12 +33,12 @@ public class ValueTranslatorDouble implements IValueTranslator<ValueTypeDouble.V
     }
 
     @Override
-    public Value translateToGraal(Context context, ValueTypeDouble.ValueDouble value, IEvaluationExceptionFactory exceptionFactory) {
+    public Value translateToGraal(Context context, ValueTypeDouble.ValueDouble value, IEvaluationExceptionFactory exceptionFactory, ValueDeseralizationContext valueDeseralizationContext) {
         return context.asValue(value.getRawValue());
     }
 
     @Override
-    public ValueTypeDouble.ValueDouble translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory) {
+    public ValueTypeDouble.ValueDouble translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory, ValueDeseralizationContext valueDeseralizationContext) {
         return ValueTypeDouble.ValueDouble.of(value.asDouble());
     }
 

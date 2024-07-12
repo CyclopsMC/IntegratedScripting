@@ -26,6 +26,7 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Iterator;
@@ -288,7 +289,7 @@ public class ScriptingData implements IScriptingData {
         // Invoke listeners
         List<IDiskScriptsChangeListener> listeners = scriptChangeListeners.get(disk);
         if (listeners != null) {
-            for (IDiskScriptsChangeListener listener : listeners) {
+            for (IDiskScriptsChangeListener listener : new ArrayList<>(listeners)) {
                 listener.onChange(scriptPathRelative);
             }
         }

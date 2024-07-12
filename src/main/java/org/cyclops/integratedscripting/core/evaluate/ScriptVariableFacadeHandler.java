@@ -33,7 +33,7 @@ public class ScriptVariableFacadeHandler implements IVariableFacadeHandler<IScri
 
     @Override
     public ResourceLocation getUniqueName() {
-        return new ResourceLocation(Reference.MOD_ID, "script");
+        return ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "script");
     }
 
     @Override
@@ -51,7 +51,7 @@ public class ScriptVariableFacadeHandler implements IVariableFacadeHandler<IScri
     }
 
     @Override
-    public void setVariableFacade(CompoundTag tag, IScriptVariableFacade variableFacade) {
+    public void setVariableFacade(ValueDeseralizationContext valueDeseralizationContext, CompoundTag tag, IScriptVariableFacade variableFacade) {
         tag.putInt("disk", variableFacade.getDisk());
         tag.putString("path", variableFacade.getPath().toString());
         tag.putString("member", variableFacade.getMember());

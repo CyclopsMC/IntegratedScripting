@@ -1,9 +1,8 @@
 package org.cyclops.integratedscripting.core.language;
 
 import net.minecraft.client.resources.language.I18n;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.fml.DistExecutor;
 import org.cyclops.cyclopscore.helper.L10NHelpers;
+import org.cyclops.cyclopscore.helper.MinecraftHelpers;
 import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
 import org.cyclops.integrateddynamics.core.evaluate.operator.Operators;
@@ -78,7 +77,7 @@ public class TypeScriptTypingsGenerator {
     }
 
     private void handleDescriptionComment(StringBuilder sb, String unlocalizedKey) {
-        DistExecutor.callWhenOn(Dist.CLIENT, () -> () -> {
+        if (MinecraftHelpers.isClientSide()) {
             if (I18n.exists(unlocalizedKey)) {
                 sb.append("  /**\n");
                 sb.append("   * ");
@@ -86,8 +85,7 @@ public class TypeScriptTypingsGenerator {
                 sb.append("\n");
                 sb.append("   */\n");
             }
-            return null;
-        });
+        }
     }
 
     private void handleOperator(StringBuilder sb, String name, IOperator operator, boolean scoped) {

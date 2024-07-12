@@ -9,6 +9,6 @@ import org.cyclops.integratedscripting.api.network.IScriptingNetwork;
  */
 public class Capabilities {
     public static final class ScriptingNetwork {
-        public static final NetworkCapability<IScriptingNetwork> NETWORK = NetworkCapability.create(new ResourceLocation(Reference.MOD_ID, "scripting_network"), IScriptingNetwork.class);
+        public static final NetworkCapability<IScriptingNetwork> NETWORK = NetworkCapability.create(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "scripting_network"), IScriptingNetwork.class);
     }
 }

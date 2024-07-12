@@ -1,7 +1,9 @@
 package org.cyclops.integratedscripting;
 
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.commands.Commands;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.api.distmarker.Dist;
@@ -12,9 +14,9 @@ import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLLoadCompleteEvent;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.event.TickEvent;
 import net.neoforged.neoforge.event.server.ServerStartedEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.registries.NewRegistryEvent;
 import org.apache.logging.log4j.Level;
 import org.cyclops.cyclopscore.config.ConfigHandler;
@@ -33,6 +35,7 @@ import org.cyclops.integratedscripting.block.BlockScriptingDriveConfig;
 import org.cyclops.integratedscripting.blockentity.BlockEntityScriptingDriveConfig;
 import org.cyclops.integratedscripting.capability.ScriptingNetworkCapabilityConstructors;
 import org.cyclops.integratedscripting.command.CommandTestScript;
+import org.cyclops.integratedscripting.component.DataComponentDiskIdConfig;
 import org.cyclops.integratedscripting.core.client.model.ScriptingVariableModelProviders;
 import org.cyclops.integratedscripting.core.evaluate.ScriptVariableFacadeHandler;
 import org.cyclops.integratedscripting.core.language.LanguageHandlerRegistry;
@@ -87,8 +90,8 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
     }
 
     @Override
-    protected LiteralArgumentBuilder<CommandSourceStack> constructBaseCommand() {
-        LiteralArgumentBuilder<CommandSourceStack> root = super.constructBaseCommand();
+    protected LiteralArgumentBuilder<CommandSourceStack> constructBaseCommand(Commands.CommandSelection selection, CommandBuildContext context) {
+        LiteralArgumentBuilder<CommandSourceStack> root = super.constructBaseCommand(selection, context);
 
         root.then(CommandTestScript.make());
 
@@ -117,11 +120,9 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
     }
 
     @SubscribeEvent
-    public void onServerTick(TickEvent.ServerTickEvent event) {
-        if(event.phase == TickEvent.Phase.START) {
-            if (this.scriptingData != null) {
-                this.scriptingData.tick();
-            }
+    public void onServerTick(ServerTickEvent.Pre event) {
+        if (this.scriptingData != null) {
+            this.scriptingData.tick();
         }
     }
 
@@ -156,6 +157,8 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
 
         configHandler.addConfigurable(new ContainerScriptingDriveConfig());
         configHandler.addConfigurable(new ContainerTerminalScriptingConfig());
+
+        configHandler.addConfigurable(new DataComponentDiskIdConfig());
     }
 
     @OnlyIn(Dist.CLIENT)

@@ -18,7 +18,7 @@ import java.util.function.Supplier;
 public class ScriptingDriveNetworkElement extends TileNetworkElement<BlockEntityScriptingDrive> implements
         IIdentifiableNetworkElement {
 
-    public static final ResourceLocation GROUP = new ResourceLocation(Reference.MOD_ID, "scripting_drive");
+    public static final ResourceLocation GROUP = ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "scripting_drive");
 
     private final Supplier<Integer> idGetter;
 

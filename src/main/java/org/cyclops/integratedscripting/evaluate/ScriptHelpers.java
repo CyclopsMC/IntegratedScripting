@@ -3,6 +3,7 @@ package org.cyclops.integratedscripting.evaluate;
 import net.minecraft.network.chat.Component;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
+import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
 import org.cyclops.integrateddynamics.core.evaluate.operator.Operators;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeOperator;
 import org.cyclops.integratedscripting.GeneralConfig;
@@ -55,7 +56,7 @@ public class ScriptHelpers {
         return contextBuilder.build();
     }
 
-    public static Context createPopulatedContext(@Nullable Function<Context.Builder, Context.Builder> contextBuilderModifier) throws EvaluationException {
+    public static Context createPopulatedContext(@Nullable Function<Context.Builder, Context.Builder> contextBuilderModifier, ValueDeseralizationContext valueDeseralizationContext) throws EvaluationException {
         Context context = createBaseContext(contextBuilderModifier);
 
         // Create idContext field with ops
@@ -64,7 +65,7 @@ public class ScriptHelpers {
         Value idContext = jsObjectClass.newInstance();
         Value ops = jsObjectClass.newInstance();
         for (Map.Entry<String, IOperator> entry : Operators.REGISTRY.getGlobalInteractOperators().entrySet()) {
-            ops.putMember(entry.getKey(), ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeOperator.ValueOperator.of(entry.getValue()), getDummyEvaluationExceptionFactory()));
+            ops.putMember(entry.getKey(), ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeOperator.ValueOperator.of(entry.getValue()), getDummyEvaluationExceptionFactory(), valueDeseralizationContext));
         }
         idContext.putMember("ops", ops);
         jsBindings.putMember("idContext", idContext);

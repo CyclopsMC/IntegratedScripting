@@ -4,6 +4,7 @@ import net.minecraft.nbt.ByteTag;
 import net.minecraft.nbt.Tag;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
+import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeBoolean;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypes;
 import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExceptionFactory;
@@ -36,7 +37,7 @@ public class ValueTranslatorBoolean implements IValueTranslator<ValueTypeBoolean
     }
 
     @Override
-    public Value translateToGraal(Context context, ValueTypeBoolean.ValueBoolean value, IEvaluationExceptionFactory exceptionFactory) {
+    public Value translateToGraal(Context context, ValueTypeBoolean.ValueBoolean value, IEvaluationExceptionFactory exceptionFactory, ValueDeseralizationContext valueDeseralizationContext) {
         if (!valuesInitialized) {
             valuesInitialized = true;
             valueTrue = context.asValue(true);
@@ -46,7 +47,7 @@ public class ValueTranslatorBoolean implements IValueTranslator<ValueTypeBoolean
     }
 
     @Override
-    public ValueTypeBoolean.ValueBoolean translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory) {
+    public ValueTypeBoolean.ValueBoolean translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory, ValueDeseralizationContext valueDeseralizationContext) {
         return ValueTypeBoolean.ValueBoolean.of(value.asBoolean());
     }
 

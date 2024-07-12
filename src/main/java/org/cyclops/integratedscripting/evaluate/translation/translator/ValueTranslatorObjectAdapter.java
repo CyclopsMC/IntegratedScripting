@@ -96,12 +96,12 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
     }
 
     @Override
-    public Value translateToGraal(Context context, V value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
-        return context.asValue(new ValueObjectProxyObject<>(context, exceptionFactory, this.key, getMethods(), this.valueType, value));
+    public Value translateToGraal(Context context, V value, IEvaluationExceptionFactory exceptionFactory, ValueDeseralizationContext valueDeseralizationContext) throws EvaluationException {
+        return context.asValue(new ValueObjectProxyObject<>(context, exceptionFactory, this.key, getMethods(), this.valueType, value, valueDeseralizationContext));
     }
 
     @Override
-    public V translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
+    public V translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory, ValueDeseralizationContext valueDeseralizationContext) throws EvaluationException {
         // Unwrap the value if it was translated in the opposite direction before.
         if (value.isProxyObject()) {
             try {
@@ -113,8 +113,8 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
         }
 
         Value idBlock = value.getMember(this.key);
-        ValueTypeNbt.ValueNbt valueNbt = ValueTranslators.REGISTRY.translateFromGraal(context, idBlock, exceptionFactory);
-        return this.valueType.deserialize(ValueDeseralizationContext.ofAllEnabled(), valueNbt.getRawValue().orElseThrow());
+        ValueTypeNbt.ValueNbt valueNbt = ValueTranslators.REGISTRY.translateFromGraal(context, idBlock, exceptionFactory, valueDeseralizationContext);
+        return this.valueType.deserialize(valueDeseralizationContext, valueNbt.getRawValue().orElseThrow());
     }
 
     @Override

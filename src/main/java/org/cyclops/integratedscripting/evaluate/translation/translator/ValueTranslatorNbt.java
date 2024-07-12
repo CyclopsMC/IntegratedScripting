@@ -7,6 +7,7 @@ import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
+import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeNbt;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypes;
 import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExceptionFactory;
@@ -41,15 +42,15 @@ public class ValueTranslatorNbt implements IValueTranslator<ValueTypeNbt.ValueNb
     }
 
     @Override
-    public Value translateToGraal(Context context, ValueTypeNbt.ValueNbt value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
+    public Value translateToGraal(Context context, ValueTypeNbt.ValueNbt value, IEvaluationExceptionFactory exceptionFactory, ValueDeseralizationContext valueDeseralizationContext) throws EvaluationException {
         Tag tag = value.getRawValue().orElse(null);
         if (tag == null) {
             return context.asValue(null);
         }
-        return translateTag(context, tag, exceptionFactory);
+        return translateTag(context, tag, exceptionFactory, valueDeseralizationContext);
     }
 
-    public Value translateTag(Context context, Tag tag, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
+    public Value translateTag(Context context, Tag tag, IEvaluationExceptionFactory exceptionFactory, ValueDeseralizationContext valueDeseralizationContext) throws EvaluationException {
         switch (tag.getId()) {
             case Tag.TAG_END -> {
                 return context.eval("js", "exports = { 'nbt_end': true }");
@@ -82,12 +83,12 @@ public class ValueTranslatorNbt implements IValueTranslator<ValueTypeNbt.ValueNb
                 List<Value> list = new ArrayList<>();
                 ListTag listTag = (ListTag) tag;
                 for (Tag innerValue : listTag) {
-                    list.add(translateTag(context, innerValue, exceptionFactory));
+                    list.add(translateTag(context, innerValue, exceptionFactory, valueDeseralizationContext));
                 }
                 return context.asValue(list);
             }
             case Tag.TAG_COMPOUND -> {
-                return translateCompoundTag(context, (CompoundTag) tag, exceptionFactory, null, null);
+                return translateCompoundTag(context, (CompoundTag) tag, exceptionFactory, null, null, valueDeseralizationContext);
             }
             case Tag.TAG_INT_ARRAY -> {
                 return context.asValue(((IntArrayTag) tag).getAsIntArray());
@@ -99,12 +100,12 @@ public class ValueTranslatorNbt implements IValueTranslator<ValueTypeNbt.ValueNb
         }
     }
 
-    public Value translateCompoundTag(Context context, CompoundTag tag, IEvaluationExceptionFactory exceptionFactory, @Nullable Map<String, IOperator> methods, @Nullable IValue value) {
-        return context.asValue(new NbtCompoundTagProxyObject(context, exceptionFactory, tag, methods, value));
+    public Value translateCompoundTag(Context context, CompoundTag tag, IEvaluationExceptionFactory exceptionFactory, @Nullable Map<String, IOperator> methods, @Nullable IValue value, ValueDeseralizationContext valueDeseralizationContext) {
+        return context.asValue(new NbtCompoundTagProxyObject(context, exceptionFactory, tag, methods, value, valueDeseralizationContext));
     }
 
     @Override
-    public ValueTypeNbt.ValueNbt translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
+    public ValueTypeNbt.ValueNbt translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory, ValueDeseralizationContext valueDeseralizationContext) throws EvaluationException {
         // Unwrap the value if it was translated in the opposite direction before.
         if (value.isProxyObject()) {
             try {
@@ -122,7 +123,7 @@ public class ValueTranslatorNbt implements IValueTranslator<ValueTypeNbt.ValueNb
         // In all other cases, assume we have a compound tag
         CompoundTag tag = new CompoundTag();
         for (String memberKey : value.getMemberKeys()) {
-            IValue subValue = ValueTranslators.REGISTRY.translateFromGraal(context, value.getMember(memberKey), exceptionFactory);
+            IValue subValue = ValueTranslators.REGISTRY.translateFromGraal(context, value.getMember(memberKey), exceptionFactory, valueDeseralizationContext);
             tag.put(memberKey, ValueTranslators.REGISTRY.translateToNbt(context, subValue, exceptionFactory));
         }
         return ValueTypeNbt.ValueNbt.of(tag);

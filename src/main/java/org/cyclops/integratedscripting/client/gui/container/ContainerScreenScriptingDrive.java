@@ -20,7 +20,7 @@ public class ContainerScreenScriptingDrive extends ContainerScreenExtended<Conta
 
     @Override
     protected ResourceLocation constructGuiTexture() {
-        return new ResourceLocation(Reference.MOD_ID, "textures/gui/scripting_drive.png");
+        return ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/scripting_drive.png");
     }
 
     @Override

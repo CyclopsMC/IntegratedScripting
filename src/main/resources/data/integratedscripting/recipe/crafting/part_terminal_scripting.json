@@ -23,6 +23,6 @@
     }
   },
   "result": {
-    "item": "integratedscripting:part_terminal_scripting"
+    "id": "integratedscripting:part_terminal_scripting"
   }
 }

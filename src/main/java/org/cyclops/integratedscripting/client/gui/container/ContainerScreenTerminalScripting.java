@@ -168,7 +168,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
     @Override
     protected ResourceLocation constructGuiTexture() {
-        return new ResourceLocation(Reference.MOD_ID, "textures/gui/scripting_terminal.png");
+        return ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/scripting_terminal.png");
     }
 
     @Override

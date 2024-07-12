@@ -4,6 +4,7 @@ import net.minecraft.network.chat.Component;
 import org.apache.commons.lang3.tuple.Pair;
 import org.cyclops.cyclopscore.datastructure.Wrapper;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
+import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
 import org.cyclops.integratedscripting.api.network.IScript;
 import org.cyclops.integratedscripting.api.network.IScriptFactory;
 import org.cyclops.integratedscripting.api.network.IScriptingData;
@@ -40,7 +41,7 @@ public class GraalScriptFactory implements IScriptFactory {
         // Construct graal context
         Context graalContext = ScriptHelpers.createPopulatedContext((contextBuilder) -> contextBuilder
                 .out(outputStreams.getLeft())
-                .err(outputStreams.getRight()));
+                .err(outputStreams.getRight()), ValueDeseralizationContext.ofAllEnabled());
         Value languageBinding = graalContext.getBindings("js");
 
         try {
@@ -69,7 +70,7 @@ public class GraalScriptFactory implements IScriptFactory {
                 if (diskListener.get() != null) {
                     ScriptingNetworkHelpers.getScriptingData().removeListener(disk, diskListener.get());
                 }
-            }, disk, path, null);
+            }, disk, path, null, ValueDeseralizationContext.ofAllEnabled());
         } catch (IOException e) {
             throw EvaluationExceptionResolutionHelpers.resolveOnScriptChange(
                     new EvaluationException(Component.translatable("script.integratedscripting.error.script_read", path.toString(), disk, e.getMessage())),

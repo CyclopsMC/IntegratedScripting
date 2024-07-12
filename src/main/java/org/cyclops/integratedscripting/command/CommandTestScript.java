@@ -10,6 +10,7 @@ import net.minecraft.nbt.ByteArrayTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
+import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueObjectTypeItemStack;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeBoolean;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeInteger;
@@ -54,7 +55,8 @@ function testFunction(a, b, c, d, e, f) {
     return 10;
 }""", "src.js").build();
             IEvaluationExceptionFactory EF = ScriptHelpers.getDummyEvaluationExceptionFactory();
-            try (Context context = ScriptHelpers.createPopulatedContext(null)) {
+            ValueDeseralizationContext vds = ValueDeseralizationContext.ofAllEnabled();
+            try (Context context = ScriptHelpers.createPopulatedContext(null, vds)) {
 //                long timeStart = System.currentTimeMillis();
 //                for (int i = 0; i < 100; i++) {
 //                    context.eval(source);
@@ -74,17 +76,17 @@ function testFunction(a, b, c, d, e, f) {
                 context.eval(source);
                 Value primesMain = context.getBindings("js").getMember("testFunction");
                 Value ret = primesMain.execute(
-                        ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeInteger.ValueInteger.of(10), EF),
-                        ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeBoolean.ValueBoolean.of(true), EF),
+                        ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeInteger.ValueInteger.of(10), EF, vds),
+                        ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeBoolean.ValueBoolean.of(true), EF, vds),
                         ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeList.ValueList.ofAll(
                                 ValueTypeInteger.ValueInteger.of(10),
                                 ValueTypeBoolean.ValueBoolean.of(true)
-                        ), EF),
-                        ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeNbt.ValueNbt.of(new ByteArrayTag(new byte[]{1, 2, 3})), EF),
-                        ValueTranslators.REGISTRY.translateToGraal(context, ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.STONE)), EF),
-                        ValueTranslators.REGISTRY.translateToGraal(context, ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.ACACIA_SAPLING)), EF)
+                        ), EF, vds),
+                        ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeNbt.ValueNbt.of(new ByteArrayTag(new byte[]{1, 2, 3})), EF, vds),
+                        ValueTranslators.REGISTRY.translateToGraal(context, ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.STONE)), EF, vds),
+                        ValueTranslators.REGISTRY.translateToGraal(context, ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.ACACIA_SAPLING)), EF, vds)
                 );
-                System.out.println(ValueTranslators.REGISTRY.translateFromGraal(context, ret, EF).toString()); // TODO
+                System.out.println(ValueTranslators.REGISTRY.translateFromGraal(context, ret, EF, vds).toString()); // TODO
             }
         } catch (IOException | EvaluationException | RuntimeException e) {
             e.printStackTrace();

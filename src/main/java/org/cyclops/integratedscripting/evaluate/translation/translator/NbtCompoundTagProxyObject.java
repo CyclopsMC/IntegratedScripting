@@ -4,6 +4,7 @@ import lombok.SneakyThrows;
 import net.minecraft.nbt.CompoundTag;
 import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
+import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
 import org.cyclops.integrateddynamics.core.evaluate.operator.CurriedOperator;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeOperator;
 import org.cyclops.integrateddynamics.core.evaluate.variable.Variable;
@@ -30,13 +31,15 @@ public class NbtCompoundTagProxyObject implements ProxyObject {
     private final Map<String, IOperator> methods;
     @Nullable
     private final IValue value;
+    private final ValueDeseralizationContext valueDeseralizationContext;
 
-    public NbtCompoundTagProxyObject(Context context, IEvaluationExceptionFactory exceptionFactory, CompoundTag tag, @Nullable Map<String, IOperator> methods, @Nullable IValue value) {
+    public NbtCompoundTagProxyObject(Context context, IEvaluationExceptionFactory exceptionFactory, CompoundTag tag, @Nullable Map<String, IOperator> methods, @Nullable IValue value, ValueDeseralizationContext valueDeseralizationContext) {
         this.context = context;
         this.exceptionFactory = exceptionFactory;
         this.tag = tag;
         this.methods = methods;
         this.value = value;
+        this.valueDeseralizationContext = valueDeseralizationContext;
     }
 
     public CompoundTag getTag() {
@@ -55,10 +58,10 @@ public class NbtCompoundTagProxyObject implements ProxyObject {
             IOperator operator = methods.get(key);
             if (operator != null) {
                 CurriedOperator curriedOperator = new CurriedOperator(operator, new Variable(value));
-                return ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeOperator.ValueOperator.of(curriedOperator), exceptionFactory);
+                return ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeOperator.ValueOperator.of(curriedOperator), exceptionFactory, valueDeseralizationContext);
             }
         }
-        return ValueTranslators.TRANSLATOR_NBT.translateTag(context, tag.get(key), exceptionFactory);
+        return ValueTranslators.TRANSLATOR_NBT.translateTag(context, tag.get(key), exceptionFactory, valueDeseralizationContext);
     }
 
     @Override
@@ -74,7 +77,7 @@ public class NbtCompoundTagProxyObject implements ProxyObject {
     @SneakyThrows
     @Override
     public void putMember(String key, Value value) {
-        IValue idValue = ValueTranslators.REGISTRY.translateFromGraal(context, value, exceptionFactory);
+        IValue idValue = ValueTranslators.REGISTRY.translateFromGraal(context, value, exceptionFactory, valueDeseralizationContext);
         tag.put(key, ValueTranslators.REGISTRY.translateToNbt(context, idValue, exceptionFactory));
     }
 }

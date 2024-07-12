@@ -14,7 +14,7 @@ public class ScriptingVariableModelProviders {
 
     public static final IVariableModelProviderRegistry REGISTRY = IntegratedDynamics._instance.getRegistryManager().getRegistry(IVariableModelProviderRegistry.class);
 
-    public static final SingleVariableModelProvider SCRIPT = REGISTRY.addProvider(new SingleVariableModelProvider(new ResourceLocation(Reference.MOD_ID, "customoverlay/script")));
+    public static final SingleVariableModelProvider SCRIPT = REGISTRY.addProvider(new SingleVariableModelProvider(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "customoverlay/script")));
 
     public static void load() {}
 

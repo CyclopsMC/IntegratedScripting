@@ -4,12 +4,13 @@ import com.google.common.collect.Lists;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.MeshData;
 import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import net.minecraft.SharedConstants;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.StringSplitter;
@@ -27,6 +28,7 @@ import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
+import net.minecraft.util.StringUtil;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
 import org.apache.commons.lang3.StringUtils;
@@ -322,7 +324,7 @@ public class WidgetTextArea extends AbstractWidget implements GuiEventListener {
         if (super.charTyped(typedChar, keyCode)) {
             this.setFocused(true);
             return true;
-        } else if (SharedConstants.isAllowedChatCharacter(typedChar)) {
+        } else if (StringUtil.isAllowedChatCharacter(typedChar)) {
             this.textFieldHelper.insertText(Character.toString(typedChar));
             this.clearDisplayCache();
             this.setFocused(true);
@@ -492,25 +494,27 @@ public class WidgetTextArea extends AbstractWidget implements GuiEventListener {
 
     private void renderHighlight(Rect2i[] p_98139_) {
         Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder bufferbuilder = tesselator.getBuilder();
+        BufferBuilder bufferbuilder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
         RenderSystem.setShader(GameRenderer::getPositionShader);
         RenderSystem.setShaderColor(0.0F, 0.0F, this.isFocused() ? 255.0F : 100.0F /* changed */, 255.0F);
         RenderSystem.enableColorLogicOp();
         RenderSystem.logicOp(GlStateManager.LogicOp.OR_REVERSE);
-        bufferbuilder.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
 
         for(Rect2i rect2i : p_98139_) {
             int i = rect2i.getX();
             int j = rect2i.getY();
             int k = i + rect2i.getWidth();
             int l = j + rect2i.getHeight();
-            bufferbuilder.vertex((double)i, (double)l, 0.0D).endVertex();
-            bufferbuilder.vertex((double)k, (double)l, 0.0D).endVertex();
-            bufferbuilder.vertex((double)k, (double)j, 0.0D).endVertex();
-            bufferbuilder.vertex((double)i, (double)j, 0.0D).endVertex();
+            bufferbuilder.addVertex(i, l, 0.0F);
+            bufferbuilder.addVertex(k, l, 0.0F);
+            bufferbuilder.addVertex(k, j, 0.0F);
+            bufferbuilder.addVertex(i, j, 0.0F);
         }
 
-        tesselator.end();
+        MeshData meshData = bufferbuilder.build();
+        if (meshData != null) {
+            BufferUploader.drawWithShader(meshData);
+        }
         RenderSystem.disableColorLogicOp();
 
         RenderSystem.setShaderColor(1, 1, 1, 1);

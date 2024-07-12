@@ -1,7 +1,5 @@
 package org.cyclops.integratedscripting.evaluate.translation;
 
-import net.minecraft.DetectedVersion;
-import net.minecraft.SharedConstants;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.StringTag;
@@ -10,6 +8,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
+import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
 import org.cyclops.integrateddynamics.core.evaluate.operator.Operators;
 import org.cyclops.integrateddynamics.core.evaluate.variable.*;
 import org.cyclops.integratedscripting.evaluate.ScriptHelpers;
@@ -23,13 +22,13 @@ import org.graalvm.polyglot.Value;
 public class BenchmarkValueTranslators {
 
     static {
-        SharedConstants.setVersion(DetectedVersion.BUILT_IN);
         Bootstrap.bootStrap();
     }
 
     public static int REPLICATION = 100000;
 
     private static Engine ENGINE = null;
+    private static ValueDeseralizationContext VDC = null;
     private static Context CTX = null;
 
     public static void main(String[] args) {
@@ -95,6 +94,7 @@ ToGraal-item: 6.7E-4ms/op
         ENGINE = Engine.newBuilder()
                 .option("engine.WarnInterpreterOnly", "false")
                 .build();
+        VDC = ValueDeseralizationContextMocked.get();
         CTX = Context.newBuilder().engine(ENGINE).allowAllAccess(true).build();
     }
 
@@ -103,11 +103,11 @@ ToGraal-item: 6.7E-4ms/op
     }
 
     private static void runFromGraal(String label, Value graalValue, int replication) {
-        benchmark("FromGraal-" + label, () -> ValueTranslators.REGISTRY.translateFromGraal(CTX, graalValue, ScriptHelpers.getDummyEvaluationExceptionFactory()), replication);
+        benchmark("FromGraal-" + label, () -> ValueTranslators.REGISTRY.translateFromGraal(CTX, graalValue, ScriptHelpers.getDummyEvaluationExceptionFactory(), VDC), replication);
     }
 
     private static void runToGraal(String label, IValue idValue, int replication) {
-        benchmark("ToGraal-" + label, () -> ValueTranslators.REGISTRY.translateToGraal(CTX, idValue, ScriptHelpers.getDummyEvaluationExceptionFactory()), replication);
+        benchmark("ToGraal-" + label, () -> ValueTranslators.REGISTRY.translateToGraal(CTX, idValue, ScriptHelpers.getDummyEvaluationExceptionFactory(), VDC), replication);
     }
 
     public static void benchmark(String label, ThrowingRunnable runnable, int replication) {

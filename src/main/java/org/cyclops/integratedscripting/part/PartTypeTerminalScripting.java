@@ -2,7 +2,7 @@ package org.cyclops.integratedscripting.part;
 
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -108,7 +108,7 @@ public class PartTypeTerminalScripting extends PartTypePanel<PartTypeTerminalScr
     }
 
     @Override
-    public void writeExtraGuiData(FriendlyByteBuf packetBuffer, PartPos pos, ServerPlayer player) {
+    public void writeExtraGuiData(RegistryFriendlyByteBuf packetBuffer, PartPos pos, ServerPlayer player) {
         PacketCodec.write(packetBuffer, pos);
         super.writeExtraGuiData(packetBuffer, pos, player);
         createContainerInitData(pos).writeToPacketBuffer(packetBuffer);

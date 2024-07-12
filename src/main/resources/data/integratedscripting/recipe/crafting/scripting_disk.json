@@ -14,7 +14,7 @@
     }
   },
   "result": {
-    "item": "integratedscripting:scripting_disk",
+    "id": "integratedscripting:scripting_disk",
     "count": 8
   }
 }

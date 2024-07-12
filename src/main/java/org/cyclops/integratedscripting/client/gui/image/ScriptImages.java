@@ -10,7 +10,7 @@ import org.cyclops.integratedscripting.IntegratedScripting;
  */
 public class ScriptImages {
 
-    public static final ResourceLocation ICONS = new ResourceLocation(IntegratedScripting._instance.getModId(),
+    public static final ResourceLocation ICONS = ResourceLocation.fromNamespaceAndPath(IntegratedScripting._instance.getModId(),
             IntegratedScripting._instance.getReferenceValue(ModBase.REFKEY_TEXTURE_PATH_GUI) + "icons.png");
 
     public static final Image FILE_OTHER = new Image(ICONS, 0, 0, 12, 12);

@@ -5,6 +5,7 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
+import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
 import org.cyclops.integrateddynamics.core.evaluate.operator.CurriedOperator;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueObjectTypeBase;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeOperator;
@@ -30,19 +31,21 @@ public class ValueObjectProxyObject<V extends IValue> implements ProxyObject {
     private final V value;
     private final Map<String, IOperator> methods;
     private final String memberNbtKey;
+    private final ValueDeseralizationContext valueDeseralizationContext;
 
     @Nullable
     private Value memberNbtValue;
 
     public ValueObjectProxyObject(Context context, IEvaluationExceptionFactory exceptionFactory,
                                   String memberNbtKey, Map<String, IOperator> methods,
-                                  ValueObjectTypeBase<V> valueType, V value) {
+                                  ValueObjectTypeBase<V> valueType, V value, ValueDeseralizationContext valueDeseralizationContext) {
         this.context = context;
         this.exceptionFactory = exceptionFactory;
         this.valueType = valueType;
         this.methods = methods;
         this.value = value;
         this.memberNbtKey = memberNbtKey;
+        this.valueDeseralizationContext = valueDeseralizationContext;
     }
 
     public ValueObjectTypeBase<V> getValueType() {
@@ -60,12 +63,12 @@ public class ValueObjectProxyObject<V extends IValue> implements ProxyObject {
         IOperator operator = methods.get(key);
         if (operator != null) {
             CurriedOperator curriedOperator = new CurriedOperator(operator, new Variable(value));
-            return ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeOperator.ValueOperator.of(curriedOperator), exceptionFactory);
+            return ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeOperator.ValueOperator.of(curriedOperator), exceptionFactory, valueDeseralizationContext);
         }
         if (key.equals(this.memberNbtKey)) {
             if (this.memberNbtValue == null) {
-                Tag tag = this.valueType.serialize(this.value);
-                this.memberNbtValue = ValueTranslators.TRANSLATOR_NBT.translateTag(context, tag, exceptionFactory);
+                Tag tag = this.valueType.serialize(this.valueDeseralizationContext, this.value);
+                this.memberNbtValue = ValueTranslators.TRANSLATOR_NBT.translateTag(context, tag, exceptionFactory, valueDeseralizationContext);
             }
             return this.memberNbtValue;
         }

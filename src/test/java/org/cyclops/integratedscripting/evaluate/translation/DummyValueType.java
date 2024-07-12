@@ -46,7 +46,7 @@ public class DummyValueType implements IValueType<DummyValueType.DummyValue> {
 
     @Override
     public ResourceLocation getUniqueName() {
-        return new ResourceLocation(Reference.MOD_ID, "dummy");
+        return ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "dummy");
     }
 
     @Override
@@ -80,7 +80,7 @@ public class DummyValueType implements IValueType<DummyValueType.DummyValue> {
     }
 
     @Override
-    public Tag serialize(DummyValue value) {
+    public Tag serialize(ValueDeseralizationContext valueDeseralizationContext, DummyValue value) {
         return null;
     }
 

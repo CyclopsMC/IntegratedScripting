@@ -1,13 +1,14 @@
 package org.cyclops.integratedscripting.evaluate.translation.translator;
 
+import com.google.common.collect.Lists;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import com.google.common.collect.Lists;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValueTypeListProxy;
+import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeList;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypes;
 import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExceptionFactory;
@@ -40,7 +41,7 @@ public class ValueTranslatorList implements IValueTranslator<ValueTypeList.Value
     }
 
     @Override
-    public Value translateToGraal(Context context, ValueTypeList.ValueList value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
+    public Value translateToGraal(Context context, ValueTypeList.ValueList value, IEvaluationExceptionFactory exceptionFactory, ValueDeseralizationContext valueDeseralizationContext) throws EvaluationException {
         if (value.getRawValue().isInfinite()) {
             throw exceptionFactory.createError(Component.translatable("valuetype.integratedscripting.error.translation.list_infinite"));
         }
@@ -48,18 +49,18 @@ public class ValueTranslatorList implements IValueTranslator<ValueTypeList.Value
         // The following should work according to the docs, but doesn't. So we fallback to a sub-optimal approach.
         List<Value> list = new ArrayList<>();
         for (IValue innerValue : (Iterable<IValue>) value.getRawValue()) {
-            Value translate = ValueTranslators.REGISTRY.translateToGraal(context, innerValue, exceptionFactory);
+            Value translate = ValueTranslators.REGISTRY.translateToGraal(context, innerValue, exceptionFactory, valueDeseralizationContext);
             list.add(translate);
         }
         return context.asValue(list);
     }
 
     @Override
-    public ValueTypeList.ValueList translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
+    public ValueTypeList.ValueList translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory, ValueDeseralizationContext valueDeseralizationContext) throws EvaluationException {
         List<IValue> values = Lists.newArrayList();
         long length = value.getArraySize();
         for (long i = 0; i < length; i++) {
-            values.add(ValueTranslators.REGISTRY.translateFromGraal(context, value.getArrayElement(i), exceptionFactory));
+            values.add(ValueTranslators.REGISTRY.translateFromGraal(context, value.getArrayElement(i), exceptionFactory, valueDeseralizationContext));
         }
         return ValueTypeList.ValueList.ofList(ValueTypes.CATEGORY_ANY, values);
     }

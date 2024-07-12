@@ -44,12 +44,12 @@ public class ValueTranslatorOperator implements IValueTranslator<ValueTypeOperat
     }
 
     @Override
-    public Value translateToGraal(Context context, ValueTypeOperator.ValueOperator value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
-        return context.asValue(new OperatorProxyExecutable(context, value, exceptionFactory));
+    public Value translateToGraal(Context context, ValueTypeOperator.ValueOperator value, IEvaluationExceptionFactory exceptionFactory, ValueDeseralizationContext valueDeseralizationContext) throws EvaluationException {
+        return context.asValue(new OperatorProxyExecutable(context, value, exceptionFactory, valueDeseralizationContext));
     }
 
     @Override
-    public ValueTypeOperator.ValueOperator translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
+    public ValueTypeOperator.ValueOperator translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory, ValueDeseralizationContext valueDeseralizationContext) throws EvaluationException {
         // Unwrap the value if it was translated in the opposite direction before.
         if (value.isProxyObject()) {
             try {
@@ -74,7 +74,7 @@ public class ValueTranslatorOperator implements IValueTranslator<ValueTypeOperat
             context.resetLimits();
             for (int i = 0; i < variables.length; i++) {
                 try {
-                    values[i] = ValueTranslators.REGISTRY.translateToGraal(context, variables[i].getValue(), exceptionFactory);
+                    values[i] = ValueTranslators.REGISTRY.translateToGraal(context, variables[i].getValue(), exceptionFactory, valueDeseralizationContext);
                 } catch (PolyglotException e) {
                     throw exceptionFactory.createError(e.getMessage());
                 }
@@ -85,7 +85,7 @@ public class ValueTranslatorOperator implements IValueTranslator<ValueTypeOperat
             } catch (PolyglotException e) {
                 throw exceptionFactory.createError(e.getMessage());
             }
-            return ValueTranslators.REGISTRY.translateFromGraal(context, returnValue, exceptionFactory);
+            return ValueTranslators.REGISTRY.translateFromGraal(context, returnValue, exceptionFactory, valueDeseralizationContext);
         }));
     }
 
@@ -118,11 +118,11 @@ public class ValueTranslatorOperator implements IValueTranslator<ValueTypeOperat
 
             @Override
             public ResourceLocation getUniqueName() {
-                return new ResourceLocation(Reference.MOD_ID, "graal");
+                return ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "graal");
             }
 
             @Override
-            public Tag serialize(GraalOperator operator) {
+            public Tag serialize(ValueDeseralizationContext valueDeseralizationContext, GraalOperator operator) {
                 ListTag list = new ListTag();
                 for (int i = 0; i < operator.getInputTypes().length; i++) {
                     list.add(StringTag.valueOf(operator.getInputTypes()[i].getUniqueName().toString()));
@@ -135,7 +135,7 @@ public class ValueTranslatorOperator implements IValueTranslator<ValueTypeOperat
                 ListTag listTag = (ListTag) value;
                 IValueType[] inputTypes = new IValueType[listTag.size()];
                 for (int i = 0; i < listTag.size(); i++) {
-                    inputTypes[i] = ValueTypes.REGISTRY.getValueType(new ResourceLocation(listTag.getString(i)));
+                    inputTypes[i] = ValueTypes.REGISTRY.getValueType(ResourceLocation.parse(listTag.getString(i)));
                 }
                 return new GraalOperator(inputTypes, (variables) -> {
                     throw new EvaluationException(Component.translatable("operator.integratedscripting.error.no_graal_serialization"));

@@ -1,6 +1,7 @@
 package org.cyclops.integratedscripting.blockentity;
 
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.MenuProvider;
@@ -78,14 +79,14 @@ public class BlockEntityScriptingDrive extends BlockEntityCableConnectableInvent
     }
 
     @Override
-    public void read(CompoundTag tag) {
-        super.read(tag);
+    public void read(CompoundTag tag, HolderLookup.Provider provider) {
+        super.read(tag, provider);
         this.exposedDiskId = tag.getInt("exposedDiskId");
     }
 
     @Override
-    public void saveAdditional(CompoundTag tag) {
-        super.saveAdditional(tag);
+    public void saveAdditional(CompoundTag tag, HolderLookup.Provider provider) {
+        super.saveAdditional(tag, provider);
         tag.putInt("exposedDiskId", this.exposedDiskId);
     }
 
