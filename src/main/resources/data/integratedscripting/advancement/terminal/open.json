@@ -1,7 +1,7 @@
 {
   "display": {
     "icon": {
-      "item": "integratedscripting:part_terminal_scripting"
+      "id": "integratedscripting:part_terminal_scripting"
     },
     "title": {
       "translate": "advancement.integratedscripting.terminal_open"

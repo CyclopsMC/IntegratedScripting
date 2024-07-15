@@ -1,7 +1,7 @@
 {
   "display": {
     "icon": {
-      "item": "integratedscripting:mendesite"
+      "id": "integratedscripting:mendesite"
     },
     "title": {
       "translate": "advancement.integratedscripting.mendesite"

@@ -1,7 +1,7 @@
 {
   "display": {
     "icon": {
-      "item": "integratedscripting:scripting_disk"
+      "id": "integratedscripting:scripting_disk"
     },
     "title": {
       "translate": "itemGroup.integratedscripting"
