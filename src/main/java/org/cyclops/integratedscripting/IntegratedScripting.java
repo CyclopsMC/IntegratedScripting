@@ -148,6 +148,8 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
     protected void onConfigsRegister(ConfigHandler configHandler) {
         super.onConfigsRegister(configHandler);
 
+        configHandler.addConfigurable(new GeneralConfig());
+
         configHandler.addConfigurable(new ScriptingNetworkConfig());
 
         configHandler.addConfigurable(new ItemScriptingDiskConfig());
