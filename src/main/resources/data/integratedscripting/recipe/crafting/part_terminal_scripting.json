@@ -7,7 +7,7 @@
   ],
   "key": {
     "R": {
-      "tag": "forge:dusts/redstone"
+      "tag": "c:dusts/redstone"
     },
     "M": {
       "item": "integratedscripting:mendesite"
