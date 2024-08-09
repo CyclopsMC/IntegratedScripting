@@ -129,7 +129,7 @@ dependencies {
 
 subsystems {
     parchment {
-        minecraftVersion = "${project.minecraft_version}"
+        minecraftVersion = "${project.parchment_minecraft_version}"
         mappingsVersion = "${project.parchment_version}"
     }
 }
