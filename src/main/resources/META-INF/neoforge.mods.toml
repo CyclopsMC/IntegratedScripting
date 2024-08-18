@@ -16,7 +16,7 @@ Create scripts for handling operations in Integrated Dynamics.
 [[dependencies.integratedscripting]]
     modId="cyclopscore"
     type="required"
-    versionRange="[1.19.11,)"
+    versionRange="[1.20.0,)"
     ordering="NONE"
     side="BOTH"
 [[dependencies.integratedscripting]]
