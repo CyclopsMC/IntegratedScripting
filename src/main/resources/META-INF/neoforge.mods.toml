@@ -9,7 +9,7 @@ authors="rubensworks (aka kroeser)"
 modId="integratedscripting"
 version="${file.jarVersion}"
 displayName="IntegratedScripting"
-updateJSONURL="https://raw.githubusercontent.com/CyclopsMC/Versions/master/forge_update/integrated-scripting.json"
+updateJSONURL="https://raw.githubusercontent.com/CyclopsMC/Versions/master/neoforge_update/integrated-scripting.json"
 description='''
 Create scripts for handling operations in Integrated Dynamics.
 '''
