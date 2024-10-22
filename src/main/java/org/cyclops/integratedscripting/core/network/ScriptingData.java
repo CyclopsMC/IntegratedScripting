@@ -78,7 +78,9 @@ public class ScriptingData implements IScriptingData {
 
     public void close() {
         try {
-            this.watchService.close();
+            if (this.watchService != null) {
+                this.watchService.close();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
