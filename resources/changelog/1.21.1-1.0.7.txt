@@ -1,0 +1,6 @@
+As always, don't forget to backup your world before updating!
+Requires CyclopsCore version 1.25.1 or higher.
+
+Fixes:
+* Fix unable to clear part IDs, Closes CyclopsMC/IntegratedTunnels#309
+
