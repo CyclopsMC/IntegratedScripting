@@ -122,8 +122,11 @@ public class ValueTranslatorNbt implements IValueTranslator<ValueTypeNbt.ValueNb
         // In all other cases, assume we have a compound tag
         CompoundTag tag = new CompoundTag();
         for (String memberKey : value.getMemberKeys()) {
-            IValue subValue = ValueTranslators.REGISTRY.translateFromGraal(context, value.getMember(memberKey), exceptionFactory);
-            tag.put(memberKey, ValueTranslators.REGISTRY.translateToNbt(context, subValue, exceptionFactory));
+            Value memberValue = value.getMember(memberKey);
+            if (!memberValue.isNull()) {
+                IValue subValue = ValueTranslators.REGISTRY.translateFromGraal(context, memberValue, exceptionFactory);
+                tag.put(memberKey, ValueTranslators.REGISTRY.translateToNbt(context, subValue, exceptionFactory));
+            }
         }
         return ValueTypeNbt.ValueNbt.of(tag);
     }

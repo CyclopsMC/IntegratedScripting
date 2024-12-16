@@ -42,6 +42,7 @@ public class LanguageHandlerJavaScript implements ILanguageHandler {
         this.tokenStyles = Maps.newHashMap();
 
         this.tokenStyles.put("const", KEYWORD);
+        this.tokenStyles.put("delete", KEYWORD);
         this.tokenStyles.put("let", KEYWORD);
         this.tokenStyles.put("var", KEYWORD);
         this.tokenStyles.put("function", KEYWORD);
