@@ -353,6 +353,13 @@ public class ValueTranslatorsJavaScriptTests {
     }
 
     @Test
+    public void testNbtCompoundWithNullAndUndefined() throws EvaluationException {
+        CompoundTag compoundTag = new CompoundTag();
+        compoundTag.put("a", StringTag.valueOf("bla"));
+        assertThat(ValueTranslators.REGISTRY.translateFromGraal(CTX, getJsValue("exports = { 'a': 'bla', 'b': null, 'c': undefined }"), EF), equalTo(ValueTypeNbt.ValueNbt.of(compoundTag)));
+    }
+
+    @Test
     public void testNbtCompoundBidirectional() throws EvaluationException {
         CompoundTag compoundTag = new CompoundTag();
         CompoundTag compoundTagSub = new CompoundTag();
