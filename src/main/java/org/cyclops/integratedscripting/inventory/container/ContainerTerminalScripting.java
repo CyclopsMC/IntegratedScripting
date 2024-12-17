@@ -44,11 +44,7 @@ import org.cyclops.integratedscripting.part.PartTypeTerminalScripting;
 
 import javax.annotation.Nullable;
 import java.nio.file.Path;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -374,8 +370,8 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
     }
 
     @Override
-    public void setValue(int valueId, CompoundTag value) {
-        super.setValue(valueId, value);
+    public void onUpdate(int valueId, CompoundTag value) {
+        super.onUpdate(valueId, value);
 
         // Potentially trigger a variable write when a new member was selected
         if (valueId == selectionId) {
