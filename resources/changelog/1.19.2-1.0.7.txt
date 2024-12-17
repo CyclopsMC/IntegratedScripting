@@ -1,0 +1,9 @@
+As always, don't forget to backup your world before updating!
+Requires CyclopsCore version 1.19.0 or higher.
+
+Changes:
+* Cache scripts to improve performance
+  Required for CyclopsMC/IntegratedDynamics#1439
+
+Fixes:
+* Fix variable card writing failing when reselecting text, Closes #25
