@@ -3,6 +3,7 @@ package org.cyclops.integratedscripting.core.network;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import net.minecraft.network.chat.Component;
+import org.apache.commons.lang3.tuple.Pair;
 import org.apache.commons.lang3.tuple.Triple;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
@@ -26,6 +27,7 @@ import java.util.Set;
 public class ScriptingNetwork implements IScriptingNetwork {
 
     private final Set<Integer> disks = Sets.newHashSet();
+    private final Map<Pair<Integer, Path>, IScript> scriptCache = Maps.newHashMap();
     private final Map<Triple<Integer, Path, String>, ScriptVariable> variableCache = Maps.newHashMap();
 
     @Override
@@ -46,12 +48,21 @@ public class ScriptingNetwork implements IScriptingNetwork {
     @Nullable
     @Override
     public IScript getScript(int disk, Path path) throws EvaluationException {
-        ILanguageHandler languageHandler = LanguageHandlers.REGISTRY.getProvider(path);
-        if (languageHandler == null) {
-            throw new EvaluationException(Component.translatable("script.integratedscripting.error.unsupported_language", path.toString()));
+        Pair<Integer, Path> cacheKey = Pair.of(disk, path);
+        IScript script = scriptCache.get(cacheKey);
+        if (script == null) {
+            ILanguageHandler languageHandler = LanguageHandlers.REGISTRY.getProvider(path);
+            if (languageHandler == null) {
+                throw new EvaluationException(Component.translatable("script.integratedscripting.error.unsupported_language", path.toString()));
+            }
+            IScriptFactory scriptFactory = languageHandler.getScriptFactory();
+            script = scriptFactory.getScript(disk, path);
+            if (script != null) {
+                script.addInvalidationListener(() -> scriptCache.remove(cacheKey));
+                scriptCache.put(cacheKey, script);
+            }
         }
-        IScriptFactory scriptFactory = languageHandler.getScriptFactory();
-        return scriptFactory.getScript(disk, path);
+        return script;
     }
 
     @Override
