@@ -11,13 +11,14 @@ import net.neoforged.neoforge.registries.DeferredHolder;
 import org.cyclops.integrateddynamics.blockentity.BlockEntityVariablestore;
 import org.cyclops.integratedscripting.inventory.container.ContainerScriptingDrive;
 import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScripting;
+import org.cyclops.integratedscripting.item.ItemScriptingDisk;
 
 /**
  * Referenced registry entries.
  * @author rubensworks
  */
 public class RegistryEntries {
-    public static final DeferredHolder<Item, Item> ITEM_SCRIPTING_DISK = DeferredHolder.create(Registries.ITEM, ResourceLocation.parse("integratedscripting:scripting_disk"));
+    public static final DeferredHolder<Item, ItemScriptingDisk> ITEM_SCRIPTING_DISK = DeferredHolder.create(Registries.ITEM, ResourceLocation.parse("integratedscripting:scripting_disk"));
 
     public static final DeferredHolder<Block, Block> BLOCK_SCRIPTING_DRIVE = DeferredHolder.create(Registries.BLOCK, ResourceLocation.parse("integratedscripting:scripting_drive"));
     public static final DeferredHolder<Block, Block> BLOCK_PART_TERMINAL_SCRIPTING = DeferredHolder.create(Registries.BLOCK, ResourceLocation.parse("integratedscripting:part_terminal_scripting"));

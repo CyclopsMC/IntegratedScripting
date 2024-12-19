@@ -1,6 +1,7 @@
 ## Integrated Scripting
 
 [![Build Status](https://github.com/CyclopsMC/IntegratedScripting/workflows/CI/badge.svg)](https://github.com/CyclopsMC/IntegratedScripting/actions?query=workflow%3ACI)
+[![Coverage Status](https://coveralls.io/repos/github/CyclopsMC/IntegratedScripting/badge.svg)](https://coveralls.io/github/CyclopsMC/IntegratedScripting)
 [![Download](https://img.shields.io/static/v1?label=Maven&message=GitHub%20Packages&color=blue)](https://github.com/CyclopsMC/packages/packages/1901862)
 [![Crowdin](https://badges.crowdin.net/integratedscripting/localized.svg)](https://crowdin.com/project/integratedscripting)
 [![CurseForge](http://cf.way2muchnoise.eu/full_889785_downloads.svg)](https://minecraft.curseforge.com/projects/integrated-scripting)
