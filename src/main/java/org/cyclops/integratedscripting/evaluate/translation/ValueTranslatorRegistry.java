@@ -70,7 +70,7 @@ public class ValueTranslatorRegistry implements IValueTranslatorRegistry {
     public <V extends IValue> V translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory) throws EvaluationException {
         IValueTranslator translator = getScriptValueTranslator(value);
         if (translator == null) {
-            throw exceptionFactory.createError(Component.translatable("valuetype.integratedscripting.error.translation.unknown_from_graal", value));
+            throw exceptionFactory.createError(Component.translatable("valuetype.integratedscripting.error.translation.unknown_from_graal", value.toString()));
         }
         return (V) translator.translateFromGraal(context, value, exceptionFactory);
     }
