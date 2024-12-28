@@ -1,8 +1,10 @@
 package org.cyclops.integratedscripting.gametest;
 
+import com.google.common.collect.Lists;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.gametest.GameTestHolder;
 import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
@@ -78,6 +80,37 @@ public class GameTestsScripts {
 
         helper.succeedWhen(() -> {
             assertValueEqual(partAndState.getRight().getDisplayValue(), ValueTypeInteger.ValueInteger.of(11));
+        });
+    }
+
+    @GameTest(template = TEMPLATE_EMPTY, timeoutTicks = TIMEOUT)
+    public void testScriptsDisplayScriptInfiniteLoop(GameTestHelper helper) {
+        GameTestHelpersIntegratedScripting.NetworkPositions positions = createBasicNetwork(helper, POS);
+
+        // Write script
+        ScriptingNetworkHelpers.getScriptingData().setScript(positions.diskId(), Path.of("script0.js"), "function oops() {\n" +
+                "    while (true) {}\n" +
+                "}", IScriptingData.ChangeLocation.MEMORY);
+
+        // Create variable from script
+        ItemStack variableScript = createVariableForScript(helper.getLevel(), positions.diskId(), Path.of("script0.js"), "abc");
+
+        // Insert all variables into the variable store
+        positions.variableStore().getInventory().setItem(0, variableScript);
+
+        // Create variable card for applying the function
+        ItemStack variableAdded = createVariableForOperator(helper.getLevel(), Operators.OPERATOR_APPLY_0, new int[]{
+                getVariableFacade(helper.getLevel(), variableScript).getId()
+        });
+
+        // Place variable in display
+        Pair<PartTypePanelDisplay, PartTypePanelDisplay.State> partAndState = placeVariableInDisplayPanel(helper.getLevel(), positions.displayPanel(), variableAdded);
+
+        helper.succeedWhen(() -> {
+            helper.assertValueEqual(partAndState.getRight().getGlobalErrors(), Lists.newArrayList(
+                    Component.translatable("script.integratedscripting.error.member_not_in_network", positions.diskId(), "abc", "script0.js"),
+                    Component.translatable("script.integratedscripting.error.member_not_in_network", positions.diskId(), "abc", "script0.js")
+            ), "Display panel errors do not match");
         });
     }
 
