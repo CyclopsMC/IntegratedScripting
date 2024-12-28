@@ -45,8 +45,13 @@ public class GraalScript implements IScript, IScriptMember {
 
     @Nullable
     @Override
-    public IScriptMember getMember(String memberName) {
-        Value member = this.graalValue.getMember(memberName);
+    public IScriptMember getMember(String memberName) throws EvaluationException {
+        Value member;
+        try {
+            member = this.graalValue.getMember(memberName);
+        } catch (PolyglotException e) {
+            throw ScriptHelpers.getEvaluationExceptionFactory(disk, path, memberName).createError(e.getMessage());
+        }
         return member == null ? null : new GraalScript(this.graalContext, member, this.addInvalidationListener, this.removeInvalidationListener, disk, path, memberName);
     }
 
