@@ -141,12 +141,14 @@ dependencies {
         transitive = false
     }
 
-    modLib "org.graalvm.sdk:graal-sdk:22.3.2"
-    shadow "org.graalvm.sdk:graal-sdk:22.3.2"
-    modLib ("org.graalvm.js:js:22.3.2") {
+    // https://mvnrepository.com/artifact/org.graalvm.sdk/graal-sdk
+    modLib "org.graalvm.sdk:graal-sdk:${project.graal_version}"
+    shadow "org.graalvm.sdk:graal-sdk:${project.graal_version}"
+    // https://mvnrepository.com/artifact/org.graalvm.js/js
+    modLib ("org.graalvm.js:js:${project.graal_version}") {
         exclude group: 'com.ibm.icu', module: 'icu4j'
     }
-    shadow "org.graalvm.js:js:22.3.2"
+    shadow "org.graalvm.js:js:${project.graal_version}"
 
 
     // Project lombok
