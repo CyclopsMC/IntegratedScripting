@@ -375,3 +375,8 @@ tasks.register('updateGitHooks', Copy) {
     into './.git/hooks'
 }
 compileJava.dependsOn updateGitHooks
+
+task benchmark(type: JavaExec) {
+    classpath sourceSets.test.runtimeClasspath
+    main = "org.cyclops.integratedscripting.evaluate.translation.BenchmarkValueTranslators"
+}
