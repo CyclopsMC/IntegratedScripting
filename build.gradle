@@ -434,3 +434,9 @@ tasks.configureEach { task ->
         task.enabled = false
     }
 }
+
+task benchmark(type: JavaExec) {
+    classpath sourceSets.test.runtimeClasspath
+    main = "org.cyclops.integratedscripting.evaluate.translation.BenchmarkValueTranslators"
+}
+test.dependsOn benchmark
