@@ -1,5 +1,7 @@
 package org.cyclops.integratedscripting.evaluate.translation;
 
+import net.minecraft.DetectedVersion;
+import net.minecraft.SharedConstants;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.StringTag;
@@ -22,6 +24,8 @@ import org.graalvm.polyglot.Value;
 public class BenchmarkValueTranslators {
 
     static {
+        // We need the Minecraft registries to be filled
+        SharedConstants.setVersion(DetectedVersion.BUILT_IN);
         Bootstrap.bootStrap();
     }
 
