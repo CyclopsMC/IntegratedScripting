@@ -4,7 +4,6 @@ import com.google.common.collect.Sets;
 import net.minecraft.nbt.*;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.Bootstrap;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
@@ -40,7 +39,10 @@ import static org.junit.Assert.assertThat;
 public class ValueTranslatorsJavaScriptTests {
 
     static {
-        Bootstrap.bootStrap();
+        // Override NeoForge's class loader, which is injected because JUnit is run through NeoForge's JUnitMain.
+        // We need to do this, because otherwise Graal will fail to load.
+        // This is not a problem at runtime.
+        Thread.currentThread().setContextClassLoader(ValueTranslatorsJavaScriptTests.class.getClassLoader());
     }
 
     private static ValueDeseralizationContext VDC = null;
