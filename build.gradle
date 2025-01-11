@@ -2,7 +2,7 @@ plugins {
     id 'net.minecraftforge.gradle' version '[6.0,6.2)'
     id 'com.matthewprenger.cursegradle' version '1.4.0'
 	id 'com.github.kt3k.coveralls' version '2.12.0'
-    id 'com.diffplug.spotless' version '5.14.3'
+    id 'com.diffplug.spotless' version '6.25.0'
     id 'com.github.johnrengelman.shadow' version '8.1.1'
 	id 'com.modrinth.minotaur' version '2.+'
 }
@@ -105,12 +105,12 @@ dependencies {
         transitive = false
     }
 
-    modLib "org.graalvm.sdk:graal-sdk:22.3.2"
-    shadow "org.graalvm.sdk:graal-sdk:22.3.2"
-    modLib ("org.graalvm.js:js:22.3.2") {
+    modLib "org.graalvm.sdk:graal-sdk:${project.graal_version}"
+    shadow "org.graalvm.sdk:graal-sdk:${project.graal_version}"
+    modLib ("org.graalvm.js:js:${project.graal_version}") {
         exclude group: 'com.ibm.icu', module: 'icu4j'
     }
-    shadow "org.graalvm.js:js:22.3.2"
+    shadow "org.graalvm.js:js:${project.graal_version}"
 
 
     // Project lombok

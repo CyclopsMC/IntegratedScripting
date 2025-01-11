@@ -1,9 +1,32 @@
 name: "CI"
 on: [push, pull_request]
+
+env:
+  DEFAULT_JAVA_VERSION: 17
+  DEFAULT_JAVA_DISTRIBUTION: 'microsoft'
+
 jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java:
+          - 17
+          - 18
+          - 19
+          - 20
+          - 21
+          - 22
+          - 23
+        distribution:
+          - 'adopt-hotspot'
+        include:
+          - java: 17
+            distribution: 'microsoft'
+          - java: 21
+            distribution: 'microsoft'
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v2
@@ -16,13 +39,11 @@ jobs:
             ~/.m2
             ~/.gradle
           key: ${{ runner.os }}-gradle-${{ hashFiles('build.gradle') }}
-      - name: Validate Gradle wrapper
-        uses: gradle/wrapper-validation-action@v1
       - name: 'Setup Java'
         uses: actions/setup-java@v1
         with:
-          java-version: 17
-          java-package: jdk
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java }}
       - name: 'Mark tag as release'
         if: startsWith(github.ref, 'refs/tags/')
         run: echo "RELEASE=true" >> $GITHUB_ENV
@@ -55,18 +76,18 @@ jobs:
         if: ${{ env.COVERALLS_REPO_TOKEN }}
         run: ./gradlew test jacocoTestReport coveralls
       - name: 'Deploy to CurseForge'
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') && startsWith(matrix.java, env.DEFAULT_JAVA_VERSION) && startsWith(matrix.distribution, env.DEFAULT_JAVA_DISTRIBUTION)
         env:
           CURSEFORGE_KEY_SECRET: ${{ secrets.CURSEFORGE_KEY_SECRET }}
         run: ./gradlew curseforge
       - name: 'Deploy to Modrinth'
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') && startsWith(matrix.java, env.DEFAULT_JAVA_VERSION) && startsWith(matrix.distribution, env.DEFAULT_JAVA_DISTRIBUTION)
         env:
           MODRINTH_KEY_SECRET: ${{ secrets.MODRINTH_KEY_SECRET }}
         run: ./gradlew modrinth
       - name: 'Create GitHub release'
         id: create_release
-        if: startsWith(github.ref, 'refs/tags/')
+        if: startsWith(github.ref, 'refs/tags/') && startsWith(matrix.java, env.DEFAULT_JAVA_VERSION) && startsWith(matrix.distribution, env.DEFAULT_JAVA_DISTRIBUTION)
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -74,14 +95,14 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: ${{ github.ref }}
       - name: 'Deploy to Maven'
-        if: startsWith(github.ref, 'refs/heads/master')
+        if: startsWith(github.ref, 'refs/heads/master') && startsWith(matrix.java, env.DEFAULT_JAVA_VERSION) && startsWith(matrix.distribution, env.DEFAULT_JAVA_DISTRIBUTION)
         env:
           MAVEN_URL: ${{ secrets.MAVEN_URL }}
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
           MAVEN_KEY: ${{ secrets.MAVEN_KEY }}
         run: ./gradlew publish
       - name: 'Deploy JavaDoc to GitHub Pages'
-        if: startsWith(github.ref, 'refs/heads/master')
+        if: startsWith(github.ref, 'refs/heads/master') && startsWith(matrix.java, env.DEFAULT_JAVA_VERSION) && startsWith(matrix.distribution, env.DEFAULT_JAVA_DISTRIBUTION)
         uses: JamesIves/github-pages-deploy-action@3.6.2
         with:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
