@@ -148,7 +148,7 @@ dependencies {
     modLib ("org.graalvm.js:js:${project.graal_version}") {
         exclude group: 'com.ibm.icu', module: 'icu4j'
     }
-    shadow "org.graalvm.js:js:${project.graal_version}"
+    shadow "org.graalvm.js:js:${project.graal_version}" // TODO: not working anymore after shadow... Don't rename during shadow?...
 
 
     // Project lombok
@@ -262,8 +262,8 @@ shadowJar {
     configurations = [project.configurations.shadow]
     archiveClassifier.set(''); // Replace the default JAR
     // To avoid clashes with other mods
-    relocate 'org.graalvm', 'org.cyclops.integratedscripting.vendors.org.graalvm'
-    relocate 'com.oracle', 'org.cyclops.integratedscripting.vendors.com.oracle'
+//    relocate 'org.graalvm', 'org.cyclops.integratedscripting.vendors.org.graalvm'
+//    relocate 'com.oracle', 'org.cyclops.integratedscripting.vendors.com.oracle'
     relocate 'com.ibm', 'org.cyclops.integratedscripting.vendors.com.ibm'
 }
 assemble.dependsOn shadowJar

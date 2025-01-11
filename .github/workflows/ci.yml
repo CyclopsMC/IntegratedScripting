@@ -22,6 +22,7 @@ jobs:
           - 23
         distribution:
           - 'adopt-hotspot'
+          - 'oracle'
         include:
           - java: 21
             distribution: 'microsoft'
