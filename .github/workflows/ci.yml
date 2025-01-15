@@ -23,6 +23,7 @@ jobs:
         distribution:
           - 'adopt-hotspot'
           - 'oracle'
+          - 'graalvm'
         include:
           - java: 21
             distribution: 'microsoft'
@@ -73,6 +74,11 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: 'Test'
         run: ./gradlew test runGameTestServer jacocoTestReport
+      - name: 'Deploy test failures as GitHub CI artifacts'
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          path: build/reports/tests/*
       - name: 'Submit coverage results'
         uses: coverallsapp/github-action@v2
       - name: 'Deploy as GitHub CI artifacts'
