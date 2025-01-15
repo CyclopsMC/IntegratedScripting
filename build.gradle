@@ -40,6 +40,11 @@ java {
 }
 compileJava.options.compilerArgs << "-Xmaxerrs" << "9999"
 
+boolean graal = System.getenv()['JAVA_HOME']?.contains('GraalVM');
+if (graal) {
+    logger.lifecycle "Building on GraalVM!"
+}
+
 // Load secrets
 def getSecrets() {
     Properties props = new Properties()
@@ -86,6 +91,17 @@ sourceSets {
     test
 }
 sourceSets.main.resources { srcDir 'src/generated/resources' }
+
+if (graal) {
+    sourceSets {
+        main {
+            java {
+                exclude 'org/graalvm/collections/**'
+                exclude 'org/graalvm/word/**'
+            }
+        }
+    }
+}
 
 configurations {
     modLib
