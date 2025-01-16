@@ -148,7 +148,7 @@ dependencies {
     modLib ("org.graalvm.js:js:${project.graal_version}") {
         exclude group: 'com.ibm.icu', module: 'icu4j'
     }
-    shadow "org.graalvm.js:js:${project.graal_version}" // TODO: not working anymore after shadow... Don't rename during shadow?...
+    shadow "org.graalvm.js:js:${project.graal_version}"
 
 
     // Project lombok
@@ -262,9 +262,21 @@ shadowJar {
     configurations = [project.configurations.shadow]
     archiveClassifier.set(''); // Replace the default JAR
     // To avoid clashes with other mods
-//    relocate 'org.graalvm', 'org.cyclops.integratedscripting.vendors.org.graalvm'
-//    relocate 'com.oracle', 'org.cyclops.integratedscripting.vendors.com.oracle'
+    relocate 'org.graalvm', 'org.cyclops.integratedscripting.vendors.org.graalvm'
     relocate 'com.ibm', 'org.cyclops.integratedscripting.vendors.com.ibm'
+    // Relocate everything from com.oracle, except for com.oracle.truffle.runtime, as this is defined in a native lib, which can not be relocated
+//    relocate 'com.oracle', 'org.cyclops.integratedscripting.vendors.com.oracle' // Relocation of this fails for com.oracle.truffle.runtime.ModulesSupport at runtime
+    relocate 'com.oracle.js', 'org.cyclops.integratedscripting.vendors.com.oracle.js'
+    relocate 'com.oracle.svm', 'org.cyclops.integratedscripting.vendors.com.oracle.svm'
+    relocate 'com.oracle.truffle.api', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle.api'
+    relocate 'com.oracle.truffle.compiler', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle.compiler'
+    relocate 'com.oracle.truffle.host', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle.host'
+    relocate 'com.oracle.truffle.js', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle.js'
+    relocate 'com.oracle.truffle.object', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle.object'
+    relocate 'com.oracle.truffle.polyglot', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle.polyglot'
+    relocate 'com.oracle.truffle.regex', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle.regex'
+    // We exclude com.oracle.truffle.regex.runtime
+    relocate 'com.oracle.truffle.sandbox', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle.sandbox'
 }
 assemble.dependsOn shadowJar
 jar {
