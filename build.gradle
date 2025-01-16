@@ -240,10 +240,14 @@ shadowJar {
     configurations = [project.configurations.shadow]
     archiveClassifier.set(''); // Replace the default JAR
     // To avoid clashes with other mods
-//    relocate 'org.graalvm', 'org.cyclops.integratedscripting.vendors.org.graalvm'
-//    relocate 'com.oracle', 'org.cyclops.integratedscripting.vendors.com.oracle'
+    relocate 'org.graalvm', 'org.cyclops.integratedscripting.vendors.org.graalvm'
     relocate 'com.ibm', 'org.cyclops.integratedscripting.vendors.com.ibm'
-	finalizedBy 'reobfShadowJar'
+    // Relocate everything from com.oracle, except for com.oracle.truffle, as this is defined in a native lib, which can not be relocated
+//    relocate 'com.oracle', 'org.cyclops.integratedscripting.vendors.com.oracle'
+    relocate 'com.oracle.js', 'org.cyclops.integratedscripting.vendors.com.oracle.js'
+    relocate 'com.oracle.svm', 'org.cyclops.integratedscripting.vendors.com.oracle.svm'
+//    relocate 'com.oracle.truffle', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle' // Relocation of this fails for com.oracle.truffle.runtime.ModulesSupport at runtime
+    finalizedBy 'reobfShadowJar'
 }
 
 assemble.dependsOn shadowJar
