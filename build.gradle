@@ -3,6 +3,7 @@ plugins {
     id 'com.matthewprenger.cursegradle' version '1.4.0'
 	id 'com.github.kt3k.coveralls' version '2.12.0'
     id 'com.diffplug.spotless' version '6.25.0'
+    id 'com.github.johnrengelman.shadow' version '8.1.1'
 	id 'com.modrinth.minotaur' version '2.+'
 }
 
@@ -105,26 +106,11 @@ dependencies {
     }
 
     modLib "org.graalvm.sdk:graal-sdk:${project.graal_version}"
+    shadow "org.graalvm.sdk:graal-sdk:${project.graal_version}"
     modLib ("org.graalvm.js:js:${project.graal_version}") {
         exclude group: 'com.ibm.icu', module: 'icu4j'
     }
-    // Every time the graal_version is changed, determine the list of deps to include in the jarJar by inspecting ./gradlew dependencies.
-    jarJar(group: 'org.graalvm.sdk', name: 'graal-sdk', version: "[${project.graal_version}]")
-    jarJar(group: 'org.graalvm.sdk', name: 'collections', version: "[${project.graal_version}]")
-    jarJar(group: 'org.graalvm.sdk', name: 'nativeimage', version: "[${project.graal_version}]")
-    jarJar(group: 'org.graalvm.sdk', name: 'word', version: "[${project.graal_version}]")
-    jarJar(group: 'org.graalvm.polyglot', name: 'polyglot', version: "[${project.graal_version}]")
-//    jarJar(group: 'org.graalvm.js', name: 'js', version: "[${project.graal_version}]")
-//    jarJar(group: 'org.graalvm.js', name: 'js-community', version: "[${project.graal_version}]")
-    jarJar(group: 'org.graalvm.js', name: 'js-language', version: "[${project.graal_version}]")
-    jarJar(group: 'org.graalvm.regex', name: 'regex', version: "[${project.graal_version}]")
-    jarJar(group: 'org.graalvm.truffle', name: 'truffle-api', version: "[${project.graal_version}]")
-    jarJar(group: 'org.graalvm.shadowed', name: 'icu4j', version: "[${project.graal_version}]")
-    jarJar(group: 'org.graalvm.truffle', name: 'truffle-runtime', version: "[${project.graal_version}]")
-    jarJar(group: 'org.graalvm.sdk', name: 'jniutils', version: "[${project.graal_version}]")
-    jarJar(group: 'org.graalvm.truffle', name: 'truffle-compiler', version: "[${project.graal_version}]")
-    jarJar(group: 'org.graalvm.truffle', name: 'truffle-enterprise', version: "[${project.graal_version}]")
-    jarJar(group: 'org.graalvm.sdk', name: 'nativebridge', version: "[${project.graal_version}]")
+    shadow "org.graalvm.js:js:${project.graal_version}"
 
 
     // Project lombok
@@ -249,16 +235,28 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
 }
 
-jarJar.enable()
-reobf.create('jarJar')
-tasks.jarJar.configure {
-    archiveClassifier.set('');
-    finalizedBy('reobfJarJar')
+shadowJar {
+    mergeServiceFiles() // To fix graal issue: https://github.com/oracle/graaljs/issues/125
+    configurations = [project.configurations.shadow]
+    archiveClassifier.set(''); // Replace the default JAR
+    // To avoid clashes with other mods
+    relocate 'org.graalvm', 'org.cyclops.integratedscripting.vendors.org.graalvm'
+    relocate 'com.ibm', 'org.cyclops.integratedscripting.vendors.com.ibm'
+    // Relocate everything from com.oracle, except for com.oracle.truffle, as this is defined in a native lib, which can not be relocated
+//    relocate 'com.oracle', 'org.cyclops.integratedscripting.vendors.com.oracle'
+    relocate 'com.oracle.js', 'org.cyclops.integratedscripting.vendors.com.oracle.js'
+    relocate 'com.oracle.svm', 'org.cyclops.integratedscripting.vendors.com.oracle.svm'
+//    relocate 'com.oracle.truffle', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle' // Relocation of this fails for com.oracle.truffle.runtime.ModulesSupport at runtime
+    finalizedBy 'reobfShadowJar'
 }
-build.dependsOn tasks.jarJar
+
+assemble.dependsOn shadowJar
+reobf {
+    shadowJar {} // Reobfuscate the shadowed JAR
+}
 
 artifacts {
-    archives tasks.jarJar
+    archives shadowJar
     archives deobfJar
     archives sourcesJar
     archives javadocJar
@@ -275,7 +273,7 @@ curseforge {
         id = "889785" // my project url is http://minecraft.curseforge.com/mc-mods/889785/
         releaseType = project.project.release_type
 		addGameVersion project.minecraft_version
-        mainArtifact(tasks.jarJar) {
+        mainArtifact(shadowJar) {
             relations {
                 requiredDependency 'cyclops-core'
                 requiredDependency 'integrated-dynamics'
@@ -304,7 +302,7 @@ modrinth {
     projectId = "uDJkuFRe"
     versionNumber = project.minecraft_version + '-' + project.mod_version
     versionType = project.release_type
-    uploadFile = tasks.jarJar
+    uploadFile = shadowJar
     gameVersions = [ project.minecraft_version ]
     changelog = ""
     if (new File("resources/changelog/${project.version}.txt").exists()) {
@@ -343,7 +341,7 @@ publishing {
 
     publications { PublicationContainer publicationContainer ->
         publicationContainer.register("maven", MavenPublication) { MavenPublication publication ->
-            publication.artifacts = [tasks.jarJar, javadocJar, deobfJar, sourcesJar]
+            publication.artifacts = [shadowJar, javadocJar, deobfJar, sourcesJar]
             publication.artifactId = project.archivesBaseName.toLowerCase() // GH can't handle uppercase...
         }
     }
