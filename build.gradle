@@ -3,7 +3,6 @@ plugins {
     id 'net.darkhax.curseforgegradle' version '1.0.8'
 	id 'com.github.kt3k.coveralls' version '2.12.0'
     id 'com.diffplug.spotless' version '6.25.0'
-    id 'com.github.johnrengelman.shadow' version '8.1.1'
 	id 'com.modrinth.minotaur' version '2.+'
 }
 
@@ -89,6 +88,7 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 configurations {
     modLib
+    graaldeps
     implementation.extendsFrom modLib
 }
 
@@ -142,13 +142,13 @@ dependencies {
     }
 
     // https://mvnrepository.com/artifact/org.graalvm.sdk/graal-sdk
-    modLib "org.graalvm.sdk:graal-sdk:${project.graal_version}"
-    shadow "org.graalvm.sdk:graal-sdk:${project.graal_version}"
+    compileOnly(testImplementation("org.graalvm.sdk:graal-sdk:${project.graal_version}"))
+    graaldeps "org.graalvm.sdk:graal-sdk:${project.graal_version}"
     // https://mvnrepository.com/artifact/org.graalvm.js/js
-    modLib ("org.graalvm.js:js:${project.graal_version}") {
+    compileOnly(testImplementation("org.graalvm.js:js:${project.graal_version}") {
         exclude group: 'com.ibm.icu', module: 'icu4j'
-    }
-    shadow "org.graalvm.js:js:${project.graal_version}"
+    })
+    graaldeps "org.graalvm.js:js:${project.graal_version}"
 
 
     // Project lombok
@@ -257,26 +257,8 @@ task javadocJar(type: Jar, dependsOn: javadoc) {
     from javadoc.destinationDir
 }
 
-shadowJar {
-    mergeServiceFiles() // To fix graal issue: https://github.com/oracle/graaljs/issues/125
-    configurations = [project.configurations.shadow]
-    archiveClassifier.set(''); // Replace the default JAR
-    // To avoid clashes with other mods
-    relocate 'org.graalvm', 'org.cyclops.integratedscripting.vendors.org.graalvm'
-    relocate 'com.ibm', 'org.cyclops.integratedscripting.vendors.com.ibm'
-    // Relocate everything from com.oracle, except for com.oracle.truffle, as this is defined in a native lib, which can not be relocated
-//    relocate 'com.oracle', 'org.cyclops.integratedscripting.vendors.com.oracle'
-    relocate 'com.oracle.js', 'org.cyclops.integratedscripting.vendors.com.oracle.js'
-    relocate 'com.oracle.svm', 'org.cyclops.integratedscripting.vendors.com.oracle.svm'
-//    relocate 'com.oracle.truffle', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle' // Relocation of this fails for com.oracle.truffle.runtime.ModulesSupport at runtime
-}
-assemble.dependsOn shadowJar
-jar {
-    shadowJar {}
-}
-
 artifacts {
-    archives shadowJar
+    archives jar
     archives deobfJar
     archives sourcesJar
     archives javadocJar
@@ -304,11 +286,16 @@ processResources {
             'commoncapabilities_version'            : commoncapabilities_version,
             'commoncapabilities_version_semver'     : commoncapabilities_version.replaceAll("-.*\$", ""),
             'integrateddynamics_version'            : integrateddynamics_version,
-            'integrateddynamics_version_semver'     : integrateddynamics_version.replaceAll("-.*\$", "")
+            'integrateddynamics_version_semver'     : integrateddynamics_version.replaceAll("-.*\$", ""),
+            'graaldeps' : configurations.graaldeps.files.findAll { it.name.endsWith(".jar") }.collect { "\"META-INF/graaldeps/${it.name}\"" }.join(", ")
     ]
 
-    filesMatching(['pack.mcmeta', 'META-INF/mods.toml', 'META-INF/neoforge.mods.toml', 'mixins.*.json']) {
+    filesMatching(['pack.mcmeta', 'META-INF/mods.toml', 'META-INF/neoforge.mods.toml', 'mixins.*.json', 'graaldeps.json']) {
         expand expandProps
+    }
+    from(configurations.graaldeps.files) {
+        include("*.jar")
+        into "META-INF/graaldeps"
     }
     inputs.properties(expandProps)
 }
@@ -316,7 +303,7 @@ processResources {
 task publishCurseForge(type: TaskPublishCurseForge) {
     dependsOn(tasks.jar)
     apiToken = secrets.curseforgeKey;
-    def mainFile = upload(project.curseforge_project_id, shadowJar)
+    def mainFile = upload(project.curseforge_project_id, jar)
     mainFile.releaseType = secrets.build_number.equals("RELEASE") ? Constants.RELEASE_TYPE_RELEASE : Constants.RELEASE_TYPE_BETA
     mainFile.changelogType = "text"
     mainFile.changelog = secrets.changelog
@@ -334,7 +321,7 @@ modrinth {
     versionNumber = project.minecraft_version + '-' + project.version
     versionName = "${project.version} for NeoForge ${project.minecraft_version}"
     versionType = secrets.build_number.equals("RELEASE") ? "release" : "beta"
-    uploadFile = shadowJar
+    uploadFile = jar
     gameVersions = [ project.minecraft_version ]
     changelog = provider { secrets.changelog }
 
@@ -371,7 +358,7 @@ publishing {
 
     publications { PublicationContainer publicationContainer ->
         publicationContainer.register("maven", MavenPublication) { MavenPublication publication ->
-            publication.artifacts = [shadowJar, javadocJar, deobfJar, sourcesJar]
+            publication.artifacts = [jar, javadocJar, deobfJar, sourcesJar]
             publication.artifactId = project.archivesBaseName.toLowerCase() // GH can't handle uppercase...
         }
     }
