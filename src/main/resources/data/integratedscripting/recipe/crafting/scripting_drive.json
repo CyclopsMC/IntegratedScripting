@@ -6,15 +6,9 @@
     " J "
   ],
   "key": {
-    "D": {
-      "item": "integratedscripting:scripting_disk"
-    },
-    "S": {
-      "item": "integrateddynamics:variablestore"
-    },
-    "J": {
-      "item": "minecraft:jukebox"
-    }
+    "D": "integratedscripting:scripting_disk",
+    "S": "integrateddynamics:variablestore",
+    "J": "minecraft:jukebox"
   },
   "result": {
     "id": "integratedscripting:scripting_drive"

@@ -1,6 +1,6 @@
 package org.cyclops.integratedscripting;
 
-import org.cyclops.cyclopscore.helper.MinecraftHelpers;
+import org.cyclops.cyclopscore.helper.IModHelpers;
 
 /**
  * Class that can hold basic static things that are better not hard-coded
@@ -13,7 +13,7 @@ public class Reference {
 
     // Mod info
     public static final String MOD_ID = "integratedscripting";
-    public static final String VERSION_URL = "https://raw.githubusercontent.com/CyclopsMC/Versions/master/" + MinecraftHelpers.getMinecraftVersionMajorMinor() + "/IntegratedREST.txt";
+    public static final String VERSION_URL = "https://raw.githubusercontent.com/CyclopsMC/Versions/master/" + IModHelpers.get().getMinecraftHelpers().getMinecraftVersionMajorMinor() + "/IntegratedREST.txt";
 
     // MOD ID's
     public static final String MOD_FORGE = "forge";

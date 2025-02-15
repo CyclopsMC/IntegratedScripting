@@ -6,21 +6,11 @@
     "R R"
   ],
   "key": {
-    "R": {
-      "tag": "c:dusts/redstone"
-    },
-    "M": {
-      "item": "integratedscripting:mendesite"
-    },
-    "V": {
-      "item": "integrateddynamics:variable_transformer_output"
-    },
-    "D": {
-      "item": "integrateddynamics:part_display_panel"
-    },
-    "W": {
-      "item": "integrateddynamics:variable_transformer_input"
-    }
+    "R": "#c:dusts/redstone",
+    "M": "integratedscripting:mendesite",
+    "V": "integrateddynamics:variable_transformer_output",
+    "D": "integrateddynamics:part_display_panel",
+    "W": "integrateddynamics:variable_transformer_input"
   },
   "result": {
     "id": "integratedscripting:part_terminal_scripting"

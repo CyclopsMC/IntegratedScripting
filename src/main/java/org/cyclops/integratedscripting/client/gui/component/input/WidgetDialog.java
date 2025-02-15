@@ -9,11 +9,12 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import org.cyclops.cyclopscore.client.gui.component.button.ButtonText;
-import org.cyclops.cyclopscore.helper.Helpers;
+import org.cyclops.cyclopscore.helper.IModHelpers;
 import org.cyclops.integratedscripting.Reference;
 
 /**
@@ -49,11 +50,11 @@ public class WidgetDialog extends AbstractWidget implements GuiEventListener {
     protected void drawBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         // Gray-out background
         RenderSystem.setShaderColor(0F, 0F, 0F, 0.95F);
-        guiGraphics.fill(0, 0, parent.width, parent.height, Helpers.RGBAToInt(50, 50, 50, 100));
+        guiGraphics.fill(0, 0, parent.width, parent.height, IModHelpers.get().getBaseHelpers().RGBAToInt(50, 50, 50, 100));
         RenderSystem.setShaderColor(1, 1, 1, 1);
 
         // Draw dialog texture
-        guiGraphics.blit(TEXTURE, getX(), getY(), 0, 0, WIDTH, HEIGHT);
+        guiGraphics.blit(RenderType::guiTextured, TEXTURE, getX(), getY(), 0, 0, WIDTH, HEIGHT, 256, 256);
     }
 
     @Override

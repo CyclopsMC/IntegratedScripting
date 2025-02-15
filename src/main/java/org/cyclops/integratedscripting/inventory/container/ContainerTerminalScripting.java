@@ -71,8 +71,8 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
     private final int activeScriptPathId;
     private final int selectionId;
 
-    public ContainerTerminalScripting(int id, Inventory playerInventory, RegistryFriendlyByteBuf packetBuffer) {
-        this(id, playerInventory, PartHelpers.readPartTarget(packetBuffer), Optional.empty(),
+    public ContainerTerminalScripting(int id, Inventory playerInventory, FriendlyByteBuf packetBuffer) {
+        this(id, playerInventory, PartHelpers.readPartTarget((RegistryFriendlyByteBuf) packetBuffer), Optional.empty(),
                 PartHelpers.readPart(packetBuffer), InitData.readFromPacketBuffer(packetBuffer));
     }
 

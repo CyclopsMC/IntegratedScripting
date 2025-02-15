@@ -22,9 +22,7 @@ import org.cyclops.cyclopscore.client.gui.component.input.WidgetArrowedListField
 import org.cyclops.cyclopscore.client.gui.container.ContainerScreenExtended;
 import org.cyclops.cyclopscore.client.gui.image.IImage;
 import org.cyclops.cyclopscore.client.gui.image.Images;
-import org.cyclops.cyclopscore.helper.Helpers;
-import org.cyclops.cyclopscore.helper.L10NHelpers;
-import org.cyclops.cyclopscore.helper.RenderHelpers;
+import org.cyclops.cyclopscore.helper.IModHelpers;
 import org.cyclops.integrateddynamics.core.client.gui.container.DisplayErrorsComponent;
 import org.cyclops.integratedscripting.GeneralConfig;
 import org.cyclops.integratedscripting.IntegratedScripting;
@@ -192,7 +190,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     @Override
     protected void renderBg(GuiGraphics guiGraphics, float partialTicks, int mouseX, int mouseY) {
         super.renderBg(guiGraphics, partialTicks, mouseX, mouseY);
-        RenderHelpers.bindTexture(this.texture);
+        IModHelpers.get().getRenderHelpers().bindTexture(this.texture);
         fieldDisk.render(guiGraphics, mouseX, mouseY, partialTicks);
         scrollBar.render(guiGraphics, mouseX, mouseY, partialTicks);
 
@@ -201,14 +199,14 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         } else {
             // Gray-out editor and file list
             RenderSystem.setShaderColor(0.3F, 0.3F, 0.3F, 0.3F);
-            guiGraphics.fill(leftPos + PATHS_X, topPos + PATHS_Y, leftPos + PATHS_X + PATHS_WIDTH, topPos + PATHS_Y + PATHS_HEIGHT, Helpers.RGBAToInt(50, 50, 50, 100));
+            guiGraphics.fill(leftPos + PATHS_X, topPos + PATHS_Y, leftPos + PATHS_X + PATHS_WIDTH, topPos + PATHS_Y + PATHS_HEIGHT, IModHelpers.get().getBaseHelpers().RGBAToInt(50, 50, 50, 100));
             RenderSystem.setShaderColor(1, 1, 1, 1);
         }
 
         if (this.getMenu().getActiveScript() == null) {
             // Gray-out editor and file list
             RenderSystem.setShaderColor(0.3F, 0.3F, 0.3F, 0.3F);
-            guiGraphics.fill(leftPos + SCRIPT_X_INNER, topPos + SCRIPT_Y, leftPos + SCRIPT_X_INNER + SCRIPT_WIDTH, topPos + SCRIPT_Y + SCRIPT_HEIGHT, Helpers.RGBAToInt(50, 50, 50, 100));
+            guiGraphics.fill(leftPos + SCRIPT_X_INNER, topPos + SCRIPT_Y, leftPos + SCRIPT_X_INNER + SCRIPT_WIDTH, topPos + SCRIPT_Y + SCRIPT_HEIGHT, IModHelpers.get().getBaseHelpers().RGBAToInt(50, 50, 50, 100));
             RenderSystem.setShaderColor(1, 1, 1, 1);
         }
 
@@ -244,7 +242,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
             // Draw highlighted background behind script path text
             if (active) {
-                guiGraphics.fill(this.leftPos + PATHS_X, this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT, this.leftPos + PATHS_X + PATHS_WIDTH, this.topPos + PATHS_Y + (i + 1) * PATHS_ROW_HEIGHT, Helpers.RGBAToInt(110, 130, 240, 255));
+                guiGraphics.fill(this.leftPos + PATHS_X, this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT, this.leftPos + PATHS_X + PATHS_WIDTH, this.topPos + PATHS_Y + (i + 1) * PATHS_ROW_HEIGHT, IModHelpers.get().getBaseHelpers().RGBAToInt(110, 130, 240, 255));
             }
 
             // Draw file type icon
@@ -260,14 +258,14 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             guiGraphics.pose().popPose();
 
             // Draw filename
-            RenderHelpers.drawScaledString(
+            IModHelpers.get().getRenderHelpers().drawScaledString(
                     guiGraphics,
                     font,
                     StringUtil.truncateStringIfNecessary(path.toString(), 20, true),
                     this.leftPos + PATHS_X + 1 + 7,
                     this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT + 1 + 1,
                     0.5f,
-                    hovering && !active ? Helpers.RGBToInt(50, 50, 250) : Helpers.RGBToInt(0, 0, 0),
+                    hovering && !active ? IModHelpers.get().getBaseHelpers().RGBToInt(50, 50, 250) : IModHelpers.get().getBaseHelpers().RGBToInt(0, 0, 0),
                     false,
                     Font.DisplayMode.NORMAL
             );
@@ -309,7 +307,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         super.renderLabels(guiGraphics, mouseX, mouseY);
 
         // Draw disk label
-        guiGraphics.drawString(font, L10NHelpers.localize("gui.integratedscripting.disk") + ":", 8, 6, 16777215);
+        guiGraphics.drawString(font, IModHelpers.get().getL10NHelpers().localize("gui.integratedscripting.disk") + ":", 8, 6, 16777215);
 
         displayErrors.drawForeground(guiGraphics.pose(), getMenu().getReadErrors(), getErrorX(), getErrorY(), mouseX, mouseY, this, this.leftPos, this.topPos);
     }

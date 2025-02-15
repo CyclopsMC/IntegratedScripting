@@ -1,8 +1,6 @@
 {
   "type": "integrateddynamics:mechanical_drying_basin",
-  "input_item": {
-    "item": "minecraft:andesite"
-  },
+  "input_item": "minecraft:andesite",
   "input_fluid": {
     "id": "integrateddynamics:menril_resin",
     "amount": 1000

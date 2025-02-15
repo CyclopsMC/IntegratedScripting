@@ -1,14 +1,6 @@
 package org.cyclops.integratedscripting.client.gui.component.input;
 
 import com.google.common.collect.Lists;
-import com.mojang.blaze3d.platform.GlStateManager;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.BufferUploader;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
-import com.mojang.blaze3d.vertex.MeshData;
-import com.mojang.blaze3d.vertex.Tesselator;
-import com.mojang.blaze3d.vertex.VertexFormat;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.Util;
@@ -23,8 +15,8 @@ import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.BookEditScreen;
-import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.Rect2i;
+import net.minecraft.client.renderer.RenderType;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
@@ -37,8 +29,7 @@ import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.lang3.tuple.Pair;
 import org.cyclops.cyclopscore.client.gui.component.WidgetScrollBar;
 import org.cyclops.cyclopscore.client.gui.component.input.IInputListener;
-import org.cyclops.cyclopscore.helper.Helpers;
-import org.cyclops.cyclopscore.helper.RenderHelpers;
+import org.cyclops.cyclopscore.helper.IModHelpers;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
@@ -453,14 +444,14 @@ public class WidgetTextArea extends AbstractWidget implements GuiEventListener {
             guiGraphics.drawString(this.font, line.asComponent, line.x, line.y - offsetY, -16777216, false);
             // Draw line number
             if (this.showLineNumbers && lastLineNumber != line.lineNumber) {
-                RenderHelpers.drawScaledString(
+                IModHelpers.get().getRenderHelpers().drawScaledString(
                         guiGraphics,
                         font,
                         String.valueOf(line.lineNumber),
                         this.getX(),
                         line.y - offsetY + 2,
                         0.5f,
-                        line.hasCursor ? 0 : Helpers.RGBToInt(120, 120, 120),
+                        line.hasCursor ? 0 : IModHelpers.get().getBaseHelpers().RGBToInt(120, 120, 120),
                         false,
                         Font.DisplayMode.NORMAL
                 );
@@ -469,7 +460,7 @@ public class WidgetTextArea extends AbstractWidget implements GuiEventListener {
         }
 
         // Show highlighting and cursor
-        this.renderHighlight(displayCache.selection);
+        this.renderHighlight(guiGraphics, displayCache.selection);
         if (displayCache.cursor != null) {
             this.renderCursor(guiGraphics, displayCache.cursor, displayCache.cursorAtEnd);
         }
@@ -492,32 +483,14 @@ public class WidgetTextArea extends AbstractWidget implements GuiEventListener {
 
     }
 
-    private void renderHighlight(Rect2i[] p_98139_) {
-        Tesselator tesselator = Tesselator.getInstance();
-        BufferBuilder bufferbuilder = tesselator.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION);
-        RenderSystem.setShader(GameRenderer::getPositionShader);
-        RenderSystem.setShaderColor(0.0F, 0.0F, this.isFocused() ? 255.0F : 100.0F /* changed */, 255.0F);
-        RenderSystem.enableColorLogicOp();
-        RenderSystem.logicOp(GlStateManager.LogicOp.OR_REVERSE);
-
-        for(Rect2i rect2i : p_98139_) {
+    private void renderHighlight(GuiGraphics guiGraphics, Rect2i[] highlightAreas) {
+        for (Rect2i rect2i : highlightAreas) {
             int i = rect2i.getX();
             int j = rect2i.getY();
             int k = i + rect2i.getWidth();
             int l = j + rect2i.getHeight();
-            bufferbuilder.addVertex(i, l, 0.0F);
-            bufferbuilder.addVertex(k, l, 0.0F);
-            bufferbuilder.addVertex(k, j, 0.0F);
-            bufferbuilder.addVertex(i, j, 0.0F);
+            guiGraphics.fill(RenderType.guiTextHighlight(), i, j, k, l, -16776961);
         }
-
-        MeshData meshData = bufferbuilder.build();
-        if (meshData != null) {
-            BufferUploader.drawWithShader(meshData);
-        }
-        RenderSystem.disableColorLogicOp();
-
-        RenderSystem.setShaderColor(1, 1, 1, 1);
     }
 
     private int getLinesXOffset() {

@@ -1,6 +1,6 @@
 package org.cyclops.integratedscripting.proxy;
 
-import org.cyclops.cyclopscore.init.ModBase;
+import org.cyclops.cyclopscore.init.ModBaseNeoForge;
 import org.cyclops.cyclopscore.proxy.ClientProxyComponent;
 import org.cyclops.integratedscripting.IntegratedScripting;
 
@@ -17,7 +17,7 @@ public class ClientProxy extends ClientProxyComponent {
     }
 
     @Override
-    public ModBase getMod() {
+    public ModBaseNeoForge<IntegratedScripting> getMod() {
         return IntegratedScripting._instance;
     }
 

@@ -12,7 +12,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import org.cyclops.integrateddynamics.core.block.BlockWithEntityGuiCabled;
 import org.cyclops.integratedscripting.blockentity.BlockEntityScriptingDrive;
 
@@ -27,7 +27,7 @@ public class BlockScriptingDrive extends BlockWithEntityGuiCabled {
 
     public static final MapCodec<BlockScriptingDrive> CODEC = simpleCodec(BlockScriptingDrive::new);
 
-    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
 
     public BlockScriptingDrive(Properties properties) {
         super(properties, BlockEntityScriptingDrive::new);

@@ -28,5 +28,8 @@
 				"down": {"uv": [3, 13, 13, 15], "texture": "#front"}
 			}
 		}
-	]
+	],
+	"textures": {
+		"particle": "#front"
+	}
 }

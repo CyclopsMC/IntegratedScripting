@@ -6,12 +6,8 @@
     " V "
   ],
   "key": {
-    "V": {
-      "item": "integrateddynamics:variable"
-    },
-    "M": {
-      "item": "integratedscripting:mendesite"
-    }
+    "V": "integrateddynamics:variable",
+    "M": "integratedscripting:mendesite"
   },
   "result": {
     "id": "integratedscripting:scripting_disk",

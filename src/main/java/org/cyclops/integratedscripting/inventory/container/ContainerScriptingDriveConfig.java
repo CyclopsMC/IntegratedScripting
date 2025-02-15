@@ -1,22 +1,17 @@
 package org.cyclops.integratedscripting.inventory.container;
 
-import net.minecraft.client.gui.screens.MenuScreens;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.inventory.MenuAccess;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.inventory.MenuType;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import org.cyclops.cyclopscore.client.gui.ScreenFactorySafe;
-import org.cyclops.cyclopscore.config.extendedconfig.GuiConfig;
+import org.cyclops.cyclopscore.config.extendedconfig.GuiConfigCommon;
+import org.cyclops.cyclopscore.config.extendedconfig.GuiConfigScreenFactoryProvider;
+import org.cyclops.cyclopscore.init.IModBase;
 import org.cyclops.integratedscripting.IntegratedScripting;
-import org.cyclops.integratedscripting.client.gui.container.ContainerScreenScriptingDrive;
 
 /**
  * Config for {@link ContainerScriptingDrive}.
  * @author rubensworks
  */
-public class ContainerScriptingDriveConfig extends GuiConfig<ContainerScriptingDrive> {
+public class ContainerScriptingDriveConfig extends GuiConfigCommon<ContainerScriptingDrive, IModBase> {
 
     public ContainerScriptingDriveConfig() {
         super(IntegratedScripting._instance,
@@ -24,10 +19,8 @@ public class ContainerScriptingDriveConfig extends GuiConfig<ContainerScriptingD
                 eConfig -> new MenuType<>(ContainerScriptingDrive::new, FeatureFlags.VANILLA_SET));
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
-    public <U extends Screen & MenuAccess<ContainerScriptingDrive>> MenuScreens.ScreenConstructor<ContainerScriptingDrive, U> getScreenFactory() {
-        return new ScreenFactorySafe<>(ContainerScreenScriptingDrive::new);
+    public GuiConfigScreenFactoryProvider<ContainerScriptingDrive> getScreenFactoryProvider() {
+        return new ContainerScriptingDriveConfigScreenFactoryProvider();
     }
-
 }

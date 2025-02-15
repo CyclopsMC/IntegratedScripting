@@ -1,6 +1,6 @@
 package org.cyclops.integratedscripting.evaluate.translation;
 
-import org.cyclops.cyclopscore.helper.MinecraftHelpers;
+import org.cyclops.cyclopscore.helper.IModHelpers;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypes;
 import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.api.evaluate.translation.IValueTranslatorRegistry;
@@ -16,7 +16,7 @@ public class ValueTranslators {
 
     private static IValueTranslatorRegistry constructRegistry() {
         // This also allows this registry to be used outside of a minecraft environment.
-        if(MinecraftHelpers.isModdedEnvironment()) {
+        if(IModHelpers.get().getMinecraftHelpers().isModdedEnvironment()) {
             return IntegratedScripting._instance.getRegistryManager().getRegistry(IValueTranslatorRegistry.class);
         } else {
             return ValueTranslatorRegistry.getInstance();

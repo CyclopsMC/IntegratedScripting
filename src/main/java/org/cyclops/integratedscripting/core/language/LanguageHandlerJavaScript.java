@@ -7,7 +7,7 @@ import net.minecraft.network.chat.TextColor;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.cyclops.cyclopscore.client.gui.image.IImage;
-import org.cyclops.cyclopscore.helper.Helpers;
+import org.cyclops.cyclopscore.helper.IModHelpers;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.Reference;
@@ -29,11 +29,11 @@ import java.util.Map;
 public class LanguageHandlerJavaScript implements ILanguageHandler {
 
     // These colors are inspired by GitHub's color palette
-    public static final Style ATTRIBUTE = Style.EMPTY.withColor(TextColor.fromRgb(Helpers.RGBToInt(121, 93, 163))); // Purple
-    public static final Style COMMENT = Style.EMPTY.withColor(TextColor.fromRgb(Helpers.RGBToInt(150, 152, 150))); // Gray
-    public static final Style SYMBOL = Style.EMPTY.withColor(TextColor.fromRgb(Helpers.RGBToInt(99, 163, 92))); // Green
-    public static final Style CONSTANT = Style.EMPTY.withColor(TextColor.fromRgb(Helpers.RGBToInt(0, 134, 179))); // Blue
-    public static final Style KEYWORD = Style.EMPTY.withColor(TextColor.fromRgb(Helpers.RGBToInt(167, 29, 93))); // Red-purple
+    public static final Style ATTRIBUTE = Style.EMPTY.withColor(TextColor.fromRgb(IModHelpers.get().getBaseHelpers().RGBToInt(121, 93, 163))); // Purple
+    public static final Style COMMENT = Style.EMPTY.withColor(TextColor.fromRgb(IModHelpers.get().getBaseHelpers().RGBToInt(150, 152, 150))); // Gray
+    public static final Style SYMBOL = Style.EMPTY.withColor(TextColor.fromRgb(IModHelpers.get().getBaseHelpers().RGBToInt(99, 163, 92))); // Green
+    public static final Style CONSTANT = Style.EMPTY.withColor(TextColor.fromRgb(IModHelpers.get().getBaseHelpers().RGBToInt(0, 134, 179))); // Blue
+    public static final Style KEYWORD = Style.EMPTY.withColor(TextColor.fromRgb(IModHelpers.get().getBaseHelpers().RGBToInt(167, 29, 93))); // Red-purple
 
     public final Map<String, Style> tokenStyles;
     private final IScriptFactory scriptFactory;

@@ -2,7 +2,8 @@ package org.cyclops.integratedscripting.block;
 
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.SoundType;
-import org.cyclops.cyclopscore.config.extendedconfig.BlockConfig;
+import org.cyclops.cyclopscore.config.extendedconfig.BlockConfigCommon;
+import org.cyclops.cyclopscore.init.IModBase;
 import org.cyclops.integratedscripting.IntegratedScripting;
 
 /**
@@ -10,13 +11,13 @@ import org.cyclops.integratedscripting.IntegratedScripting;
  * @author rubensworks
  *
  */
-public class BlockMendesiteConfig extends BlockConfig {
+public class BlockMendesiteConfig extends BlockConfigCommon<IModBase> {
 
     public BlockMendesiteConfig() {
         super(
                 IntegratedScripting._instance,
                 "mendesite",
-                eConfig -> new Block(Block.Properties.of()
+                (eConfig, properties) -> new Block(properties
                         .sound(SoundType.SNOW)
                         .strength(1.5F)
                         .noOcclusion()),

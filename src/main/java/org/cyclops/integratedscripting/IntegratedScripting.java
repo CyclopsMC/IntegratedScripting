@@ -19,10 +19,9 @@ import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.registries.NewRegistryEvent;
 import org.apache.logging.log4j.Level;
-import org.cyclops.cyclopscore.config.ConfigHandler;
-import org.cyclops.cyclopscore.helper.MinecraftHelpers;
+import org.cyclops.cyclopscore.config.ConfigHandlerCommon;
 import org.cyclops.cyclopscore.infobook.IInfoBookRegistry;
-import org.cyclops.cyclopscore.init.ModBaseVersionable;
+import org.cyclops.cyclopscore.init.ModBaseNeoForge;
 import org.cyclops.cyclopscore.proxy.IClientProxy;
 import org.cyclops.cyclopscore.proxy.ICommonProxy;
 import org.cyclops.integrateddynamics.IntegratedDynamics;
@@ -56,7 +55,7 @@ import org.cyclops.integratedscripting.proxy.CommonProxy;
  *
  */
 @Mod(Reference.MOD_ID)
-public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting> {
+public class IntegratedScripting extends ModBaseNeoForge<IntegratedScripting> {
 
     public static IntegratedScripting _instance;
 
@@ -81,7 +80,7 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
                 .registerHandler(ScriptVariableFacadeHandler.getInstance());
 
         // Load client models
-        if (MinecraftHelpers.isClientSide()) {
+        if (getModHelpers().getMinecraftHelpers().isClientSide()) {
             ScriptingVariableModelProviders.load();
         }
 
@@ -145,7 +144,7 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
     }
 
     @Override
-    protected void onConfigsRegister(ConfigHandler configHandler) {
+    protected void onConfigsRegister(ConfigHandlerCommon configHandler) {
         super.onConfigsRegister(configHandler);
 
         configHandler.addConfigurable(new GeneralConfig());

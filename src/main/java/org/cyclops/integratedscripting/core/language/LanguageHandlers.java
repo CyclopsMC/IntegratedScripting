@@ -1,6 +1,6 @@
 package org.cyclops.integratedscripting.core.language;
 
-import org.cyclops.cyclopscore.helper.MinecraftHelpers;
+import org.cyclops.cyclopscore.helper.IModHelpers;
 import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.api.language.ILanguageHandlerRegistry;
 
@@ -13,7 +13,7 @@ public class LanguageHandlers {
 
     private static ILanguageHandlerRegistry constructRegistry() {
         // This also allows this registry to be used outside of a minecraft environment.
-        if(MinecraftHelpers.isModdedEnvironment()) {
+        if(IModHelpers.get().getMinecraftHelpers().isModdedEnvironment()) {
             return IntegratedScripting._instance.getRegistryManager().getRegistry(ILanguageHandlerRegistry.class);
         } else {
             return LanguageHandlerRegistry.getInstance();
