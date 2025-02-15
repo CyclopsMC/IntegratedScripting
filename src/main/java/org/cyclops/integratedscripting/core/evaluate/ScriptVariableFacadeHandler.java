@@ -38,7 +38,7 @@ public class ScriptVariableFacadeHandler implements IVariableFacadeHandler<IScri
 
     @Override
     public IScriptVariableFacade getVariableFacade(ValueDeseralizationContext valueDeseralizationContext, int id, CompoundTag tag) {
-        if(!tag.contains("disk", Tag.TAG_INT)) {
+        if(!tag.contains("disk", Tag.TAG_INT) && !tag.contains("disk", Tag.TAG_BYTE)) {
             return INVALID_FACADE;
         }
         if(!tag.contains("path", Tag.TAG_STRING)) {
