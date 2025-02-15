@@ -1,6 +1,8 @@
 package org.cyclops.integratedscripting.evaluate.translation;
 
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import net.minecraft.SharedConstants;
 import net.minecraft.nbt.*;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
@@ -9,7 +11,11 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.material.Fluids;
+import net.neoforged.fml.loading.LoadingModList;
 import net.neoforged.neoforge.fluids.FluidStack;
+import org.cyclops.commoncapabilities.api.capability.itemhandler.ItemMatch;
+import org.cyclops.commoncapabilities.ingredient.DataComparator;
+import org.cyclops.cyclopscore.helper.CyclopsCoreInstance;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
@@ -28,6 +34,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Iterator;
 
 import static org.hamcrest.CoreMatchers.equalTo;
@@ -39,16 +46,19 @@ import static org.junit.Assert.assertThat;
  */
 public class ValueTranslatorsJavaScriptTests {
 
-    static {
-        Bootstrap.bootStrap();
-    }
-
     private static ValueDeseralizationContext VDC = null;
     private static Context CTX = null;
     private static IEvaluationExceptionFactory EF = ScriptHelpers.getDummyEvaluationExceptionFactory();
 
     @BeforeClass
     public static void beforeAll() {
+        CyclopsCoreInstance.MOD = new ModBaseMocked();
+        // Derived from NeoForge's JUnitMain
+        SharedConstants.tryDetectVersion();
+        LoadingModList.of(Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Maps.newHashMap());
+        Bootstrap.bootStrap();
+        ItemMatch.DATA_COMPARATOR = new DataComparator(null);
+
         ValueTypeListProxyFactories.load();
         Operators.load();
         ValueTranslators.load();
@@ -470,7 +480,7 @@ public class ValueTranslatorsJavaScriptTests {
 
     @Test
     public void testObjectItemMethods() throws EvaluationException {
-        assertThat(ValueTranslators.REGISTRY.translateToGraal(CTX, ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.ARROW)), EF, VDC).invokeMember("canBurn").asBoolean(), is(false));
+        assertThat(ValueTranslators.REGISTRY.translateToGraal(CTX, ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.ARROW)), EF, VDC).invokeMember("isEnchanted").asBoolean(), is(false));
 
         assertThat(ValueTranslators.REGISTRY.translateToGraal(CTX, ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.ACACIA_SAPLING)), EF, VDC).invokeMember("block").invokeMember("plantAge").asInt(), is(0));
 
