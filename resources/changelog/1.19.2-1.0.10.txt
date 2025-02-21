@@ -1,0 +1,6 @@
+As always, don't forget to backup your world before updating!
+Requires CyclopsCore version 1.19.0 or higher.
+
+Changes:
+* Restrict access to parts of the Java API
+  They can still be enabled if desired by the server admin.
