@@ -8,12 +8,7 @@ import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeOperator;
 import org.cyclops.integratedscripting.GeneralConfig;
 import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExceptionFactory;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
-import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.Engine;
-import org.graalvm.polyglot.EnvironmentAccess;
-import org.graalvm.polyglot.HostAccess;
-import org.graalvm.polyglot.ResourceLimits;
-import org.graalvm.polyglot.Value;
+import org.graalvm.polyglot.*;
 
 import javax.annotation.Nullable;
 import java.nio.file.Path;
@@ -42,7 +37,18 @@ public class ScriptHelpers {
                 .allowExperimentalOptions(GeneralConfig.graalAllowExperimentalOptions)
                 .allowEnvironmentAccess(GeneralConfig.graalAllowEnvironment ? EnvironmentAccess.INHERIT : EnvironmentAccess.NONE)
                 .allowNativeAccess(GeneralConfig.graalAllowNative)
-                .allowHostAccess(HostAccess.ALL)
+                .allowHostAccess(HostAccess.newBuilder()
+                        .allowPublicAccess(GeneralConfig.graalAllowHostPublicAccess)
+                        .allowAllImplementations(GeneralConfig.graalAllowHostAllImplementations)
+                        .allowAllClassImplementations(GeneralConfig.graalAllowHostAllClassImplementations)
+                        .allowArrayAccess(GeneralConfig.graalAllowHostArrayAccess)
+                        .allowListAccess(GeneralConfig.graalAllowHostListAccess)
+                        .allowBufferAccess(GeneralConfig.graalAllowHostBufferAccess)
+                        .allowIterableAccess(GeneralConfig.graalAllowHostIterableAccess)
+                        .allowIteratorAccess(GeneralConfig.graalAllowHostIteratorAccess)
+                        .allowMapAccess(GeneralConfig.graalAllowHostMapAccess)
+                        .allowAccessInheritance(GeneralConfig.graalAllowHostAccessInheritance)
+                        .build())
                 .allowInnerContextOptions(false);
         if (GeneralConfig.graalStatementLimit > 0) {
             contextBuilder = contextBuilder.resourceLimits(ResourceLimits.newBuilder()
