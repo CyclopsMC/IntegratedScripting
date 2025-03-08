@@ -1,8 +1,8 @@
 package org.cyclops.integratedscripting.evaluate.translation.translator;
 
-import lombok.SneakyThrows;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
 import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
@@ -11,6 +11,7 @@ import org.cyclops.integrateddynamics.core.evaluate.variable.ValueObjectTypeBase
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeOperator;
 import org.cyclops.integrateddynamics.core.evaluate.variable.Variable;
 import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExceptionFactory;
+import org.cyclops.integratedscripting.evaluate.ScriptHelpers;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
@@ -57,22 +58,26 @@ public class ValueObjectProxyObject<V extends IValue> implements ProxyObject {
         return value;
     }
 
-    @SneakyThrows
     @Override
     public Object getMember(String key) {
-        IOperator operator = methods.get(key);
-        if (operator != null) {
-            CurriedOperator curriedOperator = new CurriedOperator(operator, new Variable(value));
-            return ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeOperator.ValueOperator.of(curriedOperator), exceptionFactory, valueDeseralizationContext);
-        }
-        if (key.equals(this.memberNbtKey)) {
-            if (this.memberNbtValue == null) {
-                Tag tag = this.valueType.serialize(this.valueDeseralizationContext, this.value);
-                this.memberNbtValue = ValueTranslators.TRANSLATOR_NBT.translateTag(context, tag, exceptionFactory, valueDeseralizationContext);
+        try {
+            IOperator operator = methods.get(key);
+            if (operator != null) {
+                CurriedOperator curriedOperator = new CurriedOperator(operator, new Variable(value));
+                return ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeOperator.ValueOperator.of(curriedOperator), exceptionFactory, valueDeseralizationContext);
             }
-            return this.memberNbtValue;
+            if (key.equals(this.memberNbtKey)) {
+                if (this.memberNbtValue == null) {
+                    Tag tag = this.valueType.serialize(this.valueDeseralizationContext, this.value);
+                    this.memberNbtValue = ValueTranslators.TRANSLATOR_NBT.translateTag(context, tag, exceptionFactory, valueDeseralizationContext);
+                }
+                return this.memberNbtValue;
+            }
+            return null;
+        } catch (EvaluationException e) {
+            ScriptHelpers.sneakyThrow(e);
+            return null;
         }
-        return null;
     }
 
     @Override
@@ -85,9 +90,8 @@ public class ValueObjectProxyObject<V extends IValue> implements ProxyObject {
         return key.equals(this.memberNbtKey) || (this.methods != null && this.methods.containsKey(key));
     }
 
-    @SneakyThrows
     @Override
     public void putMember(String key, Value value) {
-        throw exceptionFactory.createError(Component.translatable("valuetype.integratedscripting.error.translation.proxyobject_putMember", key, valueType.getTypeName()));
+        ScriptHelpers.sneakyThrow(exceptionFactory.createError(Component.translatable("valuetype.integratedscripting.error.translation.proxyobject_putMember", key, valueType.getTypeName())));
     }
 }

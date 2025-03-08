@@ -1,12 +1,13 @@
 package org.cyclops.integratedscripting.evaluate.translation.translator;
 
-import lombok.SneakyThrows;
+import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IVariable;
 import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeOperator;
 import org.cyclops.integrateddynamics.core.evaluate.variable.Variable;
 import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExceptionFactory;
+import org.cyclops.integratedscripting.evaluate.ScriptHelpers;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
@@ -33,13 +34,17 @@ public class OperatorProxyExecutable implements ProxyExecutable {
         return value;
     }
 
-    @SneakyThrows
     @Override
     public Object execute(Value... args) {
-        IVariable<IValue>[] variables = new IVariable[args.length];
-        for (int i = 0; i < args.length; i++) {
-            variables[i] = new Variable<>(ValueTranslators.REGISTRY.translateFromGraal(context, args[i], exceptionFactory, valueDeseralizationContext));
+        try {
+            IVariable<IValue>[] variables = new IVariable[args.length];
+            for (int i = 0; i < args.length; i++) {
+                variables[i] = new Variable<>(ValueTranslators.REGISTRY.translateFromGraal(context, args[i], exceptionFactory, valueDeseralizationContext));
+            }
+            return ValueTranslators.REGISTRY.translateToGraal(context, value.getRawValue().evaluate(variables), exceptionFactory, valueDeseralizationContext);
+        } catch (EvaluationException e) {
+            ScriptHelpers.sneakyThrow(e);
+            return null;
         }
-        return ValueTranslators.REGISTRY.translateToGraal(context, value.getRawValue().evaluate(variables), exceptionFactory, valueDeseralizationContext);
     }
 }

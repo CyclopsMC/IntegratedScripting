@@ -1,7 +1,5 @@
 package org.cyclops.integratedscripting.core.item;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.RandomSource;
@@ -27,13 +25,12 @@ import org.cyclops.integratedscripting.core.network.ScriptingNetworkHelpers;
 
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * Variable facade for variables determined by proxies.
  * @author rubensworks
  */
-@EqualsAndHashCode(callSuper = true)
-@Data
 public class ScriptVariableFacade extends VariableFacadeBase implements IScriptVariableFacade {
 
     private final int disk;
@@ -52,6 +49,34 @@ public class ScriptVariableFacade extends VariableFacadeBase implements IScriptV
         this.disk = disk;
         this.path = path;
         this.member = member;
+    }
+
+    @Override
+    public int getDisk() {
+        return disk;
+    }
+
+    @Override
+    public Path getPath() {
+        return path;
+    }
+
+    @Override
+    public String getMember() {
+        return member;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        ScriptVariableFacade that = (ScriptVariableFacade) o;
+        return disk == that.disk && Objects.equals(path, that.path) && Objects.equals(member, that.member);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), disk, path, member);
     }
 
     @Override
