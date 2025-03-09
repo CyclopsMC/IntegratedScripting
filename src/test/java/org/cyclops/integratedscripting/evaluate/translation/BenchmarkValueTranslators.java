@@ -1,11 +1,15 @@
 package org.cyclops.integratedscripting.evaluate.translation;
 
+import com.google.common.collect.Maps;
+import net.minecraft.SharedConstants;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.StringTag;
 import net.minecraft.server.Bootstrap;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.neoforged.fml.loading.LoadingModList;
+import org.cyclops.cyclopscore.helper.CyclopsCoreInstance;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
 import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
@@ -16,12 +20,18 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.Value;
 
+import java.util.Collections;
+
 /**
  * @author rubensworks
  */
 public class BenchmarkValueTranslators {
 
     static {
+        CyclopsCoreInstance.MOD = new ModBaseMocked();
+        // Derived from NeoForge's JUnitMain
+        SharedConstants.tryDetectVersion();
+        LoadingModList.of(Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Maps.newHashMap());
         Bootstrap.bootStrap();
     }
 

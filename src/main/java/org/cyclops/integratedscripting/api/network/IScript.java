@@ -1,5 +1,7 @@
 package org.cyclops.integratedscripting.api.network;
 
+import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
+
 import javax.annotation.Nullable;
 
 /**
@@ -14,7 +16,7 @@ public interface IScript {
      * @return The member, or null if it does not exist.
      */
     @Nullable
-    public IScriptMember getMember(String memberName);
+    public IScriptMember getMember(String memberName) throws EvaluationException;
 
     /**
      * Register a listener that will be invoked when this script gets invalidated.

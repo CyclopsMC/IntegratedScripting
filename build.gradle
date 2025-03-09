@@ -142,12 +142,14 @@ dependencies {
         transitive = false
     }
 
-    modLib "org.graalvm.sdk:graal-sdk:22.3.2"
-    shadow "org.graalvm.sdk:graal-sdk:22.3.2"
-    modLib ("org.graalvm.js:js:22.3.2") {
+    // https://mvnrepository.com/artifact/org.graalvm.sdk/graal-sdk
+    modLib "org.graalvm.sdk:graal-sdk:${project.graal_version}"
+    shadow "org.graalvm.sdk:graal-sdk:${project.graal_version}"
+    // https://mvnrepository.com/artifact/org.graalvm.js/js
+    modLib ("org.graalvm.js:js:${project.graal_version}") {
         exclude group: 'com.ibm.icu', module: 'icu4j'
     }
-    shadow "org.graalvm.js:js:22.3.2"
+    shadow "org.graalvm.js:js:${project.graal_version}"
 	
 	testImplementation "junit:junit:4.12"
     testImplementation "org.mockito:mockito-core:1.+"
@@ -255,8 +257,12 @@ shadowJar {
     archiveClassifier.set(''); // Replace the default JAR
     // To avoid clashes with other mods
     relocate 'org.graalvm', 'org.cyclops.integratedscripting.vendors.org.graalvm'
-    relocate 'com.oracle', 'org.cyclops.integratedscripting.vendors.com.oracle'
     relocate 'com.ibm', 'org.cyclops.integratedscripting.vendors.com.ibm'
+    // Relocate everything from com.oracle, except for com.oracle.truffle, as this is defined in a native lib, which can not be relocated
+//    relocate 'com.oracle', 'org.cyclops.integratedscripting.vendors.com.oracle'
+    relocate 'com.oracle.js', 'org.cyclops.integratedscripting.vendors.com.oracle.js'
+    relocate 'com.oracle.svm', 'org.cyclops.integratedscripting.vendors.com.oracle.svm'
+//    relocate 'com.oracle.truffle', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle' // Relocation of this fails for com.oracle.truffle.runtime.ModulesSupport at runtime
 }
 assemble.dependsOn shadowJar
 jar {
@@ -426,3 +432,9 @@ tasks.configureEach { task ->
         task.enabled = false
     }
 }
+
+task benchmark(type: JavaExec) {
+    classpath sourceSets.test.runtimeClasspath
+    main = "org.cyclops.integratedscripting.evaluate.translation.BenchmarkValueTranslators"
+}
+test.dependsOn benchmark
