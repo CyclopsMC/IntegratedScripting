@@ -96,7 +96,7 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: ${{ github.ref }}
       - name: 'Deploy to Maven'
-        if: startsWith(github.ref, 'refs/heads/master') && startsWith(matrix.java, env.DEFAULT_JAVA_VERSION) && startsWith(matrix.distribution, env.DEFAULT_JAVA_DISTRIBUTION)
+        if: (startsWith(github.ref, 'refs/heads/master') || startsWith(github.ref, 'refs/heads/feature')) && startsWith(matrix.java, env.DEFAULT_JAVA_VERSION) && startsWith(matrix.distribution, env.DEFAULT_JAVA_DISTRIBUTION)
         env:
           MAVEN_URL: ${{ secrets.MAVEN_URL }}
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
