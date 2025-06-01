@@ -17,6 +17,7 @@ import net.minecraft.client.StringSplitter;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiComponent;
 import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.Widget;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.font.TextFieldHelper;
@@ -61,7 +62,7 @@ import java.util.stream.Stream;
  * @author rubensworks
  */
 @OnlyIn(Dist.CLIENT)
-public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventListener {
+public class WidgetTextArea extends EditBox implements Widget, GuiEventListener {
 
     public static final int ROW_HEIGHT = 9;
 
@@ -90,7 +91,7 @@ public class WidgetTextArea extends AbstractWidget implements Widget, GuiEventLi
     private int firstRow;
 
     public WidgetTextArea(Font font, int x, int y, int width, int height, Component narrationMessage, boolean scrollBar, boolean showLineNumbers) {
-        super(x, y, width, height, narrationMessage);
+        super(font, x, y, width, height, narrationMessage);
         this.font = font;
         this.showLineNumbers = showLineNumbers;
         this.textFieldHelper = new TextFieldHelperExtended(this::getValue, this::setValuePassive, this::getClipboard, this::setClipboard, s -> true, this::setSelected, this::onCursorPosChanged);
