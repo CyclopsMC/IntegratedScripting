@@ -8,7 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.StringSplitter;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.font.TextFieldHelper;
 import net.minecraft.client.gui.narration.NarratedElementType;
@@ -53,7 +53,7 @@ import java.util.stream.Stream;
  * @author rubensworks
  */
 @OnlyIn(Dist.CLIENT)
-public class WidgetTextArea extends AbstractWidget implements GuiEventListener {
+public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     public static final int ROW_HEIGHT = 9;
 
@@ -82,7 +82,7 @@ public class WidgetTextArea extends AbstractWidget implements GuiEventListener {
     private int firstRow;
 
     public WidgetTextArea(Font font, int x, int y, int width, int height, Component narrationMessage, boolean scrollBar, boolean showLineNumbers) {
-        super(x, y, width, height, narrationMessage);
+        super(font, x, y, width, height, narrationMessage);
         this.font = font;
         this.showLineNumbers = showLineNumbers;
         this.textFieldHelper = new TextFieldHelperExtended(this::getValue, this::setValuePassive, this::getClipboard, this::setClipboard, s -> true, this::setSelected, this::onCursorPosChanged);
@@ -204,7 +204,7 @@ public class WidgetTextArea extends AbstractWidget implements GuiEventListener {
     }
 
     @Override
-    protected void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
+    public void updateWidgetNarration(NarrationElementOutput narrationElementOutput) {
         narrationElementOutput.add(NarratedElementType.TITLE, Component.translatable("narration.edit_box", this.getValue()));
     }
 
@@ -432,7 +432,7 @@ public class WidgetTextArea extends AbstractWidget implements GuiEventListener {
     }
 
     @Override
-    protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+    public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         // Determine lines to show
         DisplayCache displayCache = this.getDisplayCache();
         List<LineInfo> lines = Arrays.asList(displayCache.lines);
