@@ -89,7 +89,7 @@
   "info_book.integratedscripting.materials.text1": "Before getting started with scripting, you will need some &lMendesite&r blocks. These blocks are very malleable, and form a good basis for the storage and handling of scripts. &lMendesite&r is created by combining &lMenril Resin&r and &lAndesite&r in a &lDrying Basin&r.",
 
   "info_book.integratedscripting.concepts": "Concepts",
-  "info_book.integratedscripting.concepts.text1": "Editing, storing, and serving scripts to the network requires 3 elements: the &lScripting Terminal&r, &lScripting Disk&r, and &lScripting Drive&r",
+  "info_book.integratedscripting.concepts.text1": "Editing, storing, and serving scripts to the network requires 3 elements: the &lScripting Terminal&r, &lScripting Disk&r, and &lScripting Drive&r.",
   "info_book.integratedscripting.concepts.text2": "The &lScripting Disk&r is used to store raw script contents, but can not do anything on its own.",
   "info_book.integratedscripting.concepts.text3": "The &lScripting Drive&r allows you to insert a single &lScripting Disk&r, which will expose its contents to the network.",
   "info_book.integratedscripting.concepts.text4": "The &lScripting Terminal&r allows you to view, manage, and edit all scripts in the current network that are exposed by &lScripting Drives&r.",
@@ -116,7 +116,7 @@
   "info_book.integratedscripting.terminal.text8": "In order to use a script member as &lIntegrated Dynamics&r logic, you can bind it to a &lVariable Card&r.",
   "info_book.integratedscripting.terminal.text9": "You can do this by first selecting a script member in the text editor by selecting it with your cursor, such as a variable name or function name.",
   "info_book.integratedscripting.terminal.text10": "After that, you can insert a &lVariable Card&r into the slot on the right-hand side of the screen to bind it to this script member.",
-  "info_book.integratedscripting.terminal.text11": "This &lVariable Card&r can now be used elsewhere in the network, by for example showing a variable member inside a &lDisplay Panel&r, or by using a function member as operator in an item list filter.",
+  "info_book.integratedscripting.terminal.text11": "This &lVariable Card&r can now be used elsewhere in the network, by for example showing a variable member inside a &lDisplay Panel&r, or by using a function member as an operator in an item list filter.",
   "info_book.integratedscripting.terminal.text12": "The next chapter will provide more details on how to write scripts.",
 
   "info_book.integratedscripting.writing": "Writing Scripts",
@@ -137,7 +137,7 @@
   "info_book.integratedscripting.writing.functions.text2": "Any way of creating JavaScript functions can be used to create &2Operators&0, such as via the &ofunction&r keyword, or by creating custom lambdas.",
   "info_book.integratedscripting.writing.functions.text3": "Functions accept a number of arguments, which –when executed through Integrated Dynamics logic– will receive regular Integrated Dynamics values that are translated into JavaScript values.",
   "info_book.integratedscripting.writing.functions.text4": "Binding a JavaScript function to a &lVariable Card&r as an &2Operator&0, is done just like with constants and variables, by selecting the function member name in the Scripting Terminal text editor and binding it to a &lVariable Card&r. This value can now be used anywhere an &2Operator&0 is accepted.",
-  "info_book.integratedscripting.writing.functions.text5": "For example, you can create a function with a single &8Item&0 argument that returns a &9Boolean&0 to use as filter &2Operator&0 for filtering a list of items that you read from a Chest.",
+  "info_book.integratedscripting.writing.functions.text5": "For example, you can create a function with a single &8Item&0 argument that returns a &9Boolean&0 to use as a filter &2Operator&0 for filtering a list of items that you read from a Chest.",
   "info_book.integratedscripting.writing.functions.text6": "Below, you can find examples of different types of functions that could be created.",
 
   "info_book.integratedscripting.writing.globals": "Global functions",
@@ -151,7 +151,7 @@
   "info_book.integratedscripting.writing.methods.text2": "Object value types such as &8Blocks&0, &8Items&0, &8Fluids&0, ... will have &lmethods&r attached to them when used in JavaScript.",
   "info_book.integratedscripting.writing.methods.text3": "Object methods are just plain functions, but their first argument is tied to the object value.",
   "info_book.integratedscripting.writing.methods.text4": "For example, the global function &oitemstackStackable&r takes a single &8Item&0 argument and outputs a &9Boolean&0. This function is available as a method on &8Item&0 values via the name &ostackable&r, which takes zero arguments.",
-  "info_book.integratedscripting.writing.methods.text5": "Global functions that accept two or more arguments will be available as method on object values, with all arguments shifted by one. For example, the global function &oitemstackStrength&r accepts an &8Item&0 and a &8Block&0 argument, but is also available as method on &8Items&0 with a single &8Block&0 argument.",
+  "info_book.integratedscripting.writing.methods.text5": "Global functions that accept two or more arguments will be available as methods on object values, with all arguments shifted by one. For example, the global function &oitemstackStrength&r accepts an &8Item&0 and a &8Block&0 argument, but is also available as method on &8Items&0 with a single &8Block&0 argument.",
 
   "info_book.integratedscripting.advanced": "Advanced",
 
@@ -160,7 +160,7 @@
   "info_book.integratedscripting.advanced.transient_storage.text2": "As the JavaScript language offers a mix of both functional and imperative programming, keeping track of states becomes partially possible.",
   "info_book.integratedscripting.advanced.transient_storage.text3": "Concretely, if you declare a mutable variable outside of functions (for example using &olet&r), you can modify its values through function invocations.",
   "info_book.integratedscripting.advanced.transient_storage.text4": "This way, you can keep track of states, such as counting the number of function calls, or calculating the running average of specific values.",
-  "info_book.integratedscripting.advanced.transient_storage.text5": "An important catch to these variables is that their state is only transient. Concretely, this means that their values can be reset any time a variable card in the network is re-inserted, or when the server restarted.",
+  "info_book.integratedscripting.advanced.transient_storage.text5": "An important catch to these variables is that their state is only transient. Concretely, this means that their values can be reset any time a variable card in the network is re-inserted, or when the server is restarted.",
   "info_book.integratedscripting.advanced.transient_storage.text6": "As such, you can not assume these values to always remain present. If you need persistent data storage, it is better to make use of the &lDelayer&r.",
 
   "info_book.integratedscripting.advanced.external_editing": "External Editing",
