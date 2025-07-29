@@ -1,1 +1,25 @@
-{}
+{
+  "_comment": "------ Over de Dynamiek van Integratie inhoud ------",
+  "itemGroup.integratedscripting": "Integrated Scripting",
+  "gui.integratedscripting.create_file": "Maak bestand",
+  "gui.integratedscripting.removal_dialog.delete": "Verwijderen",
+  "gui.integratedscripting.removal_dialog.keep": "Behouden",
+  "item.integratedscripting.scripting_disk.id": "ID: %s",
+  "info_book.integratedscripting.section.main": "Scripting",
+  "info_book.integratedscripting.introduction": "Introductie",
+  "info_book.integratedscripting.materials": "Materialen",
+  "info_book.integratedscripting.concepts": "Concepten",
+  "info_book.integratedscripting.writing": "Scripts schrijven",
+  "info_book.integratedscripting.writing.js": "JavaScript",
+  "info_book.integratedscripting.writing.variables": "Constanten en variabelen",
+  "info_book.integratedscripting.writing.functions": "Functies",
+  "info_book.integratedscripting.writing.globals": "Globale functies",
+  "info_book.integratedscripting.writing.methods": "Objectmethoden",
+  "info_book.integratedscripting.advanced": "Geavanceerd",
+  "info_book.integratedscripting.advanced.external_editing": "Extern bewerken",
+  "info_book.integratedscripting.advanced.typescript": "TypeScript",
+  "info_book.integratedscripting.section.tutorials": "Scriptinglessen",
+  "info_book.integratedscripting.tutorials.introduction": "Introductie",
+  "info_book.integratedscripting.tutorials.basics": "De grondbeginselen van scripting",
+  "info_book.integratedscripting.tutorials.functions": "Scripting functies"
+}
