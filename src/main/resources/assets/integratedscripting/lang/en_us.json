@@ -82,14 +82,14 @@
   "info_book.integratedscripting.introduction": "Introduction",
   "info_book.integratedscripting.introduction.text1": "&lIntegrated Scripting&r is an extension to &lIntegrated Dynamics&r for creating scripts to handle complex operations in &lIntegrated Dynamics&r networks. By default, this mod ships with support for the JavaScript scripting language.",
   "info_book.integratedscripting.introduction.text2": "It allows you to define &lIntegrated Dynamics&r logic operations using a convenient scripting syntax instead of the standard visual variable card-based method, which can become cumbersome for advanced chains of operations.",
-  "info_book.integratedscripting.introduction.text3": "For example, it allows you to easily define complex item list filters such as &o\"items that are damageable, are owned by mod X, and correspond to blocks that can be only mined with a diamond pickaxe.\"&r. Or &o\"get the item in this list with the second-largest stack size.\"&r",
+  "info_book.integratedscripting.introduction.text3": "For example, it allows you to easily define complex item list filters such as &o\"items that are damageable, are owned by mod X, and correspond to blocks that can only be mined with a diamond pickaxe.\"&r. Or &o\"get the item in this list with the second-largest stack size.\"&r",
   "info_book.integratedscripting.introduction.text4": "Basic programming knowledge is recommended when using this mod, but may be learnable through the tutorials later in this book.",
 
   "info_book.integratedscripting.materials": "Materials",
   "info_book.integratedscripting.materials.text1": "Before getting started with scripting, you will need some &lMendesite&r blocks. These blocks are very malleable, and form a good basis for the storage and handling of scripts. &lMendesite&r is created by combining &lMenril Resin&r and &lAndesite&r in a &lDrying Basin&r.",
 
   "info_book.integratedscripting.concepts": "Concepts",
-  "info_book.integratedscripting.concepts.text1": "Editing, storing, and serving scripts to the network requires 3 elements: the &lScripting Terminal&r, &lScripting Disk&r, and &lScripting Drive&r",
+  "info_book.integratedscripting.concepts.text1": "Editing, storing, and serving scripts to the network requires 3 elements: the &lScripting Terminal&r, &lScripting Disk&r, and &lScripting Drive&r.",
   "info_book.integratedscripting.concepts.text2": "The &lScripting Disk&r is used to store raw script contents, but can not do anything on its own.",
   "info_book.integratedscripting.concepts.text3": "The &lScripting Drive&r allows you to insert a single &lScripting Disk&r, which will expose its contents to the network.",
   "info_book.integratedscripting.concepts.text4": "The &lScripting Terminal&r allows you to view, manage, and edit all scripts in the current network that are exposed by &lScripting Drives&r.",
@@ -98,7 +98,7 @@
   "info_book.integratedscripting.disk": "Scripting Disk",
   "info_book.integratedscripting.disk.text1": "&lScripting Disks&r are responsible for storing scripts, and are to be inserted into &lScripting Drives&r. They can be created by combining some &lVariable Cards&r with &lMendesite&r.",
   "info_book.integratedscripting.disk.text2": "Once a &lScripting Disk&r has been inserted into a &lScripting Drive&r, they will obtain a unique numerical identifier. This identifier will be used to modify scripts on this disk from within the &lScripting Terminal&r. The identifier is also used to link script elements to &lVariable Cards&r.",
-  "info_book.integratedscripting.disk.text3": "A &lScripting Disk&r can safely be moved to another &lScripting Disk&r without loss of script data, even when on a different network. &lVariable Cards&r that refer to this script's identifier will however start throwing errors when not on the same network anymore.",
+  "info_book.integratedscripting.disk.text3": "A &lScripting Disk&r can safely be moved to another &lScripting Drive&r without loss of script data, even when on a different network. &lVariable Cards&r that refer to this script's identifier will however start throwing errors when not on the same network anymore.",
   "info_book.integratedscripting.disk.text4": "A &lScripting Disk&r has no limit in terms of its storage size, but splitting up scripts across multiple disks is recommended for management reasons.",
 
   "info_book.integratedscripting.drive": "Scripting Drive",
@@ -113,10 +113,10 @@
   "info_book.integratedscripting.terminal.text5": "The script file list on the left-hand side of the screen is used to select a script for editing. When clicking on a script, its editable contents will show up on the right-hand-side of the screen.",
   "info_book.integratedscripting.terminal.text6": "The text field on the right-hand side of the screen allows you to edit the contents of script files, which will be saved automatically after each modification.",
   "info_book.integratedscripting.terminal.text7": "While the editor will perform limited syntax highlighting, it is not able to detect syntax errors at this time. Syntax errors will be reported when executing scripts via &lVariable Cards&r.",
-  "info_book.integratedscripting.terminal.text8": "In order to use a script member as &lIntegrated Dynamics&r logic, you can bind it to a &lVariable Cards&r.",
+  "info_book.integratedscripting.terminal.text8": "In order to use a script member as &lIntegrated Dynamics&r logic, you can bind it to a &lVariable Card&r.",
   "info_book.integratedscripting.terminal.text9": "You can do this by first selecting a script member in the text editor by selecting it with your cursor, such as a variable name or function name.",
   "info_book.integratedscripting.terminal.text10": "After that, you can insert a &lVariable Card&r into the slot on the right-hand side of the screen to bind it to this script member.",
-  "info_book.integratedscripting.terminal.text11": "This &lVariable Card&r can now be used elsewhere in the network, by for example showing a variable member inside a &lDisplay Panel&r, or by using a function member as operator in an item list filter.",
+  "info_book.integratedscripting.terminal.text11": "This &lVariable Card&r can now be used elsewhere in the network, by for example showing a variable member inside a &lDisplay Panel&r, or by using a function member as an operator in an item list filter.",
   "info_book.integratedscripting.terminal.text12": "The next chapter will provide more details on how to write scripts.",
 
   "info_book.integratedscripting.writing": "Writing Scripts",
@@ -133,11 +133,11 @@
   "info_book.integratedscripting.writing.variables.text5": "Creating variables via JavaScript is mainly useful if you need to create complex values that are not easy to create using the &lLogic Programmer&r, such as long &4Strings&0 with a specific value. Below, you can find some examples of how to create such values.",
 
   "info_book.integratedscripting.writing.functions": "Functions",
-  "info_book.integratedscripting.writing.functions.text1": "As &2Operator&0 are first-class citizens in Integrated Dynamics logic, they can also be created as JavaScript functions.",
+  "info_book.integratedscripting.writing.functions.text1": "As &2Operators&0 are first-class citizens in Integrated Dynamics logic, they can also be created as JavaScript functions.",
   "info_book.integratedscripting.writing.functions.text2": "Any way of creating JavaScript functions can be used to create &2Operators&0, such as via the &ofunction&r keyword, or by creating custom lambdas.",
   "info_book.integratedscripting.writing.functions.text3": "Functions accept a number of arguments, which –when executed through Integrated Dynamics logic– will receive regular Integrated Dynamics values that are translated into JavaScript values.",
-  "info_book.integratedscripting.writing.functions.text4": "Binding JavaScript functions to a &lVariable Card&r as &2Operator&0, is done just like with constants and variables, by selecting the function member name in the Scripting Terminal text editor and binding it to a &lVariable Card&r. This value can now be used anywhere an &2Operator&0 is accepted.",
-  "info_book.integratedscripting.writing.functions.text5": "For example, you can create a function with a single &8Item&0 argument that returns a &9Boolean&0 to use as filter &2Operator&0 for filtering a list of items that you read from a Chest.",
+  "info_book.integratedscripting.writing.functions.text4": "Binding a JavaScript function to a &lVariable Card&r as an &2Operator&0, is done just like with constants and variables, by selecting the function member name in the Scripting Terminal text editor and binding it to a &lVariable Card&r. This value can now be used anywhere an &2Operator&0 is accepted.",
+  "info_book.integratedscripting.writing.functions.text5": "For example, you can create a function with a single &8Item&0 argument that returns a &9Boolean&0 to use as a filter &2Operator&0 for filtering a list of items that you read from a Chest.",
   "info_book.integratedscripting.writing.functions.text6": "Below, you can find examples of different types of functions that could be created.",
 
   "info_book.integratedscripting.writing.globals": "Global functions",
@@ -151,7 +151,7 @@
   "info_book.integratedscripting.writing.methods.text2": "Object value types such as &8Blocks&0, &8Items&0, &8Fluids&0, ... will have &lmethods&r attached to them when used in JavaScript.",
   "info_book.integratedscripting.writing.methods.text3": "Object methods are just plain functions, but their first argument is tied to the object value.",
   "info_book.integratedscripting.writing.methods.text4": "For example, the global function &oitemstackStackable&r takes a single &8Item&0 argument and outputs a &9Boolean&0. This function is available as a method on &8Item&0 values via the name &ostackable&r, which takes zero arguments.",
-  "info_book.integratedscripting.writing.methods.text5": "Global functions that accept two or more arguments will be available as method on object values, with all arguments shifted by one. For example, the global function &oitemstackStrength&r accepts an &8Item&0 and a &8Block&0 argument, but is also available as method on &8Items&0 with a single &8Block&0 argument.",
+  "info_book.integratedscripting.writing.methods.text5": "Global functions that accept two or more arguments will be available as methods on object values, with all arguments shifted by one. For example, the global function &oitemstackStrength&r accepts an &8Item&0 and a &8Block&0 argument, but is also available as method on &8Items&0 with a single &8Block&0 argument.",
 
   "info_book.integratedscripting.advanced": "Advanced",
 
@@ -160,7 +160,7 @@
   "info_book.integratedscripting.advanced.transient_storage.text2": "As the JavaScript language offers a mix of both functional and imperative programming, keeping track of states becomes partially possible.",
   "info_book.integratedscripting.advanced.transient_storage.text3": "Concretely, if you declare a mutable variable outside of functions (for example using &olet&r), you can modify its values through function invocations.",
   "info_book.integratedscripting.advanced.transient_storage.text4": "This way, you can keep track of states, such as counting the number of function calls, or calculating the running average of specific values.",
-  "info_book.integratedscripting.advanced.transient_storage.text5": "An important catch to these variables is that their state is only transient. Concretely, this means that their values can be reset any time a variable card in the network is re-inserted, or when the server restarted.",
+  "info_book.integratedscripting.advanced.transient_storage.text5": "An important catch to these variables is that their state is only transient. Concretely, this means that their values can be reset any time a variable card in the network is re-inserted, or when the server is restarted.",
   "info_book.integratedscripting.advanced.transient_storage.text6": "As such, you can not assume these values to always remain present. If you need persistent data storage, it is better to make use of the &lDelayer&r.",
 
   "info_book.integratedscripting.advanced.external_editing": "External Editing",
@@ -194,18 +194,18 @@
   "info_book.integratedscripting.tutorials.basics.text3": "Finally, let's place a &lScripting Drive&r and store a &lScripting Disk&r in it. This will allow us to store scripts in the next tutorial.",
 
   "info_book.integratedscripting.tutorials.terminal": "Using the Scripting Terminal",
-  "info_book.integratedscripting.tutorials.terminal.text1": "In the previous step, we created and placed a &lScripting Disk&r and &lScripting Drive&r. In this tutorial, we will see how we can actually &owrite&r scripts and bind them to &lVariable Cards&r",
+  "info_book.integratedscripting.tutorials.terminal.text1": "In the previous step, we created and placed a &lScripting Disk&r and &lScripting Drive&r. In this tutorial, we will see how we can actually &owrite&r scripts and bind them to &lVariable Cards&r.",
   "info_book.integratedscripting.tutorials.terminal.text2": "First, let us craft a &lScripting Terminal&r, place it on a cable connected to the &lScripting Drive&r, and right-click on the &lScripting Terminal&r to open it.",
-  "info_book.integratedscripting.tutorials.terminal.text3": "You will see an editor in which you can access all script files stored in the different &lScripting Disk&r that are accessible to the network. You can toggle through the different &lScripting Disks&r by clicking on the arrows on the top-left of the screen.",
+  "info_book.integratedscripting.tutorials.terminal.text3": "You will see an editor in which you can access all script files stored in the different &lScripting Disks&r that are accessible to the network. You can toggle through the different &lScripting Disks&r by clicking on the arrows on the top-left of the screen.",
   "info_book.integratedscripting.tutorials.terminal.text4": "At this stage, you will not have any script files in your network yet, so let's create a new file by clicking on the \"+\" button on the bottom-left of the screen. Now click on the new file to open it, and click on the text field at the right-hand side of the screen to edit the file and write &oJavaScript&r code.",
   "info_book.integratedscripting.tutorials.terminal.text5": "To keep it simple for now, we will create a constant value. Let's write something like &oconst myVar = 123;&r",
-  "info_book.integratedscripting.tutorials.terminal.text6": "As a final step, let's bind this constant to a &lVariable Card&r by inserting an empty &lVariable Card&r into slot at the right-hand side of the screen, and select the variable by double-clicking it with your cursor. Your &lVariable Card&r will now be bound to the constant value. You can use this &lVariable Card&r now anywhere in your network. Let's try showing it in a &lDisplay Panel&r!",
+  "info_book.integratedscripting.tutorials.terminal.text6": "As a final step, let's bind this constant to a &lVariable Card&r by inserting an empty &lVariable Card&r into the slot at the right-hand side of the screen, and select the variable by double-clicking it with your cursor. Your &lVariable Card&r will now be bound to the constant value. You can now use this &lVariable Card&r anywhere in your network. Let's try showing it in a &lDisplay Panel&r!",
 
   "info_book.integratedscripting.tutorials.functions": "Scripting functions",
   "info_book.integratedscripting.tutorials.functions.text1": "While creating constant values through JavaScript might be fun, the real power of these scripts become apparent when creating &ofunctions&r.",
-  "info_book.integratedscripting.tutorials.functions.text2": "Functions created through JavaScript can be bound to &lVariable Cards&r as &2Operator&0, which can then be used in Integrated Dynamics logic as usual. For example, you could use them for defining Integrated Tunnels exporter filters, or for calculating complex values such as the median stack size of items in a list.",
+  "info_book.integratedscripting.tutorials.functions.text2": "Functions created through JavaScript can be bound to &lVariable Cards&r as &2Operators&0, which can then be used in Integrated Dynamics logic as usual. For example, you could use them for defining Integrated Tunnels exporter filters, or for calculating complex values such as the median stack size of items in a list.",
   "info_book.integratedscripting.tutorials.functions.text3": "In this tutorial, we'll create a function that accepts a single &8Item&0 argument, and returns a &9Boolean&0 as output. This function will act as a filter operator, which we can use when for example filtering a list of items.",
-  "info_book.integratedscripting.tutorials.functions.text4": "Concretely, we will read the list of items using the &lInventory Reader&r, and &lFilter&r it using our newly created function. You can bind the function to a &lVariable Card&r by selecting it in the editor and inserting an empty &lVariable Card&r, which will store it as &2Operator&0.",
+  "info_book.integratedscripting.tutorials.functions.text4": "Concretely, we will read the list of items using the &lInventory Reader&r, and &lFilter&r it using our newly created function. You can bind the function to a &lVariable Card&r by selecting it in the editor and inserting an empty &lVariable Card&r, which will store it as an &2Operator&0.",
   "info_book.integratedscripting.tutorials.functions.text5": "You are free to use any implementation of the filter function for this tutorial. Hereafter, you can find a valid example script which you are free to copy.",
   "info_book.integratedscripting.tutorials.functions.text6": "To complete the tutorial, show the result of the filtered list in a &lDisplay Panel&r.",
   "info_book.integratedscripting.tutorials.functions.text7": "In this example script, you will see that you can invoke built-in methods on items such as &oisStackable()&r and &ostacksize()&r. More details on which methods are available can be found later in the full manual."
