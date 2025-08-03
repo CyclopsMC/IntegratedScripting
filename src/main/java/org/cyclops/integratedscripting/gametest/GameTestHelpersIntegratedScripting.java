@@ -34,7 +34,7 @@ public class GameTestHelpersIntegratedScripting {
         helper.setBlock(pos.south(), org.cyclops.integratedscripting.RegistryEntries.BLOCK_SCRIPTING_DRIVE.value());
 
         // Insert scripting disk into scripting drive
-        BlockEntityScriptingDrive scriptingDrive = helper.getBlockEntity(pos.south());
+        BlockEntityScriptingDrive scriptingDrive = helper.getBlockEntity(pos.south(), BlockEntityScriptingDrive.class);
         scriptingDrive.getInventory().setItem(0, new ItemStack(org.cyclops.integratedscripting.RegistryEntries.ITEM_SCRIPTING_DISK));
 
         // Place variable store
@@ -46,7 +46,7 @@ public class GameTestHelpersIntegratedScripting {
         // Place display panel
         PartHelpers.addPart(helper.getLevel(), helper.absolutePos(pos.above().east()), Direction.NORTH, org.cyclops.integrateddynamics.core.part.PartTypes.DISPLAY_PANEL, new ItemStack(org.cyclops.integrateddynamics.core.part.PartTypes.DISPLAY_PANEL.getItem()));
 
-        BlockEntityVariablestore variableStore = helper.getBlockEntity(pos.south().south());
+        BlockEntityVariablestore variableStore = helper.getBlockEntity(pos.south().south(), BlockEntityVariablestore.class);
 
         return new NetworkPositions(
                 PartPos.of(helper.getLevel(), helper.absolutePos(pos.above()), Direction.NORTH),

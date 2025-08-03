@@ -1,10 +1,12 @@
 package org.cyclops.integratedscripting.evaluate.translation.translator;
 
-import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.StringTag;
+import com.mojang.serialization.Codec;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
+import org.apache.commons.compress.utils.Lists;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
 import org.cyclops.integrateddynamics.api.evaluate.operator.IOperatorSerializer;
@@ -22,6 +24,8 @@ import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Value;
+
+import java.util.List;
 
 /**
  * @author rubensworks
@@ -122,22 +126,20 @@ public class ValueTranslatorOperator implements IValueTranslator<ValueTypeOperat
             }
 
             @Override
-            public Tag serialize(ValueDeseralizationContext valueDeseralizationContext, GraalOperator operator) {
-                ListTag list = new ListTag();
+            public void serialize(ValueOutput valueOutput, GraalOperator operator) {
+                ValueOutput.TypedOutputList<String> list = valueOutput.list("v", Codec.STRING);
                 for (int i = 0; i < operator.getInputTypes().length; i++) {
-                    list.add(StringTag.valueOf(operator.getInputTypes()[i].getUniqueName().toString()));
+                    list.add(operator.getInputTypes()[i].getUniqueName().toString());
                 }
-                return list;
             }
 
             @Override
-            public GraalOperator deserialize(ValueDeseralizationContext valueDeseralizationContext, Tag value) throws EvaluationException {
-                ListTag listTag = (ListTag) value;
-                IValueType[] inputTypes = new IValueType[listTag.size()];
-                for (int i = 0; i < listTag.size(); i++) {
-                    inputTypes[i] = ValueTypes.REGISTRY.getValueType(ResourceLocation.parse(listTag.getString(i)));
+            public GraalOperator deserialize(ValueInput valueInput) throws EvaluationException {
+                List<IValueType<?>> inputTypes = Lists.newArrayList();
+                for (String value : valueInput.list("v", Codec.STRING).orElseThrow()) {
+                    inputTypes.add(ValueTypes.REGISTRY.getValueType(ResourceLocation.parse(value)));
                 }
-                return new GraalOperator(inputTypes, (variables) -> {
+                return new GraalOperator(inputTypes.toArray(new IValueType[0]), (variables) -> {
                     throw new EvaluationException(Component.translatable("operator.integratedscripting.error.no_graal_serialization"));
                 });
             }

@@ -2,8 +2,10 @@ package org.cyclops.integratedscripting.evaluate.translation.translator;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
+import org.cyclops.cyclopscore.helper.IModHelpers;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
@@ -114,7 +116,10 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
 
         Value idBlock = value.getMember(this.key);
         ValueTypeNbt.ValueNbt valueNbt = ValueTranslators.REGISTRY.translateFromGraal(context, idBlock, exceptionFactory, valueDeseralizationContext);
-        return this.valueType.deserialize(valueDeseralizationContext, valueNbt.getRawValue().orElseThrow());
+        CompoundTag subTag = (CompoundTag) valueNbt.getRawValue().orElseThrow();
+        CompoundTag tag = new CompoundTag();
+        tag.put("v", subTag);
+        return IModHelpers.get().getMinecraftHelpers().valueInputFromNbt(tag, valueDeseralizationContext.holderLookupProvider(), this.valueType::deserialize);
     }
 
     @Override

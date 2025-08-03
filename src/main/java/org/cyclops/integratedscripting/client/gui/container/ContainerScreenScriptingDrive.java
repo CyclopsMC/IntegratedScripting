@@ -3,6 +3,7 @@ package org.cyclops.integratedscripting.client.gui.container;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ARGB;
 import net.minecraft.world.entity.player.Inventory;
 import org.cyclops.cyclopscore.client.gui.container.ContainerScreenExtended;
 import org.cyclops.integratedscripting.Reference;
@@ -31,6 +32,6 @@ public class ContainerScreenScriptingDrive extends ContainerScreenExtended<Conta
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int x, int y) {
         // super.drawGuiContainerForegroundLayer(matrixStack, x, y);
-        guiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 4210752, false);
+        guiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, ARGB.opaque(4210752), false);
     }
 }

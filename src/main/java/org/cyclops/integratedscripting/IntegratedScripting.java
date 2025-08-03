@@ -6,8 +6,6 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.ItemStack;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
@@ -42,6 +40,7 @@ import org.cyclops.integratedscripting.core.language.LanguageHandlers;
 import org.cyclops.integratedscripting.core.network.ScriptingData;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslatorRegistry;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
+import org.cyclops.integratedscripting.gametest.GameTestsScripts;
 import org.cyclops.integratedscripting.inventory.container.ContainerScriptingDriveConfig;
 import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScriptingConfig;
 import org.cyclops.integratedscripting.item.ItemScriptingDiskConfig;
@@ -162,7 +161,6 @@ public class IntegratedScripting extends ModBaseNeoForge<IntegratedScripting> {
         configHandler.addConfigurable(new DataComponentDiskIdConfig());
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
     protected IClientProxy constructClientProxy() {
         return new ClientProxy();
@@ -171,6 +169,13 @@ public class IntegratedScripting extends ModBaseNeoForge<IntegratedScripting> {
     @Override
     protected ICommonProxy constructCommonProxy() {
         return new CommonProxy();
+    }
+
+    @Override
+    public Class<?>[] getGameTestClasses() {
+        return new Class<?>[]{
+                GameTestsScripts.class
+        };
     }
 
     /**

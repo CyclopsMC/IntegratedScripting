@@ -29,11 +29,11 @@ import java.util.Map;
 public class LanguageHandlerJavaScript implements ILanguageHandler {
 
     // These colors are inspired by GitHub's color palette
-    public static final Style ATTRIBUTE = Style.EMPTY.withColor(TextColor.fromRgb(IModHelpers.get().getBaseHelpers().RGBToInt(121, 93, 163))); // Purple
-    public static final Style COMMENT = Style.EMPTY.withColor(TextColor.fromRgb(IModHelpers.get().getBaseHelpers().RGBToInt(150, 152, 150))); // Gray
-    public static final Style SYMBOL = Style.EMPTY.withColor(TextColor.fromRgb(IModHelpers.get().getBaseHelpers().RGBToInt(99, 163, 92))); // Green
-    public static final Style CONSTANT = Style.EMPTY.withColor(TextColor.fromRgb(IModHelpers.get().getBaseHelpers().RGBToInt(0, 134, 179))); // Blue
-    public static final Style KEYWORD = Style.EMPTY.withColor(TextColor.fromRgb(IModHelpers.get().getBaseHelpers().RGBToInt(167, 29, 93))); // Red-purple
+    public static final Style ATTRIBUTE = Style.EMPTY.withColor(TextColor.fromRgb(IModHelpers.get().getBaseHelpers().RGBAToInt(121, 93, 163, 255))); // Purple
+    public static final Style COMMENT = Style.EMPTY.withColor(TextColor.fromRgb(IModHelpers.get().getBaseHelpers().RGBAToInt(150, 152, 150, 255))); // Gray
+    public static final Style SYMBOL = Style.EMPTY.withColor(TextColor.fromRgb(IModHelpers.get().getBaseHelpers().RGBAToInt(99, 163, 92, 255))); // Green
+    public static final Style CONSTANT = Style.EMPTY.withColor(TextColor.fromRgb(IModHelpers.get().getBaseHelpers().RGBAToInt(0, 134, 179, 255))); // Blue
+    public static final Style KEYWORD = Style.EMPTY.withColor(TextColor.fromRgb(IModHelpers.get().getBaseHelpers().RGBAToInt(167, 29, 93, 255))); // Red-purple
 
     public final Map<String, Style> tokenStyles;
     private final IScriptFactory scriptFactory;

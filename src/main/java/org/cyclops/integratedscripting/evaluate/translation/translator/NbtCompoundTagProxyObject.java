@@ -71,7 +71,7 @@ public class NbtCompoundTagProxyObject implements ProxyObject {
 
     @Override
     public Object getMemberKeys() {
-        return tag.getAllKeys().toArray();
+        return tag.keySet().toArray();
     }
 
     @Override

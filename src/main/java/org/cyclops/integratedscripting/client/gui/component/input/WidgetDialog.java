@@ -1,6 +1,5 @@
 package org.cyclops.integratedscripting.client.gui.component.input;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -9,9 +8,10 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.FormattedCharSequence;
 import org.cyclops.cyclopscore.client.gui.component.button.ButtonText;
 import org.cyclops.cyclopscore.helper.IModHelpers;
@@ -49,12 +49,10 @@ public class WidgetDialog extends AbstractWidget implements GuiEventListener {
 
     protected void drawBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         // Gray-out background
-        RenderSystem.setShaderColor(0F, 0F, 0F, 0.95F);
         guiGraphics.fill(0, 0, parent.width, parent.height, IModHelpers.get().getBaseHelpers().RGBAToInt(50, 50, 50, 100));
-        RenderSystem.setShaderColor(1, 1, 1, 1);
 
         // Draw dialog texture
-        guiGraphics.blit(RenderType::guiTextured, TEXTURE, getX(), getY(), 0, 0, WIDTH, HEIGHT, 256, 256);
+        guiGraphics.blit(RenderPipelines.GUI_TEXTURED, TEXTURE, getX(), getY(), 0, 0, WIDTH, HEIGHT, 256, 256);
     }
 
     @Override
@@ -64,9 +62,9 @@ public class WidgetDialog extends AbstractWidget implements GuiEventListener {
         this.buttonConfirm.render(guiGraphics, mouseX, mouseY, partialTicks);
         this.buttonCancel.render(guiGraphics, mouseX, mouseY, partialTicks);
 
-        guiGraphics.drawCenteredString(font, title, this.getX() + this.width / 2, this.getY() + 4, 16777215);
+        guiGraphics.drawCenteredString(font, title, this.getX() + this.width / 2, this.getY() + 4, ARGB.opaque(16777215));
         FormattedCharSequence formattedcharsequence = message.getVisualOrderText();
-        guiGraphics.drawString(font, message, (this.getX() + this.width / 2 - font.width(formattedcharsequence) / 2), (this.getY() + 25), 4210752, false);
+        guiGraphics.drawString(font, message, (this.getX() + this.width / 2 - font.width(formattedcharsequence) / 2), (this.getY() + 25), ARGB.opaque(4210752), false);
     }
 
     @Override

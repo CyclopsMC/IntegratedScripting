@@ -1,7 +1,8 @@
 package org.cyclops.integratedscripting.evaluate.translation.translator;
 
-import net.minecraft.nbt.Tag;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import org.cyclops.cyclopscore.helper.IModHelpers;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
@@ -68,8 +69,8 @@ public class ValueObjectProxyObject<V extends IValue> implements ProxyObject {
             }
             if (key.equals(this.memberNbtKey)) {
                 if (this.memberNbtValue == null) {
-                    Tag tag = this.valueType.serialize(this.valueDeseralizationContext, this.value);
-                    this.memberNbtValue = ValueTranslators.TRANSLATOR_NBT.translateTag(context, tag, exceptionFactory, valueDeseralizationContext);
+                    CompoundTag tag = IModHelpers.get().getMinecraftHelpers().valueOutputToNbt(o -> this.valueType.serialize(o, this.value), this.valueDeseralizationContext.holderLookupProvider());
+                    this.memberNbtValue = ValueTranslators.TRANSLATOR_NBT.translateTag(context, tag.contains("v") ? tag.get("v") : tag, exceptionFactory, valueDeseralizationContext);
                 }
                 return this.memberNbtValue;
             }

@@ -1,7 +1,6 @@
 package org.cyclops.integratedscripting.core.evaluate;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IVariable;
 import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
@@ -38,16 +37,10 @@ public class ScriptVariableFacadeHandler implements IVariableFacadeHandler<IScri
 
     @Override
     public IScriptVariableFacade getVariableFacade(ValueDeseralizationContext valueDeseralizationContext, int id, CompoundTag tag) {
-        if(!tag.contains("disk", Tag.TAG_INT) && !tag.contains("disk", Tag.TAG_BYTE)) {
+        if ((!tag.contains("disk") && !tag.contains("disk")) || !tag.contains("path") || !tag.contains("member")) {
             return INVALID_FACADE;
         }
-        if(!tag.contains("path", Tag.TAG_STRING)) {
-            return INVALID_FACADE;
-        }
-        if(!tag.contains("member", Tag.TAG_STRING)) {
-            return INVALID_FACADE;
-        }
-        return new ScriptVariableFacade(id, tag.getInt("disk"), Path.of(tag.getString("path")), tag.getString("member"));
+        return new ScriptVariableFacade(id, tag.getInt("disk").orElseThrow(), Path.of(tag.getString("path").orElseThrow()), tag.getString("member").orElseThrow());
     }
 
     @Override

@@ -393,7 +393,7 @@ public class ValueTranslatorsJavaScriptTests {
         Value translated1 = ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeNbt.ValueNbt.of(compoundTag), EF, VDC);
         translated1.putMember("c", CTX.asValue(456));
 
-        assertThat(compoundTag.getInt("c"), equalTo(456));
+        assertThat(compoundTag.getInt("c").orElseThrow(), equalTo(456));
     }
 
     @Test

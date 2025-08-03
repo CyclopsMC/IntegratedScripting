@@ -1,20 +1,21 @@
 package org.cyclops.integratedscripting.evaluate.translation;
 
 import net.minecraft.ChatFormatting;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.cyclops.integrateddynamics.Reference;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
-import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
+import org.cyclops.integrateddynamics.api.evaluate.variable.IValueTypeClient;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueBase;
 import org.cyclops.integrateddynamics.core.logicprogrammer.ValueTypeLPElementBase;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Dummy value type
@@ -23,6 +24,11 @@ import java.util.List;
 public class DummyValueType implements IValueType<DummyValueType.DummyValue> {
 
     public static final DummyValueType TYPE = new DummyValueType();
+
+    @Override
+    public IValueTypeClient<DummyValue> getClient() {
+        return new IValueTypeClient<>() {};
+    }
 
     @Override
     public boolean isCategory() {
@@ -55,7 +61,7 @@ public class DummyValueType implements IValueType<DummyValueType.DummyValue> {
     }
 
     @Override
-    public void loadTooltip(List<Component> lines, boolean appendOptionalInfo, DummyValue value) {
+    public void loadTooltip(Consumer<Component> tooltipAdder, boolean appendOptionalInfo, @Nullable DummyValueType.DummyValue value) {
 
     }
 
@@ -80,18 +86,17 @@ public class DummyValueType implements IValueType<DummyValueType.DummyValue> {
     }
 
     @Override
-    public Tag serialize(ValueDeseralizationContext valueDeseralizationContext, DummyValue value) {
-        return null;
-    }
+    public void serialize(ValueOutput valueOutput, DummyValue value) {
 
-    @Nullable
-    @Override
-    public Component canDeserialize(ValueDeseralizationContext valueDeseralizationContext, Tag value) {
-        return null;
     }
 
     @Override
-    public DummyValue deserialize(ValueDeseralizationContext valueDeseralizationContext, Tag value) {
+    public @Nullable Component canDeserialize(ValueInput valueInput) {
+        return null;
+    }
+
+    @Override
+    public DummyValue deserialize(ValueInput valueInput) {
         return null;
     }
 

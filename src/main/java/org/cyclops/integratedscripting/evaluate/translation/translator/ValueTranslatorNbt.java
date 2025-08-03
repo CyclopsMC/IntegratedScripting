@@ -56,28 +56,28 @@ public class ValueTranslatorNbt implements IValueTranslator<ValueTypeNbt.ValueNb
                 return context.eval("js", "exports = { 'nbt_end': true }");
             }
             case Tag.TAG_BYTE -> {
-                return context.asValue(((ByteTag) tag).getAsByte());
+                return context.asValue(tag.asByte().orElseThrow());
             }
             case Tag.TAG_SHORT -> {
-                return context.asValue(((ShortTag) tag).getAsShort());
+                return context.asValue(tag.asShort().orElseThrow());
             }
             case Tag.TAG_INT -> {
-                return context.asValue(((IntTag) tag).getAsInt());
+                return context.asValue(tag.asInt().orElseThrow());
             }
             case Tag.TAG_LONG -> {
-                return context.asValue(((LongTag) tag).getAsLong());
+                return context.asValue(tag.asLong().orElseThrow());
             }
             case Tag.TAG_FLOAT -> {
-                return context.asValue(((FloatTag) tag).getAsFloat());
+                return context.asValue(tag.asFloat().orElseThrow());
             }
             case Tag.TAG_DOUBLE -> {
-                return context.asValue(((DoubleTag) tag).getAsDouble());
+                return context.asValue(tag.asDouble().orElseThrow());
             }
             case Tag.TAG_BYTE_ARRAY -> {
                 return context.asValue(((ByteArrayTag) tag).getAsByteArray());
             }
             case Tag.TAG_STRING -> {
-                return context.asValue(tag.getAsString());
+                return context.asValue(tag.asString().orElseThrow());
             }
             case Tag.TAG_LIST -> {
                 List<Value> list = new ArrayList<>();

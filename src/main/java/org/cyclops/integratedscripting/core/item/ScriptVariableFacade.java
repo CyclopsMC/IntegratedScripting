@@ -1,17 +1,12 @@
 package org.cyclops.integratedscripting.core.item;
 
-import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.Item;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
-import net.neoforged.neoforge.client.model.data.ModelData;
-import org.cyclops.integrateddynamics.api.client.model.IVariableModelBaked;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IVariable;
+import org.cyclops.integrateddynamics.api.item.IVariableFacadeClient;
 import org.cyclops.integrateddynamics.api.network.INetwork;
 import org.cyclops.integrateddynamics.api.network.IPartNetwork;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueHelpers;
@@ -20,12 +15,12 @@ import org.cyclops.integrateddynamics.core.helper.L10NValues;
 import org.cyclops.integrateddynamics.core.item.VariableFacadeBase;
 import org.cyclops.integratedscripting.api.item.IScriptVariableFacade;
 import org.cyclops.integratedscripting.api.network.IScriptingNetwork;
-import org.cyclops.integratedscripting.core.client.model.ScriptingVariableModelProviders;
 import org.cyclops.integratedscripting.core.network.ScriptingNetworkHelpers;
 
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.Consumer;
 
 /**
  * Variable facade for variables determined by proxies.
@@ -136,20 +131,18 @@ public class ScriptVariableFacade extends VariableFacadeBase implements IScriptV
         );
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
-    public void appendHoverText(List<Component> list, Item.TooltipContext context) {
-        if(isValid()) {
-            list.addAll(getScriptTooltip());
-        }
-        super.appendHoverText(list, context);
+    protected IVariableFacadeClient constructClient() {
+        return new ScriptVariableFacadeClient(this);
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
-    public void addModelOverlay(IVariableModelBaked variableModelBaked, List<BakedQuad> quads, RandomSource random, ModelData modelData) {
+    public void appendHoverText(Consumer<Component> list, Item.TooltipContext context) {
         if(isValid()) {
-            quads.addAll(variableModelBaked.getSubModels(ScriptingVariableModelProviders.SCRIPT).getBakedModel().getQuads(null, null, random, modelData, null));
+            for (Component component : getScriptTooltip()) {
+                list.accept(component);
+            }
         }
+        super.appendHoverText(list, context);
     }
 }

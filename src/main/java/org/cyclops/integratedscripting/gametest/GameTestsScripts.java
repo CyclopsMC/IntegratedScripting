@@ -2,14 +2,12 @@ package org.cyclops.integratedscripting.gametest;
 
 import com.google.common.collect.Lists;
 import net.minecraft.core.BlockPos;
-import net.minecraft.gametest.framework.GameTest;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.neoforged.neoforge.gametest.GameTestHolder;
-import net.neoforged.neoforge.gametest.PrefixGameTestTemplate;
 import org.apache.commons.lang3.tuple.Pair;
+import org.cyclops.cyclopscore.gametest.GameTest;
 import org.cyclops.integrateddynamics.core.evaluate.operator.Operators;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueObjectTypeItemStack;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeBoolean;
@@ -26,11 +24,9 @@ import static org.cyclops.integrateddynamics.gametest.GameTestHelpersIntegratedD
 import static org.cyclops.integratedscripting.gametest.GameTestHelpersIntegratedScripting.createBasicNetwork;
 import static org.cyclops.integratedscripting.gametest.GameTestHelpersIntegratedScripting.createVariableForScript;
 
-@GameTestHolder(Reference.MOD_ID)
-@PrefixGameTestTemplate(false)
 public class GameTestsScripts {
 
-    public static final String TEMPLATE_EMPTY = "empty10";
+    public static final String TEMPLATE_EMPTY = Reference.MOD_ID + ":empty10";
     public static final int TIMEOUT = 2000;
     public static final BlockPos POS = BlockPos.ZERO.offset(2, 0, 2);
 
@@ -48,7 +44,7 @@ public class GameTestsScripts {
         Pair<PartTypePanelDisplay, PartTypePanelDisplay.State> partAndState = placeVariableInDisplayPanel(helper.getLevel(), positions.displayPanel(), variableScript);
 
         helper.succeedWhen(() -> {
-            assertValueEqual(partAndState.getRight().getDisplayValue(), ValueTypeInteger.ValueInteger.of(3));
+            assertValueEqual(helper, partAndState.getRight().getDisplayValue(), ValueTypeInteger.ValueInteger.of(3));
         });
     }
 
@@ -82,7 +78,7 @@ public class GameTestsScripts {
         Pair<PartTypePanelDisplay, PartTypePanelDisplay.State> partAndState = placeVariableInDisplayPanel(helper.getLevel(), positions.displayPanel(), variableAdded);
 
         helper.succeedWhen(() -> {
-            assertValueEqual(partAndState.getRight().getDisplayValue(), ValueTypeInteger.ValueInteger.of(11));
+            assertValueEqual(helper, partAndState.getRight().getDisplayValue(), ValueTypeInteger.ValueInteger.of(11));
         });
     }
 
@@ -113,7 +109,7 @@ public class GameTestsScripts {
         Pair<PartTypePanelDisplay, PartTypePanelDisplay.State> partAndState = placeVariableInDisplayPanel(helper.getLevel(), positions.displayPanel(), variableApplied);
 
         helper.succeedWhen(() -> {
-            assertValueEqual(partAndState.getRight().getDisplayValue(), ValueTypeBoolean.ValueBoolean.of(true));
+            assertValueEqual(helper, partAndState.getRight().getDisplayValue(), ValueTypeBoolean.ValueBoolean.of(true));
         });
     }
 
@@ -144,7 +140,7 @@ public class GameTestsScripts {
             helper.assertValueEqual(partAndState.getRight().getGlobalErrors(), Lists.newArrayList(
                     Component.translatable("script.integratedscripting.error.member_not_in_network", positions.diskId(), "abc", "script0.js"),
                     Component.translatable("script.integratedscripting.error.member_not_in_network", positions.diskId(), "abc", "script0.js")
-            ), "Display panel errors do not match");
+            ), Component.literal("Display panel errors do not match"));
         });
     }
 

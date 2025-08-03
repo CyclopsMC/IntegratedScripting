@@ -16,13 +16,12 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.BookEditScreen;
 import net.minecraft.client.renderer.Rect2i;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.StringUtil;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableInt;
@@ -52,7 +51,6 @@ import java.util.stream.Stream;
  *
  * @author rubensworks
  */
-@OnlyIn(Dist.CLIENT)
 public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     public static final int ROW_HEIGHT = 9;
@@ -441,7 +439,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         // Draw lines
         int lastLineNumber = -1;
         for(LineInfo line : lines) {
-            guiGraphics.drawString(this.font, line.asComponent, line.x, line.y - offsetY, -16777216, false);
+            guiGraphics.drawString(this.font, line.asComponent, line.x, line.y - offsetY, ARGB.opaque(-16777216), false);
             // Draw line number
             if (this.showLineNumbers && lastLineNumber != line.lineNumber) {
                 IModHelpers.get().getRenderHelpers().drawScaledString(
@@ -451,7 +449,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                         this.getX(),
                         line.y - offsetY + 2,
                         0.5f,
-                        line.hasCursor ? 0 : IModHelpers.get().getBaseHelpers().RGBToInt(120, 120, 120),
+                        line.hasCursor ? 0 : IModHelpers.get().getBaseHelpers().RGBAToInt(120, 120, 120, 255),
                         false,
                         Font.DisplayMode.NORMAL
                 );
@@ -477,7 +475,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             if (!cursorAtEnd) {
                 guiGraphics.fill(pos.x, pos.y - 1, pos.x + 1, pos.y + 9, -16777216);
             } else {
-                guiGraphics.drawString(this.font, "_", pos.x, pos.y, 0);
+                guiGraphics.drawString(this.font, "_", pos.x, pos.y, ARGB.opaque(0));
             }
         }
 
@@ -489,7 +487,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             int j = rect2i.getY();
             int k = i + rect2i.getWidth();
             int l = j + rect2i.getHeight();
-            guiGraphics.fill(RenderType.guiTextHighlight(), i, j, k, l, -16776961);
+            guiGraphics.fill(RenderPipelines.GUI_TEXT_HIGHLIGHT, i, j, k, l, -16776961);
         }
     }
 
@@ -636,7 +634,6 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         return new Rect2i(i, k, j - i, l - k);
     }
 
-    @OnlyIn(Dist.CLIENT)
     static class DisplayCache {
         private final String fullText;
         @Nullable
@@ -699,7 +696,6 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         }
     }
 
-    @OnlyIn(Dist.CLIENT)
     static class LineInfo {
         final List<Pair<Style, String>> contentsStyled;
         final String contents;
@@ -725,7 +721,6 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         }
     }
 
-    @OnlyIn(Dist.CLIENT)
     static class Pos2i {
         public final int x;
         public final int y;

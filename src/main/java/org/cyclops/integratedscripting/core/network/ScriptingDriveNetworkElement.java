@@ -1,6 +1,8 @@
 package org.cyclops.integratedscripting.core.network;
 
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
 import org.cyclops.cyclopscore.datastructure.DimPos;
 import org.cyclops.integrateddynamics.api.network.IIdentifiableNetworkElement;
 import org.cyclops.integrateddynamics.api.network.INetwork;
@@ -51,8 +53,8 @@ public class ScriptingDriveNetworkElement extends TileNetworkElement<BlockEntity
     }
 
     @Override
-    public void onNetworkRemoval(INetwork network) {
-        super.onNetworkRemoval(network);
+    public void onNetworkRemoval(INetwork network, BlockState blockState, BlockEntity blockEntity) {
+        super.onNetworkRemoval(network, blockState, blockEntity);
         ScriptingNetworkHelpers.getScriptingNetwork(network)
                 .ifPresent(scriptingNetwork -> {
                     scriptingNetwork.removeDisk(getId());

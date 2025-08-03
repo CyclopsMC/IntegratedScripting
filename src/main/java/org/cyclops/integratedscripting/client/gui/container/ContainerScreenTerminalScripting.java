@@ -2,7 +2,6 @@ package org.cyclops.integratedscripting.client.gui.container;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.Maps;
-import com.mojang.blaze3d.systems.RenderSystem;
 import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.client.Minecraft;
@@ -12,6 +11,7 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.ARGB;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -190,7 +190,6 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     @Override
     protected void renderBg(GuiGraphics guiGraphics, float partialTicks, int mouseX, int mouseY) {
         super.renderBg(guiGraphics, partialTicks, mouseX, mouseY);
-        IModHelpers.get().getRenderHelpers().bindTexture(this.texture);
         fieldDisk.render(guiGraphics, mouseX, mouseY, partialTicks);
         scrollBar.render(guiGraphics, mouseX, mouseY, partialTicks);
 
@@ -198,16 +197,12 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             this.renderScriptPaths(guiGraphics, mouseX, mouseY, partialTicks);
         } else {
             // Gray-out editor and file list
-            RenderSystem.setShaderColor(0.3F, 0.3F, 0.3F, 0.3F);
             guiGraphics.fill(leftPos + PATHS_X, topPos + PATHS_Y, leftPos + PATHS_X + PATHS_WIDTH, topPos + PATHS_Y + PATHS_HEIGHT, IModHelpers.get().getBaseHelpers().RGBAToInt(50, 50, 50, 100));
-            RenderSystem.setShaderColor(1, 1, 1, 1);
         }
 
         if (this.getMenu().getActiveScript() == null) {
             // Gray-out editor and file list
-            RenderSystem.setShaderColor(0.3F, 0.3F, 0.3F, 0.3F);
             guiGraphics.fill(leftPos + SCRIPT_X_INNER, topPos + SCRIPT_Y, leftPos + SCRIPT_X_INNER + SCRIPT_WIDTH, topPos + SCRIPT_Y + SCRIPT_HEIGHT, IModHelpers.get().getBaseHelpers().RGBAToInt(50, 50, 50, 100));
-            RenderSystem.setShaderColor(1, 1, 1, 1);
         }
 
         displayErrors.drawBackground(guiGraphics, getMenu().getReadErrors(), getErrorX(), getErrorY(), getErrorX(), getErrorY(), this,
@@ -251,11 +246,11 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             if (languageHandler != null) {
                 icon = languageHandler.getIcon();
             }
-            guiGraphics.pose().pushPose();
-            guiGraphics.pose().translate(this.leftPos + PATHS_X + 1, this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT + 1, 0);
-            guiGraphics.pose().scale(0.5F, 0.5F, 0.5F);
+            guiGraphics.pose().pushMatrix();
+            guiGraphics.pose().translate(this.leftPos + PATHS_X + 1, this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT + 1);
+            guiGraphics.pose().scale(0.5F, 0.5F);
             icon.draw(guiGraphics, 0, 0);
-            guiGraphics.pose().popPose();
+            guiGraphics.pose().popMatrix();
 
             // Draw filename
             IModHelpers.get().getRenderHelpers().drawScaledString(
@@ -265,24 +260,24 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
                     this.leftPos + PATHS_X + 1 + 7,
                     this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT + 1 + 1,
                     0.5f,
-                    hovering && !active ? IModHelpers.get().getBaseHelpers().RGBToInt(50, 50, 250) : IModHelpers.get().getBaseHelpers().RGBToInt(0, 0, 0),
+                    hovering && !active ? IModHelpers.get().getBaseHelpers().RGBAToInt(50, 50, 250, 255) : IModHelpers.get().getBaseHelpers().RGBAToInt(0, 0, 0, 255),
                     false,
                     Font.DisplayMode.NORMAL
             );
 
             // If hovering, render removal button
             if (hovering) {
-                guiGraphics.pose().pushPose();
+                guiGraphics.pose().pushMatrix();
                 float scale = 0.4F;
                 int size = (int) (Images.ERROR.getWidth() * scale);
-                guiGraphics.pose().translate(this.leftPos + PATHS_X + PATHS_WIDTH - size - 1, this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT + 1, 0);
-                guiGraphics.pose().scale(scale, scale, 4F);
+                guiGraphics.pose().translate(this.leftPos + PATHS_X + PATHS_WIDTH - size - 1, this.topPos + PATHS_Y + i * PATHS_ROW_HEIGHT + 1);
+                guiGraphics.pose().scale(scale, scale);
                 if (isHovering(PATHS_X + PATHS_WIDTH - size - 1, PATHS_Y + i * PATHS_ROW_HEIGHT, PATHS_X + PATHS_WIDTH - size + size - 1, PATHS_Y + i * PATHS_ROW_HEIGHT + size, mouseX, mouseY)) {
                     Images.ERROR.draw(guiGraphics, 0, 0);
                 } else {
                     Images.ERROR.drawWithColor(guiGraphics, 0, 0, 0.7F, 0.7F, 0.7F, 1F);
                 }
-                guiGraphics.pose().popPose();
+                guiGraphics.pose().popMatrix();
             }
 
             i++;
@@ -307,9 +302,9 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         super.renderLabels(guiGraphics, mouseX, mouseY);
 
         // Draw disk label
-        guiGraphics.drawString(font, IModHelpers.get().getL10NHelpers().localize("gui.integratedscripting.disk") + ":", 8, 6, 16777215);
+        guiGraphics.drawString(font, IModHelpers.get().getL10NHelpers().localize("gui.integratedscripting.disk") + ":", 8, 6, ARGB.opaque(16777215));
 
-        displayErrors.drawForeground(guiGraphics.pose(), getMenu().getReadErrors(), getErrorX(), getErrorY(), mouseX, mouseY, this, this.leftPos, this.topPos);
+        displayErrors.drawForeground(guiGraphics, getMenu().getReadErrors(), getErrorX(), getErrorY(), mouseX, mouseY, this, this.leftPos, this.topPos);
     }
 
     @Override

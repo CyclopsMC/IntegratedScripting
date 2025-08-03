@@ -1,8 +1,6 @@
 package org.cyclops.integratedscripting.api.language;
 
 import net.minecraft.network.chat.Style;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
 import org.apache.commons.lang3.tuple.Pair;
 import org.cyclops.cyclopscore.client.gui.image.IImage;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
@@ -18,7 +16,6 @@ public interface ILanguageHandler {
 
     public String getName();
 
-    @OnlyIn(Dist.CLIENT)
     public IImage getIcon();
 
     public List<String> getExtensions();

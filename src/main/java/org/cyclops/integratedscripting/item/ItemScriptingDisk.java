@@ -7,13 +7,12 @@ import net.minecraft.network.chat.Style;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.api.distmarker.OnlyIn;
+import net.minecraft.world.item.component.TooltipDisplay;
 import org.cyclops.integrateddynamics.IntegratedDynamics;
 import org.cyclops.integratedscripting.Reference;
 import org.cyclops.integratedscripting.RegistryEntries;
 
-import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * Item for storing scripts.
@@ -28,7 +27,7 @@ public class ItemScriptingDisk extends Item {
     }
 
     public static int generateScriptingId() {
-        return IntegratedDynamics.globalCounters.getNext(Reference.MOD_ID  + ":scripting-ids");
+        return IntegratedDynamics.globalCounters.get().getNext(Reference.MOD_ID  + ":scripting-ids");
     }
 
     public int getDiskId(ItemStack itemStack) {
@@ -50,12 +49,11 @@ public class ItemScriptingDisk extends Item {
         return id;
     }
 
-    @OnlyIn(Dist.CLIENT)
     @Override
-    public void appendHoverText(ItemStack itemStack, Item.TooltipContext context, List<Component> list, TooltipFlag flag) {
+    public void appendHoverText(ItemStack itemStack, Item.TooltipContext context, TooltipDisplay tooltipDisplay, Consumer<Component> list, TooltipFlag flag) {
         int id = getDiskId(itemStack);
         if (id >= 0) {
-            list.add(Component.translatable("item.integratedscripting.scripting_disk.id", id)
+            list.accept(Component.translatable("item.integratedscripting.scripting_disk.id", id)
                     .withStyle(Style.EMPTY.withColor(ChatFormatting.GRAY)));
 //            int bytes = IntegratedScripting._instance.scriptingData.getScripts(id).values()
 //                    .stream().mapToInt(String::length).sum();
@@ -63,9 +61,9 @@ public class ItemScriptingDisk extends Item {
 //                    .withStyle(Style.EMPTY.withColor(ChatFormatting.GRAY)));
         }
         if (id >= 0 && Minecraft.getInstance().player != null && Minecraft.getInstance().player.isCreative()) {
-            list.add(Component.translatable("item.integrateddynamics.variable.warning"));
+            list.accept(Component.translatable("item.integrateddynamics.variable.warning"));
         }
-        super.appendHoverText(itemStack, context, list, flag);
+        super.appendHoverText(itemStack, context, tooltipDisplay, list, flag);
     }
 
 }

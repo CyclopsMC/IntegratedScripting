@@ -10,7 +10,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.entity.player.Inventory;
@@ -88,7 +87,7 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
         this.target = target;
         this.partType = partType;
         this.partContainer = partContainer;
-        this.world = player.getCommandSenderWorld();
+        this.world = player.level();
 
         this.network = NetworkHelpers.getNetwork(getTarget().getCenter());
         this.scriptingNetwork = this.network.flatMap(ScriptingNetworkHelpers::getScriptingNetwork);
@@ -328,8 +327,8 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
         }
     }
 
-    public List<MutableComponent> getReadErrors() {
-        List<MutableComponent> list = Lists.newArrayList();
+    public List<Component> getReadErrors() {
+        List<Component> list = Lists.newArrayList();
         if (canWriteScriptToVariable()) {
             if (!isMemberSelected()) {
                 list.add(Component.translatable("gui.integratedscripting.error.invalid_member"));
