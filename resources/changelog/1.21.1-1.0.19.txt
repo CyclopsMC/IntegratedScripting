@@ -1,0 +1,11 @@
+As always, don't forget to backup your world before updating!
+Requires CyclopsCore version 1.25.5 or higher.
+
+Additions:
+* Add ValueTranslatorRegisterEvent for mod compats (required for Integrated Mekanism)
+* Add translations through Crowdin (#29)
+* Add PT_BR localization (#48)
+
+Fixes:
+* Fix some spelling and grammar typos in lang (#47)
+* Fix spelling and grammar typos in lang (#45)
