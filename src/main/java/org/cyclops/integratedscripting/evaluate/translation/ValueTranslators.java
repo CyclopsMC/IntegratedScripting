@@ -1,9 +1,12 @@
 package org.cyclops.integratedscripting.evaluate.translation;
 
+import net.neoforged.fml.ModList;
+import net.neoforged.fml.javafmlmod.FMLModContainer;
 import org.cyclops.cyclopscore.helper.IModHelpers;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypes;
 import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.api.evaluate.translation.IValueTranslatorRegistry;
+import org.cyclops.integratedscripting.api.evaluate.translation.ValueTranslatorRegisterEvent;
 import org.cyclops.integratedscripting.evaluate.translation.translator.*;
 
 /**
@@ -40,6 +43,16 @@ public class ValueTranslators {
         REGISTRY.register(new ValueTranslatorObjectAdapter<>("id_fluid", ValueTypes.OBJECT_FLUIDSTACK));
         REGISTRY.register(new ValueTranslatorObjectAdapter<>("id_ingredients", ValueTypes.OBJECT_INGREDIENTS));
         REGISTRY.register(new ValueTranslatorObjectAdapter<>("id_recipe", ValueTypes.OBJECT_RECIPE));
+
+        // Allow others mod to register translators
+        if(IModHelpers.get().getMinecraftHelpers().isModdedEnvironment()) {
+            ValueTranslatorRegisterEvent registerEvent = new ValueTranslatorRegisterEvent(IntegratedScripting._instance.getContainer(), REGISTRY);
+            ModList.get().forEachModContainer((name, container) -> {
+                if (container instanceof FMLModContainer fmlModContainer) {
+                    fmlModContainer.getEventBus().post(registerEvent);
+                }
+            });
+        }
 
         // NBT has last priority
         REGISTRY.register(TRANSLATOR_NBT = new ValueTranslatorNbt());
