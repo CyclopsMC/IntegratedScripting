@@ -7,6 +7,9 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -102,7 +105,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
                 getMenu().getAvailableDisks());
         fieldDisk.setMaxLength(5);
         fieldDisk.setVisible(true);
-        fieldDisk.setTextColor(16777215);
+        fieldDisk.setTextColor(ARGB.opaque(16777215));
         fieldDisk.setCanLoseFocus(true);
         fieldDisk.setEditable(true);
         fieldDisk.setValue(String.valueOf(getMenu().getActiveDisk()));
@@ -308,17 +311,17 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+    public boolean mouseClicked(MouseButtonEvent mouse, boolean isDoubleClick) {
         // Make active dialog consume all input
         if (pendingScriptRemovalDialog != null) {
-            return pendingScriptRemovalDialog.mouseClicked(mouseX, mouseY, mouseButton);
+            return pendingScriptRemovalDialog.mouseClicked(mouse, isDoubleClick);
         }
 
         // Handle script path clicks
-        Path hoveredScriptPath = getHoveredScriptPath(mouseX, mouseY);
+        Path hoveredScriptPath = getHoveredScriptPath(mouse.x(), mouse.y());
         if (hoveredScriptPath != null) {
             // Handle script removal clicks
-            if (mouseX >= this.leftPos + PATHS_X + PATHS_WIDTH - (int) (Images.ERROR.getWidth() * 0.4F) - 1) {
+            if (mouse.x() >= this.leftPos + PATHS_X + PATHS_WIDTH - (int) (Images.ERROR.getWidth() * 0.4F) - 1) {
                 this.fieldDisk.playDownSound(Minecraft.getInstance().getSoundManager());
 
                 // Show confirmation dialog
@@ -357,7 +360,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
         // Update disk when changing disk field
         int previousDisk = getActiveDisk();
-        if (this.fieldDisk.mouseClicked(mouseX, mouseY, mouseButton)) {
+        if (this.fieldDisk.mouseClicked(mouse, isDoubleClick)) {
             // Save script state
             this.saveCursorPos();
             this.saveDiskScript(previousDisk);
@@ -375,7 +378,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             return true;
         }
 
-        return super.mouseClicked(mouseX, mouseY, mouseButton);
+        return super.mouseClicked(mouse, isDoubleClick);
     }
 
     public int getActiveDisk() {
@@ -487,40 +490,40 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double offsetX, double offsetY) {
+    public boolean mouseDragged(MouseButtonEvent mouse, double offsetX, double offsetY) {
         // Make active dialog consume all input
         if (pendingScriptRemovalDialog != null) {
             return false;
         }
 
-        if (textArea.mouseDragged(mouseX, mouseY, mouseButton, offsetX, offsetY)) {
+        if (textArea.mouseDragged(mouse, offsetX, offsetY)) {
             return true;
         }
-        return super.mouseDragged(mouseX, mouseY, mouseButton, offsetX, offsetY);
+        return super.mouseDragged(mouse, offsetX, offsetY);
     }
 
     @Override
-    public boolean keyPressed(int typedChar, int keyCode, int modifiers) {
+    public boolean keyPressed(KeyEvent event) {
         // Make active dialog consume all input
-        if (typedChar != GLFW.GLFW_KEY_ESCAPE && pendingScriptRemovalDialog != null) {
+        if (event.key() != GLFW.GLFW_KEY_ESCAPE && pendingScriptRemovalDialog != null) {
             return false;
         }
 
         if (textArea.isFocused()) {
-            boolean ret = textArea.keyPressed(typedChar, keyCode, modifiers);
-            if (typedChar != GLFW.GLFW_KEY_ESCAPE) {
+            boolean ret = textArea.keyPressed(event);
+            if (event.key() != GLFW.GLFW_KEY_ESCAPE) {
                 return ret;
             }
         }
-        return super.keyPressed(typedChar, keyCode, modifiers);
+        return super.keyPressed(event);
     }
 
     @Override
-    public boolean charTyped(char p_94683_, int p_94684_) {
+    public boolean charTyped(CharacterEvent event) {
         // Make active dialog consume all input
         if (pendingScriptRemovalDialog != null) {
             return false;
         }
-        return super.charTyped(p_94683_, p_94684_);
+        return super.charTyped(event);
     }
 }

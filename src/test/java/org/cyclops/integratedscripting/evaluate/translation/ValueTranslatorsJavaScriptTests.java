@@ -1,21 +1,14 @@
 package org.cyclops.integratedscripting.evaluate.translation;
 
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import net.minecraft.SharedConstants;
 import net.minecraft.nbt.*;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.Bootstrap;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.material.Fluids;
-import net.neoforged.fml.loading.LoadingModList;
 import net.neoforged.neoforge.fluids.FluidStack;
-import org.cyclops.commoncapabilities.api.capability.itemhandler.ItemMatch;
-import org.cyclops.commoncapabilities.ingredient.DataComparator;
-import org.cyclops.cyclopscore.helper.CyclopsCoreInstance;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
@@ -30,16 +23,16 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 import org.jetbrains.annotations.NotNull;
-import org.junit.BeforeClass;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Iterator;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 
 /**
  * @author rubensworks
@@ -50,19 +43,8 @@ public class ValueTranslatorsJavaScriptTests {
     private static Context CTX = null;
     private static IEvaluationExceptionFactory EF = ScriptHelpers.getDummyEvaluationExceptionFactory();
 
-    @BeforeClass
+    @BeforeAll
     public static void beforeAll() {
-        CyclopsCoreInstance.MOD = new ModBaseMocked();
-        // Derived from NeoForge's JUnitMain
-        SharedConstants.tryDetectVersion();
-        LoadingModList.of(Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Maps.newHashMap());
-        Bootstrap.bootStrap();
-        ItemMatch.DATA_COMPARATOR = new DataComparator(null);
-
-        ValueTypeListProxyFactories.load();
-        Operators.load();
-        ValueTranslators.load();
-
         VDC = ValueDeseralizationContextMocked.get();
         try {
             CTX = ScriptHelpers.createPopulatedContext(null, VDC);
@@ -75,14 +57,14 @@ public class ValueTranslatorsJavaScriptTests {
         return CTX.eval("js", jsString);
     }
 
-    @Test(expected = EvaluationException.class)
+    @Test
     public void testUnknownValueToGraal() throws EvaluationException {
-        ValueTranslators.REGISTRY.translateToGraal(CTX, DummyValueType.DummyValue.of(), EF, VDC);
+        Assertions.assertThrows(EvaluationException.class, () -> ValueTranslators.REGISTRY.translateToGraal(CTX, DummyValueType.DummyValue.of(), EF, VDC));
     }
 
-    @Test(expected = EvaluationException.class)
+    @Test
     public void testUnknownValueToGraalNbt() throws EvaluationException {
-        ValueTranslators.REGISTRY.translateToNbt(CTX, DummyValueType.DummyValue.of(), EF);
+        Assertions.assertThrows(EvaluationException.class, () -> ValueTranslators.REGISTRY.translateToNbt(CTX, DummyValueType.DummyValue.of(), EF));
     }
 
 // Untestable
@@ -160,9 +142,9 @@ public class ValueTranslatorsJavaScriptTests {
         assertThat(translatedMixed.getArrayElement(2).asString(), equalTo(getJsValue("'ghi'").asString()));
     }
 
-    @Test(expected = EvaluationException.class)
+    @Test
     public void testListInfinity() throws EvaluationException {
-        ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeList.ValueList.ofFactory(new IValueTypeListProxy() {
+        Assertions.assertThrows(EvaluationException.class, () -> ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeList.ValueList.ofFactory(new IValueTypeListProxy() {
             @Override
             public int getLength() throws EvaluationException {
                 return 0;
@@ -198,7 +180,7 @@ public class ValueTranslatorsJavaScriptTests {
             public Iterator<IValue> iterator() {
                 return null;
             }
-        }), EF, VDC);
+        }), EF, VDC));
     }
 
     @Test
@@ -458,15 +440,17 @@ public class ValueTranslatorsJavaScriptTests {
 
     @Test
     public void testObjectItem() throws EvaluationException {
-        assertThat(ValueTranslators.REGISTRY.translateFromGraal(CTX, getJsValue("exports = { id_item: { id: 'minecraft:arrow', count: 1 } }"), EF, VDC), equalTo(ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.ARROW))));
+        assertThat(ValueTranslators.REGISTRY.translateFromGraal(CTX, getJsValue("exports = { id_item: { stack: { id: 'minecraft:arrow', count: 1 } } }"), EF, VDC), equalTo(ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.ARROW))));
 
         Value translated = ValueTranslators.REGISTRY.translateToGraal(CTX, ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.ARROW)), EF, VDC);
         assertThat(translated.hasMembers(), is(true));
         assertThat(translated.getMemberKeys(), equalTo(Sets.newHashSet("id_item")));
         assertThat(translated.getMember("id_item").hasMembers(), is(true));
-        assertThat(translated.getMember("id_item").getMemberKeys(), equalTo(Sets.newHashSet("id", "count")));
-        assertThat(translated.getMember("id_item").getMember("id").asString(), equalTo("minecraft:arrow"));
-        assertThat(translated.getMember("id_item").getMember("count").asInt(), equalTo(1));
+        assertThat(translated.getMember("id_item").getMemberKeys(), equalTo(Sets.newHashSet("stack")));
+        assertThat(translated.getMember("id_item").getMember("stack").hasMembers(), is(true));
+        assertThat(translated.getMember("id_item").getMember("stack").getMemberKeys(), equalTo(Sets.newHashSet("id", "count")));
+        assertThat(translated.getMember("id_item").getMember("stack").getMember("id").asString(), equalTo("minecraft:arrow"));
+        assertThat(translated.getMember("id_item").getMember("stack").getMember("count").asInt(), equalTo(1));
     }
 
     @Test

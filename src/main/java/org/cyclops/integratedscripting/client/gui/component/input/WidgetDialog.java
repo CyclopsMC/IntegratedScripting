@@ -8,6 +8,7 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -68,10 +69,10 @@ public class WidgetDialog extends AbstractWidget implements GuiEventListener {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
-        return this.buttonConfirm.mouseClicked(mouseX, mouseY, mouseButton)
-                || this.buttonCancel.mouseClicked(mouseX, mouseY, mouseButton)
-                || super.mouseClicked(mouseX, mouseY, mouseButton);
+    public boolean mouseClicked(MouseButtonEvent mouse, boolean isDoubleClick) {
+        return this.buttonConfirm.mouseClicked(mouse, isDoubleClick)
+                || this.buttonCancel.mouseClicked(mouse, isDoubleClick)
+                || super.mouseClicked(mouse, isDoubleClick);
     }
 
     @Override

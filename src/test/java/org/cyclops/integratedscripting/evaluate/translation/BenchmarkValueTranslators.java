@@ -1,15 +1,10 @@
 package org.cyclops.integratedscripting.evaluate.translation;
 
-import com.google.common.collect.Maps;
-import net.minecraft.SharedConstants;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.StringTag;
-import net.minecraft.server.Bootstrap;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.neoforged.fml.loading.LoadingModList;
-import org.cyclops.cyclopscore.helper.CyclopsCoreInstance;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
 import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
@@ -19,21 +14,12 @@ import org.cyclops.integratedscripting.evaluate.ScriptHelpers;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.Value;
-
-import java.util.Collections;
+import org.junit.jupiter.api.Test;
 
 /**
  * @author rubensworks
  */
 public class BenchmarkValueTranslators {
-
-    static {
-        CyclopsCoreInstance.MOD = new ModBaseMocked();
-        // Derived from NeoForge's JUnitMain
-        SharedConstants.tryDetectVersion();
-        LoadingModList.of(Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Collections.emptyList(), Maps.newHashMap());
-        Bootstrap.bootStrap();
-    }
 
     public static int REPLICATION = 100000;
 
@@ -41,7 +27,8 @@ public class BenchmarkValueTranslators {
     private static ValueDeseralizationContext VDC = null;
     private static Context CTX = null;
 
-    public static void main(String[] args) {
+    @Test
+    public void main() {
         beforeAll();
 
         /*
@@ -74,7 +61,7 @@ ToGraal-item: 6.7E-4ms/op
         runFromGraal("list", getJsValue("['abc', 'def', 'ghi']"), REPLICATION);
         runFromGraal("operator", getJsValue("(a, b) => true"), REPLICATION);
         runFromGraal("nbt", getJsValue("exports = { a: { b: { c: '1', d: 123 } } }"), REPLICATION);
-        runFromGraal("item", getJsValue("exports = { id_item: { id: 'minecraft:arrow', Count: 1 } }"), REPLICATION);
+        runFromGraal("item", getJsValue("exports = { id_item: { stack: { id: 'minecraft:arrow', count: 1 } } }"), REPLICATION);
 
         runToGraal("int", ValueTypeInteger.ValueInteger.of(10), REPLICATION);
         runToGraal("boolean", ValueTypeBoolean.ValueBoolean.of(true), REPLICATION);
@@ -97,10 +84,6 @@ ToGraal-item: 6.7E-4ms/op
     }
 
     public static void beforeAll() {
-        ValueTypeListProxyFactories.load();
-        Operators.load();
-        ValueTranslators.load();
-
         ENGINE = Engine.newBuilder()
                 .option("engine.WarnInterpreterOnly", "false")
                 .build();

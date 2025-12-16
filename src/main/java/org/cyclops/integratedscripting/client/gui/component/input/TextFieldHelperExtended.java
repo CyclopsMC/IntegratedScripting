@@ -1,6 +1,8 @@
 package org.cyclops.integratedscripting.client.gui.component.input;
 
 import net.minecraft.client.gui.font.TextFieldHelper;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
 
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -33,9 +35,9 @@ public class TextFieldHelperExtended extends TextFieldHelper {
     }
 
     @Override
-    public boolean charTyped(char p_95144_) {
+    public boolean charTyped(CharacterEvent event) {
         String selectedBefore = getSelected();
-        boolean ret = super.charTyped(p_95144_);
+        boolean ret = super.charTyped(event);
         String selectedAfter = getSelected();
         if (!selectedBefore.equals(selectedAfter)) {
             this.setSelectionFn.accept(selectedAfter);
@@ -44,9 +46,9 @@ public class TextFieldHelperExtended extends TextFieldHelper {
     }
 
     @Override
-    public boolean keyPressed(int p_95146_) {
+    public boolean keyPressed(KeyEvent event) {
         String selectedBefore = getSelected();
-        boolean ret = super.keyPressed(p_95146_);
+        boolean ret = super.keyPressed(event);
         String selectedAfter = getSelected();
         if (!selectedBefore.equals(selectedAfter)) {
             this.setSelectionFn.accept(selectedAfter);

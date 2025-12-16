@@ -12,7 +12,7 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
-import net.neoforged.neoforge.items.wrapper.InvWrapper;
+import net.neoforged.neoforge.transfer.item.VanillaContainerWrapper;
 import org.cyclops.cyclopscore.datastructure.DimPos;
 import org.cyclops.cyclopscore.inventory.SimpleInventory;
 import org.cyclops.cyclopscore.persist.IDirtyMarkListener;
@@ -59,8 +59,8 @@ public class BlockEntityScriptingDrive extends BlockEntityCableConnectableInvent
             super.populate();
 
             add(
-                    net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.BLOCK,
-                    (blockEntity, context) -> new InvWrapper(blockEntity.getInventory())
+                    net.neoforged.neoforge.capabilities.Capabilities.Item.BLOCK,
+                    (blockEntity, context) -> VanillaContainerWrapper.of(blockEntity.getInventory())
             );
             add(
                     Capabilities.NetworkElementProvider.BLOCK,

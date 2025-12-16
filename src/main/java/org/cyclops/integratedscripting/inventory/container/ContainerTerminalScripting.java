@@ -347,7 +347,7 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
         SimpleInventory writeInv = (SimpleInventory) getContainerInventory();
         ItemStack itemStack = writeInv.getItem(0);
         if (canWriteScriptToVariable() && !itemStack.isEmpty() && isMemberSelected()) {
-            ItemStack outputStack = writeScriptVariable(!world.isClientSide, itemStack.copy(), getActiveDisk(), getActiveScriptPath(), getSelectedMember());
+            ItemStack outputStack = writeScriptVariable(!world.isClientSide(), itemStack.copy(), getActiveDisk(), getActiveScriptPath(), getSelectedMember());
             writeInv.removeDirtyMarkListener(this);
             writeInv.setItem(0, outputStack);
             writeInv.addDirtyMarkListener(this);

@@ -9,19 +9,20 @@ import net.minecraft.client.StringSplitter;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.MultilineTextField;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.font.TextFieldHelper;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
-import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.gui.screens.inventory.BookEditScreen;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.util.ARGB;
-import net.minecraft.util.StringUtil;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableInt;
@@ -39,15 +40,15 @@ import java.util.stream.Stream;
 
 /**
  * A widget to edit multi-line text.
- * Inspired by {@link BookEditScreen}.
+ * Inspired by {@link MultilineTextField}.
  *
  * The using screen must add this as a child and call the following method from its respective method:
  * * {@link #tick()}
- * * {@link #mouseClicked(double, double, int)}
- * * {@link #mouseDragged(double, double, int, double, double)}
+ * * {@link #mouseClicked(MouseButtonEvent, boolean)}
+ * * {@link #mouseDragged(MouseButtonEvent, double, double)}
  * * {@link #mouseScrolled(double, double, double, double)}
- * * {@link #keyPressed(int, int, int)}
- * * {@link #charTyped(char, int)}
+ * * {@link #keyPressed(KeyEvent)}
+ * * {@link #charTyped(CharacterEvent)}
  *
  * @author rubensworks
  */
@@ -220,20 +221,20 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
-        if (mouseButton == 1 && mouseX >= this.getX() && mouseX < this.getX() + this.width
-                && mouseY >= this.getY() && mouseY < this.getY() + this.height) {
+    public boolean mouseClicked(MouseButtonEvent mouse, boolean isDoubleClick) {
+        if (mouse.button() == 1 && mouse.x() >= this.getX() && mouse.x() < this.getX() + this.width
+                && mouse.y() >= this.getY() && mouse.y() < this.getY() + this.height) {
             // Select everything
             this.setFocused(true);
             textFieldHelper.selectAll();
             return true;
         } else {
-            if (mouseButton == 0 && mouseX >= this.getX() && mouseX < this.getX() + this.width
-                    && mouseY >= this.getY() && mouseY < this.getY() + this.height) {
+            if (mouse.button() == 0 && mouse.x() >= this.getX() && mouse.x() < this.getX() + this.width
+                    && mouse.y() >= this.getY() && mouse.y() < this.getY() + this.height) {
                 this.setFocused(true);
                 long i = Util.getMillis();
                 DisplayCache displayCache = this.getDisplayCache();
-                int j = displayCache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i((int)mouseX, (int)mouseY)));
+                int j = displayCache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i((int)mouse.x(), (int)mouse.y())));
                 if (j >= 0) {
                     if (j == this.lastIndex && i - this.lastClickTime < 250L) {
                         if (!this.textFieldHelper.isSelecting()) {
@@ -242,7 +243,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                             this.textFieldHelper.selectAll();
                         }
                     } else {
-                        this.textFieldHelper.setCursorPos(j, Screen.hasShiftDown());
+                        this.textFieldHelper.setCursorPos(j, Minecraft.getInstance().hasShiftDown());
                     }
 
                     this.clearDisplayCache();
@@ -278,16 +279,16 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double offsetX, double offsetY) {
-        if (this.scrollBar != null && mouseX >= this.getX() + this.width - 12 && mouseX < this.getX() + this.width
-                && mouseY >= this.getY() && mouseY < this.getY() + this.height) {
-            return this.scrollBar.mouseDragged(mouseX, mouseY, mouseButton, offsetX, offsetY);
+    public boolean mouseDragged(MouseButtonEvent mouse, double offsetX, double offsetY) {
+        if (this.scrollBar != null && mouse.x() >= this.getX() + this.width - 12 && mouse.x() < this.getX() + this.width
+                && mouse.y() >= this.getY() && mouse.y() < this.getY() + this.height) {
+            return this.scrollBar.mouseDragged(mouse, offsetX, offsetY);
         }
 
-        if (mouseButton == 0 && mouseX >= this.getX() && mouseX < this.getX() + this.width
-                && mouseY >= this.getY() && mouseY < this.getY() + this.height) {
+        if (mouse.button() == 0 && mouse.x() >= this.getX() && mouse.x() < this.getX() + this.width
+                && mouse.y() >= this.getY() && mouse.y() < this.getY() + this.height) {
             DisplayCache bookeditscreen$displaycache = this.getDisplayCache();
-            int i = bookeditscreen$displaycache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i((int)mouseX, (int)mouseY)));
+            int i = bookeditscreen$displaycache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i((int)mouse.x(), (int)mouse.y())));
             this.textFieldHelper.setCursorPos(i, true);
             this.clearDisplayCache();
             this.setFocused(true);
@@ -296,8 +297,8 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     }
 
     @Override
-    public boolean keyPressed(int typedChar, int keyCode, int modifiers) {
-        boolean flag = this.textFieldKeyPressed(typedChar, keyCode, modifiers);
+    public boolean keyPressed(KeyEvent event) {
+        boolean flag = this.textFieldKeyPressed(event);
         if (flag) {
             this.clearDisplayCache();
             this.setFocused(true);
@@ -309,12 +310,12 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     }
 
     @Override
-    public boolean charTyped(char typedChar, int keyCode) {
-        if (super.charTyped(typedChar, keyCode)) {
+    public boolean charTyped(CharacterEvent event) {
+        if (super.charTyped(event)) {
             this.setFocused(true);
             return true;
-        } else if (StringUtil.isAllowedChatCharacter(typedChar)) {
-            this.textFieldHelper.insertText(Character.toString(typedChar));
+        } else if (event.isAllowedChatCharacter()) {
+            this.textFieldHelper.insertText(event.codepointAsString());
             this.clearDisplayCache();
             this.setFocused(true);
             return true;
@@ -324,22 +325,22 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         }
     }
 
-    private boolean textFieldKeyPressed(int p_98153_, int p_98154_, int p_98155_) {
-        if (Screen.isSelectAll(p_98153_)) {
+    private boolean textFieldKeyPressed(KeyEvent event) {
+        if (event.isSelectAll()) {
             this.textFieldHelper.selectAll();
             return true;
-        } else if (Screen.isCopy(p_98153_)) {
+        } else if (event.isCopy()) {
             this.textFieldHelper.copy();
             return true;
-        } else if (Screen.isPaste(p_98153_)) {
+        } else if (event.isPaste()) {
             this.textFieldHelper.paste();
             return true;
-        } else if (Screen.isCut(p_98153_)) {
+        } else if (event.isCut()) {
             this.textFieldHelper.cut();
             return true;
         } else {
-            TextFieldHelper.CursorStep cursorStep = Screen.hasControlDown() ? TextFieldHelper.CursorStep.WORD : TextFieldHelper.CursorStep.CHARACTER;
-            switch (p_98153_) {
+            TextFieldHelper.CursorStep cursorStep = event.hasControlDown() ? TextFieldHelper.CursorStep.WORD : TextFieldHelper.CursorStep.CHARACTER;
+            switch (event.key()) {
                 case 257:
                 case 335:
                     this.textFieldHelper.insertText("\n");
@@ -351,16 +352,16 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                     this.textFieldHelper.removeFromCursor(1, cursorStep);
                     return true;
                 case 262:
-                    this.textFieldHelper.moveBy(1, Screen.hasShiftDown(), cursorStep);
+                    this.textFieldHelper.moveBy(1, event.hasShiftDown(), cursorStep);
                     return true;
                 case 263:
-                    this.textFieldHelper.moveBy(-1, Screen.hasShiftDown(), cursorStep);
+                    this.textFieldHelper.moveBy(-1, event.hasShiftDown(), cursorStep);
                     return true;
                 case 264:
-                    this.keyDown();
+                    this.keyDown(event);
                     return true;
                 case 265:
-                    this.keyUp();
+                    this.keyUp(event);
                     return true;
                 case 266:
 //                    this.backButton.onPress();
@@ -369,10 +370,10 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 //                    this.forwardButton.onPress();
                     return true;
                 case 268:
-                    this.keyHome();
+                    this.keyHome(event);
                     return true;
                 case 269:
-                    this.keyEnd();
+                    this.keyEnd(event);
                     return true;
                 default:
                     return false;
@@ -380,19 +381,19 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         }
     }
 
-    private void keyUp() {
-        this.changeLine(-1);
+    private void keyUp(KeyEvent event) {
+        this.changeLine(-1, event);
     }
 
-    private void keyDown() {
-        this.changeLine(1);
+    private void keyDown(KeyEvent event) {
+        this.changeLine(1, event);
     }
 
-    private void changeLine(int p_98098_) {
+    private void changeLine(int p_98098_, KeyEvent event) {
         int cursorPos = this.textFieldHelper.getCursorPos();
         DisplayCache displayCache = this.getDisplayCache();
         int j = displayCache.changeLine(cursorPos, p_98098_);
-        this.textFieldHelper.setCursorPos(j, Screen.hasShiftDown());
+        this.textFieldHelper.setCursorPos(j, event.hasShiftDown());
 
         // Modify scroll position when cursor goes out of screen
         if (this.scrollBar != null) {
@@ -407,25 +408,25 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         }
     }
 
-    private void keyHome() {
-        if (Screen.hasControlDown()) {
-            this.textFieldHelper.setCursorToStart(Screen.hasShiftDown());
+    private void keyHome(KeyEvent event) {
+        if (event.hasControlDown()) {
+            this.textFieldHelper.setCursorToStart(event.hasShiftDown());
         } else {
             int i = this.textFieldHelper.getCursorPos();
             int j = this.getDisplayCache().findLineStart(i);
-            this.textFieldHelper.setCursorPos(j, Screen.hasShiftDown());
+            this.textFieldHelper.setCursorPos(j, event.hasShiftDown());
         }
 
     }
 
-    private void keyEnd() {
-        if (Screen.hasControlDown()) {
-            this.textFieldHelper.setCursorToEnd(Screen.hasShiftDown());
+    private void keyEnd(KeyEvent event) {
+        if (event.hasControlDown()) {
+            this.textFieldHelper.setCursorToEnd(event.hasShiftDown());
         } else {
             DisplayCache displayCache = this.getDisplayCache();
             int i = this.textFieldHelper.getCursorPos();
             int j = displayCache.findLineEnd(i);
-            this.textFieldHelper.setCursorPos(j, Screen.hasShiftDown());
+            this.textFieldHelper.setCursorPos(j, event.hasShiftDown());
         }
     }
 
