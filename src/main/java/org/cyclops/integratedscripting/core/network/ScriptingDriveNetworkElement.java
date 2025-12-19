@@ -1,6 +1,6 @@
 package org.cyclops.integratedscripting.core.network;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import org.cyclops.cyclopscore.datastructure.DimPos;
@@ -20,7 +20,7 @@ import java.util.function.Supplier;
 public class ScriptingDriveNetworkElement extends TileNetworkElement<BlockEntityScriptingDrive> implements
         IIdentifiableNetworkElement {
 
-    public static final ResourceLocation GROUP = ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "scripting_drive");
+    public static final Identifier GROUP = Identifier.fromNamespaceAndPath(Reference.MOD_ID, "scripting_drive");
 
     private final Supplier<Integer> idGetter;
 
@@ -35,7 +35,7 @@ public class ScriptingDriveNetworkElement extends TileNetworkElement<BlockEntity
     }
 
     @Override
-    public ResourceLocation getGroup() {
+    public Identifier getGroup() {
         return ScriptingDriveNetworkElement.GROUP;
     }
 

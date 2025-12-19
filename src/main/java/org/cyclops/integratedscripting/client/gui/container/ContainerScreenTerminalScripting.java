@@ -12,7 +12,7 @@ import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.StringUtil;
@@ -168,8 +168,8 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     }
 
     @Override
-    protected ResourceLocation constructGuiTexture() {
-        return ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/scripting_terminal.png");
+    protected Identifier constructGuiTexture() {
+        return Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/scripting_terminal.png");
     }
 
     @Override

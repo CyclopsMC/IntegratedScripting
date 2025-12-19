@@ -2,7 +2,7 @@ package org.cyclops.integratedscripting.network.packet;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -22,7 +22,7 @@ import java.util.List;
  */
 public class TerminalScriptingModifiedScriptPacket extends PacketCodec<TerminalScriptingModifiedScriptPacket> {
 
-    public static final Type<TerminalScriptingModifiedScriptPacket> ID = new Type<>(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "terminal_scripting_modified_script"));
+    public static final Type<TerminalScriptingModifiedScriptPacket> ID = new Type<>(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "terminal_scripting_modified_script"));
     public static final StreamCodec<RegistryFriendlyByteBuf, TerminalScriptingModifiedScriptPacket> CODEC = getCodec(TerminalScriptingModifiedScriptPacket::new);
 
     @CodecField

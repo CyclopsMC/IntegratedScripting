@@ -1,7 +1,7 @@
 package org.cyclops.integratedscripting.core.evaluate;
 
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IVariable;
 import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
 import org.cyclops.integrateddynamics.api.item.IVariableFacade;
@@ -31,8 +31,8 @@ public class ScriptVariableFacadeHandler implements IVariableFacadeHandler<IScri
     }
 
     @Override
-    public ResourceLocation getUniqueName() {
-        return ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "script");
+    public Identifier getUniqueName() {
+        return Identifier.fromNamespaceAndPath(Reference.MOD_ID, "script");
     }
 
     @Override

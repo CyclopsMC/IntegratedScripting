@@ -11,11 +11,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
-import org.cyclops.integrateddynamics.core.evaluate.variable.ValueObjectTypeItemStack;
-import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeBoolean;
-import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeInteger;
-import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeList;
-import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeNbt;
+import org.cyclops.integrateddynamics.core.evaluate.variable.*;
 import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExceptionFactory;
 import org.cyclops.integratedscripting.evaluate.ScriptHelpers;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
@@ -97,7 +93,7 @@ function testFunction(a, b, c, d, e, f) {
 
     public static LiteralArgumentBuilder<CommandSourceStack> make() {
         return Commands.literal("testscript")
-                .requires((commandSource) -> commandSource.hasPermission(2))
+                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
                 .executes(new CommandTestScript());
     }
 

@@ -1,6 +1,6 @@
 package org.cyclops.integratedscripting;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.cyclops.integrateddynamics.api.network.NetworkCapability;
 import org.cyclops.integratedscripting.api.network.IScriptingNetwork;
 
@@ -9,6 +9,6 @@ import org.cyclops.integratedscripting.api.network.IScriptingNetwork;
  */
 public class Capabilities {
     public static final class ScriptingNetwork {
-        public static final NetworkCapability<IScriptingNetwork> NETWORK = NetworkCapability.create(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "scripting_network"), IScriptingNetwork.class);
+        public static final NetworkCapability<IScriptingNetwork> NETWORK = NetworkCapability.create(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "scripting_network"), IScriptingNetwork.class);
     }
 }

@@ -11,7 +11,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.util.ARGB;
 import net.minecraft.util.FormattedCharSequence;
 import org.cyclops.cyclopscore.client.gui.component.button.ButtonText;
@@ -24,7 +24,7 @@ import org.cyclops.integratedscripting.Reference;
  */
 public class WidgetDialog extends AbstractWidget implements GuiEventListener {
 
-    private static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/dialog.png");
+    private static final Identifier TEXTURE = Identifier.fromNamespaceAndPath(Reference.MOD_ID, "textures/gui/dialog.png");
     public static final int WIDTH = 216;
     private static final int HEIGHT = 71;
 

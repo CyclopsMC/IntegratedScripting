@@ -3,7 +3,7 @@ package org.cyclops.integratedscripting.evaluate.translation;
 import com.google.common.collect.Sets;
 import net.minecraft.nbt.*;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Blocks;
@@ -161,7 +161,7 @@ public class ValueTranslatorsJavaScriptTests {
             }
 
             @Override
-            public ResourceLocation getName() {
+            public Identifier getName() {
                 return null;
             }
 

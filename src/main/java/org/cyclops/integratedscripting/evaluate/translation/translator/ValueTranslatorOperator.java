@@ -3,7 +3,7 @@ package org.cyclops.integratedscripting.evaluate.translation.translator;
 import com.mojang.serialization.Codec;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import org.apache.commons.compress.utils.Lists;
@@ -121,8 +121,8 @@ public class ValueTranslatorOperator implements IValueTranslator<ValueTypeOperat
             }
 
             @Override
-            public ResourceLocation getUniqueName() {
-                return ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "graal");
+            public Identifier getUniqueName() {
+                return Identifier.fromNamespaceAndPath(Reference.MOD_ID, "graal");
             }
 
             @Override
@@ -137,7 +137,7 @@ public class ValueTranslatorOperator implements IValueTranslator<ValueTypeOperat
             public GraalOperator deserialize(ValueInput valueInput) throws EvaluationException {
                 List<IValueType<?>> inputTypes = Lists.newArrayList();
                 for (String value : valueInput.list("v", Codec.STRING).orElseThrow()) {
-                    inputTypes.add(ValueTypes.REGISTRY.getValueType(ResourceLocation.parse(value)));
+                    inputTypes.add(ValueTypes.REGISTRY.getValueType(Identifier.parse(value)));
                 }
                 return new GraalOperator(inputTypes.toArray(new IValueType[0]), (variables) -> {
                     throw new EvaluationException(Component.translatable("operator.integratedscripting.error.no_graal_serialization"));

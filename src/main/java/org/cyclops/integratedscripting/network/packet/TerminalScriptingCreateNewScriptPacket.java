@@ -2,7 +2,7 @@ package org.cyclops.integratedscripting.network.packet;
 
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
@@ -19,7 +19,7 @@ import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScri
  */
 public class TerminalScriptingCreateNewScriptPacket extends PacketCodec<TerminalScriptingCreateNewScriptPacket> {
 
-    public static final Type<TerminalScriptingCreateNewScriptPacket> ID = new Type<>(ResourceLocation.fromNamespaceAndPath(Reference.MOD_ID, "terminal_scripting_create_new_script"));
+    public static final Type<TerminalScriptingCreateNewScriptPacket> ID = new Type<>(Identifier.fromNamespaceAndPath(Reference.MOD_ID, "terminal_scripting_create_new_script"));
     public static final StreamCodec<RegistryFriendlyByteBuf, TerminalScriptingCreateNewScriptPacket> CODEC = getCodec(TerminalScriptingCreateNewScriptPacket::new);
 
     @CodecField

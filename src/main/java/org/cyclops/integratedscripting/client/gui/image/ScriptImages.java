@@ -1,6 +1,6 @@
 package org.cyclops.integratedscripting.client.gui.image;
 
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import org.cyclops.cyclopscore.client.gui.image.Image;
 import org.cyclops.cyclopscore.init.ModBaseNeoForge;
 import org.cyclops.integratedscripting.IntegratedScripting;
@@ -10,7 +10,7 @@ import org.cyclops.integratedscripting.IntegratedScripting;
  */
 public class ScriptImages {
 
-    public static final ResourceLocation ICONS = ResourceLocation.fromNamespaceAndPath(IntegratedScripting._instance.getModId(),
+    public static final Identifier ICONS = Identifier.fromNamespaceAndPath(IntegratedScripting._instance.getModId(),
             IntegratedScripting._instance.getReferenceValue(ModBaseNeoForge.REFKEY_TEXTURE_PATH_GUI) + "icons.png");
 
     public static final Image FILE_OTHER = new Image(ICONS, 0, 0, 12, 12);

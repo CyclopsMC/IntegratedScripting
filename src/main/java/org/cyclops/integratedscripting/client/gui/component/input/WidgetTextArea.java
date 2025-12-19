@@ -3,7 +3,7 @@ package org.cyclops.integratedscripting.client.gui.component.input;
 import com.google.common.collect.Lists;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.StringSplitter;
 import net.minecraft.client.gui.Font;
