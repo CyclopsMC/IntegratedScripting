@@ -218,7 +218,8 @@ jar {
                 "Implementation-Title": "${project.name}",
                 "Implementation-Version": "${project.mod_version}",
                 "Implementation-Vendor" :"rubensworks",
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                "Multi-Release": "true", // Required for shadowing GraalVM: https://www.graalvm.org/latest/reference-manual/embed-languages/#uber-jar-file-creation
         ])
     }
 }
@@ -234,7 +235,8 @@ task deobfJar(type: Jar) {
                 "Implementation-Title": "${project.name}",
                 "Implementation-Version": "${project.mod_version}",
                 "Implementation-Vendor" :"rubensworks",
-                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ")
+                "Implementation-Timestamp": new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+                "Multi-Release": "true", // Required for shadowing GraalVM: https://www.graalvm.org/latest/reference-manual/embed-languages/#uber-jar-file-creation
         ])
     }
 }
@@ -262,7 +264,15 @@ shadowJar {
 //    relocate 'com.oracle', 'org.cyclops.integratedscripting.vendors.com.oracle'
     relocate 'com.oracle.js', 'org.cyclops.integratedscripting.vendors.com.oracle.js'
     relocate 'com.oracle.svm', 'org.cyclops.integratedscripting.vendors.com.oracle.svm'
-//    relocate 'com.oracle.truffle', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle' // Relocation of this fails for com.oracle.truffle.runtime.ModulesSupport at runtime
+//    relocate 'com.oracle.truffle', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle'
+    relocate 'com.oracle.truffle.api', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle.api'
+    relocate 'com.oracle.truffle.compiler', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle.compiler'
+    relocate 'com.oracle.truffle.host', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle.host'
+    relocate 'com.oracle.truffle.js', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle.js'
+    relocate 'com.oracle.truffle.object', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle.object'
+//    relocate 'com.oracle.truffle.polyglot', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle.polyglot' // Relocation of src.com.oracle.truffle.polyglot.JDKSupport.java fails
+    relocate 'com.oracle.truffle.regex', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle.regex'
+    relocate 'com.oracle.truffle.runtime', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle.runtime'
 }
 assemble.dependsOn shadowJar
 jar {

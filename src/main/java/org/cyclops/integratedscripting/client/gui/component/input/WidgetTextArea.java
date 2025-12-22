@@ -150,12 +150,12 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         textFieldHelper.setCursorToStart();
         textFieldHelper.setSelectionPos(textFieldHelper.getCursorPos());
         if (this.scrollBar != null) {
-            this.firstRow = 0;
             scrollBar.scrollTo(0);
         }
     }
 
     public void setValuePassive(String value) {
+        this.firstRow = 0;
         this.value = value;
         this.clearDisplayCache();
 
