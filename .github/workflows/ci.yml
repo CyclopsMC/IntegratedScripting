@@ -5,10 +5,27 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  DEFAULT_JAVA_VERSION: 21
+  DEFAULT_JAVA_DISTRIBUTION: 'microsoft'
+
 jobs:
   build:
-    name: Build
+    name: Build for Java ${{ matrix.java }} on ${{ matrix.distribution }}
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        java:
+          - 21
+          - 22
+          - 23
+        distribution:
+          - 'adopt-hotspot'
+          - 'oracle'
+        include:
+          - java: 21
+            distribution: 'microsoft'
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
@@ -17,8 +34,8 @@ jobs:
       - name: 'Setup Java'
         uses: actions/setup-java@v4
         with:
-          distribution: 'microsoft'
-          java-version: 21
+          distribution: ${{ matrix.distribution }}
+          java-version: ${{ matrix.java }}
       - name: 'Setup Gradle'
         uses: gradle/actions/setup-gradle@v4
         with:
@@ -58,29 +75,30 @@ jobs:
         uses: coverallsapp/github-action@v2
       - name: 'Deploy as GitHub CI artifacts'
         uses: actions/upload-artifact@v4
+        if: startsWith(matrix.java, env.DEFAULT_JAVA_VERSION) && startsWith(matrix.java, env.DEFAULT_JAVA_VERSION) && startsWith(matrix.distribution, env.DEFAULT_JAVA_DISTRIBUTION)
         with:
           if-no-files-found: error
           path: build/libs/*
       - name: 'Deploy to CurseForge'
-        if: startsWith(github.ref, 'refs/tags/') || (!startsWith(github.event.head_commit.message, 'Bump mod version') && startsWith(github.ref, 'refs/heads/master'))
+        if: (startsWith(github.ref, 'refs/tags/') || (!startsWith(github.event.head_commit.message, 'Bump mod version') && startsWith(github.ref, 'refs/heads/master'))) && startsWith(matrix.java, env.DEFAULT_JAVA_VERSION) && startsWith(matrix.distribution, env.DEFAULT_JAVA_DISTRIBUTION)
         env:
           CURSEFORGE_KEY_SECRET: ${{ secrets.CURSEFORGE_KEY_SECRET }}
         run: ./gradlew publishCurseForge
       - name: 'Deploy to Modrinth'
         continue-on-error: true
-        if: startsWith(github.ref, 'refs/tags/') || (!startsWith(github.event.head_commit.message, 'Bump mod version') && startsWith(github.ref, 'refs/heads/master'))
+        if: (startsWith(github.ref, 'refs/tags/') || (!startsWith(github.event.head_commit.message, 'Bump mod version') && startsWith(github.ref, 'refs/heads/master'))) && startsWith(matrix.java, env.DEFAULT_JAVA_VERSION) && startsWith(matrix.distribution, env.DEFAULT_JAVA_DISTRIBUTION)
         env:
           MODRINTH_KEY_SECRET: ${{ secrets.MODRINTH_KEY_SECRET }}
         run: ./gradlew modrinth
       - name: 'Deploy to Maven'
-        if: startsWith(github.ref, 'refs/heads/master') || startsWith(github.ref, 'refs/heads/feature')
+        if: (startsWith(github.ref, 'refs/heads/master') || startsWith(github.ref, 'refs/heads/feature')) && startsWith(matrix.java, env.DEFAULT_JAVA_VERSION) && startsWith(matrix.distribution, env.DEFAULT_JAVA_DISTRIBUTION)
         env:
           MAVEN_URL: ${{ secrets.MAVEN_URL }}
           MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
           MAVEN_KEY: ${{ secrets.MAVEN_KEY }}
         run: ./gradlew publish
       - name: 'Deploy JavaDoc to GitHub Pages'
-        if: startsWith(github.ref, 'refs/heads/master')
+        if: startsWith(github.ref, 'refs/heads/master') && startsWith(matrix.java, env.DEFAULT_JAVA_VERSION) && startsWith(matrix.distribution, env.DEFAULT_JAVA_DISTRIBUTION)
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
