@@ -1,8 +1,21 @@
 # Changelog for Minecraft 1.20.1
 All notable changes to this project will be documented in this file.
 
+<a name="1.20.1-1.0.16"></a>
+## [1.20.1-1.0.16](/compare/1.20.1-1.0.15...1.20.1-1.0.16) - 2025-12-22 15:42:05
+
+
+### Fixed
+* Tweak relocation of GraalVM to fix incompatibilities
+  This fixes incompatibilities with Cobblemon and JsMacros.
+  This also includes an update to Graal 25.0.1.
+  Closes #34
+  Closes #53
+  Closes #39
+* Fix crash after pasting text that reduces text area size, Closes #52
+
 <a name="1.20.1-1.0.15"></a>
-## [1.20.1-1.0.15](/compare/1.20.1-1.0.14...1.20.1-1.0.15) - 2025-10-07 07:38:06
+## [1.20.1-1.0.15](/compare/1.20.1-1.0.14...1.20.1-1.0.15) - 2025-10-07 07:38:06 +0200
 
 
 ### Added
