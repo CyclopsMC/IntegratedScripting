@@ -1,8 +1,24 @@
 # Changelog for Minecraft 1.21.1
 All notable changes to this project will be documented in this file.
 
+<a name="1.21.1-1.0.20"></a>
+## [1.21.1-1.0.20](https://github.com/CyclopsMC/IntegratedScripting/compare/1.21.1-1.0.19...1.21.1-1.0.20) - 2025-12-22 15:54:19
+
+
+### Added
+* Add translations through Crowdin (#50)
+
+### Fixed
+* Tweak relocation of GraalVM to fix incompatibilities
+  This fixes incompatibilities with Cobblemon and JsMacros.
+  This also includes an update to Graal 25.0.1.
+  Closes #34
+  Closes #53
+  Closes #39
+* Fix crash after pasting text that reduces text area size, Closes #52
+
 <a name="1.21.1-1.0.19"></a>
-## [1.21.1-1.0.19](https://github.com/CyclopsMC/IntegratedScripting/compare/1.21.1-1.0.18...1.21.1-1.0.19) - 2025-10-07 07:50:49
+## [1.21.1-1.0.19](https://github.com/CyclopsMC/IntegratedScripting/compare/1.21.1-1.0.18...1.21.1-1.0.19) - 2025-10-07 07:50:49 +0200
 
 
 ### Added
