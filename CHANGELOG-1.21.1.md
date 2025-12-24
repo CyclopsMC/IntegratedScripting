@@ -1,8 +1,15 @@
 # Changelog for Minecraft 1.21.1
 All notable changes to this project will be documented in this file.
 
+<a name="1.21.1-1.0.21"></a>
+## [1.21.1-1.0.21](https://github.com/CyclopsMC/IntegratedScripting/compare/1.21.1-1.0.20...1.21.1-1.0.21) - 2025-12-24 13:43:13
+
+
+### Fixed
+* Fix Graal not being bumped to 25.0.1, Closes #54
+
 <a name="1.21.1-1.0.20"></a>
-## [1.21.1-1.0.20](https://github.com/CyclopsMC/IntegratedScripting/compare/1.21.1-1.0.19...1.21.1-1.0.20) - 2025-12-22 15:54:19
+## [1.21.1-1.0.20](https://github.com/CyclopsMC/IntegratedScripting/compare/1.21.1-1.0.19...1.21.1-1.0.20) - 2025-12-22 15:54:19 +0100
 
 
 ### Added
