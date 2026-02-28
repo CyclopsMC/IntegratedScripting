@@ -116,6 +116,16 @@ public class GameTestsAdvancements {
                 "Advancement 'integratedscripting:" + path + "' was not achieved");
     }
 
+    private static void assertAdvancementNotDone(GameTestHelper helper, ServerPlayer player, String path) {
+        var advancement = helper.getLevel().getServer().getAdvancements()
+                .get(ResourceLocation.parse("integratedscripting:" + path));
+        if (advancement != null) {
+            helper.assertTrue(
+                    !player.getAdvancements().getOrStartProgress(advancement).isDone(),
+                    "Advancement 'integratedscripting:" + path + "' should NOT have been achieved");
+        }
+    }
+
     @GameTest(template = TEMPLATE_EMPTY, timeoutTicks = TIMEOUT)
     public void testAdvancementRoot(GameTestHelper helper) {
         ServerPlayer player = makeMockPlayer(helper);
@@ -195,6 +205,87 @@ public class GameTestsAdvancements {
     }
 
     @GameTest(template = TEMPLATE_EMPTY, timeoutTicks = TIMEOUT)
+    public void testAdvancementRootNegative(GameTestHelper helper) {
+        ServerPlayer player = makeMockPlayer(helper);
+        player.getInventory().add(new ItemStack(Blocks.STONE)); // Wrong item - not integrateddynamics:variable
+        player.containerMenu.broadcastChanges();
+        helper.succeedIf(() -> assertAdvancementNotDone(helper, player, "root"));
+    }
+
+    @GameTest(template = TEMPLATE_EMPTY, timeoutTicks = TIMEOUT)
+    public void testAdvancementMendesiteNegative(GameTestHelper helper) {
+        ServerPlayer player = makeMockPlayer(helper);
+        player.getInventory().add(new ItemStack(Blocks.STONE)); // Wrong item - not integratedscripting:mendesite
+        player.containerMenu.broadcastChanges();
+        helper.succeedIf(() -> assertAdvancementNotDone(helper, player, "basics/mendesite"));
+    }
+
+    @GameTest(template = TEMPLATE_EMPTY, timeoutTicks = TIMEOUT)
+    public void testAdvancementScriptingDiskNegative(GameTestHelper helper) {
+        ServerPlayer player = makeMockPlayer(helper);
+        NeoForge.EVENT_BUS.post(new PlayerEvent.ItemCraftedEvent(
+                player, new ItemStack(Blocks.STONE), player.getInventory())); // Wrong item - not scripting_disk
+        helper.succeedIf(() -> assertAdvancementNotDone(helper, player, "basics/scripting_disk"));
+    }
+
+    @GameTest(template = TEMPLATE_EMPTY, timeoutTicks = TIMEOUT)
+    public void testAdvancementScriptingDriveNegative(GameTestHelper helper) {
+        ServerPlayer player = makeMockPlayer(helper);
+        NeoForge.EVENT_BUS.post(new PlayerEvent.ItemCraftedEvent(
+                player, new ItemStack(RegistryEntries.ITEM_SCRIPTING_DISK), player.getInventory())); // Wrong item - scripting_disk instead of scripting_drive
+        helper.succeedIf(() -> assertAdvancementNotDone(helper, player, "basics/scripting_drive"));
+    }
+
+    @GameTest(template = TEMPLATE_EMPTY, timeoutTicks = TIMEOUT)
+    public void testAdvancementTerminalOpenNegative(GameTestHelper helper) {
+        GameTestHelpersIntegratedScripting.NetworkPositions positions = createBasicNetwork(helper, POS);
+        ServerPlayer player = makeMockPlayer(helper);
+        PartHelpers.openContainerPart(player, positions.displayPanel(),
+                org.cyclops.integrateddynamics.core.part.PartTypes.DISPLAY_PANEL); // Wrong container - not scripting terminal
+        helper.succeedIf(() -> assertAdvancementNotDone(helper, player, "terminal/open"));
+    }
+
+    @GameTest(template = TEMPLATE_EMPTY, timeoutTicks = TIMEOUT)
+    public void testAdvancementTerminalBindNegative(GameTestHelper helper) {
+        GameTestHelpersIntegratedScripting.NetworkPositions positions = createBasicNetwork(helper, POS);
+        ServerPlayer player = makeMockPlayer(helper);
+        ScriptVariableFacade facade = new ScriptVariableFacade(true, positions.diskId(), Path.of("script0.js"), "abc");
+        NeoForge.EVENT_BUS.post(new LogicProgrammerVariableFacadeCreatedEvent(
+                player, facade, Blocks.STONE.defaultBlockState())); // Wrong block - not integratedscripting:part_terminal_scripting
+        helper.succeedIf(() -> assertAdvancementNotDone(helper, player, "terminal/bind"));
+    }
+
+    @GameTest(template = TEMPLATE_EMPTY, timeoutTicks = TIMEOUT)
+    public void testAdvancementTerminalDisplayNegative(GameTestHelper helper) {
+        GameTestHelpersIntegratedScripting.NetworkPositions positions = createBasicNetwork(helper, POS);
+
+        // Place a chest adjacent to the cable at POS (to the east)
+        helper.setBlock(POS.east(), Blocks.CHEST);
+
+        // Add an inventory reader part to the cable at POS, facing east toward the chest
+        PartHelpers.addPart(helper.getLevel(), helper.absolutePos(POS), Direction.EAST,
+                PartTypes.INVENTORY_READER, new ItemStack(PartTypes.INVENTORY_READER.getItem()));
+
+        // Create an aspect variable (NOT a script variable)
+        ItemStack variableAspect = createVariableFromReader(
+                helper.getLevel(),
+                PartPos.of(helper.getLevel(), helper.absolutePos(POS), Direction.EAST),
+                Aspects.Read.Inventory.LIST_ITEMSTACKS);
+
+        ServerPlayer player = makeMockPlayer(helper);
+
+        // Open display panel GUI for the player
+        PartHelpers.PartStateHolder displayHolder = PartHelpers.getPart(positions.displayPanel());
+        PartTypePanelDisplay displayPartType = (PartTypePanelDisplay) displayHolder.getPart();
+        PartHelpers.openContainerPart(player, positions.displayPanel(), displayPartType);
+
+        // Setting an aspect variable (not a script variable) should NOT trigger terminal/display
+        ((PartTypePanelDisplay.State) displayHolder.getState()).getInventory().setItem(0, variableAspect);
+
+        helper.succeedIf(() -> assertAdvancementNotDone(helper, player, "terminal/display"));
+    }
+
+    @GameTest(template = TEMPLATE_EMPTY, timeoutTicks = TIMEOUT)
     public void testAdvancementFilterChest(GameTestHelper helper) {
         GameTestHelpersIntegratedScripting.NetworkPositions positions = createBasicNetwork(helper, POS);
 
@@ -245,5 +336,52 @@ public class GameTestsAdvancements {
         ((PartTypePanelDisplay.State) displayHolder.getState()).getInventory().setItem(0, variableFilter);
 
         helper.succeedIf(() -> assertAdvancementDone(helper, player, "functions/filter_chest"));
+    }
+
+    @GameTest(template = TEMPLATE_EMPTY, timeoutTicks = TIMEOUT)
+    public void testAdvancementFilterChestNegative(GameTestHelper helper) {
+        GameTestHelpersIntegratedScripting.NetworkPositions positions = createBasicNetwork(helper, POS);
+
+        // Place a chest adjacent to the cable at POS (to the east)
+        helper.setBlock(POS.east(), Blocks.CHEST);
+
+        // Add an inventory reader part to the cable at POS, facing east toward the chest
+        PartHelpers.addPart(helper.getLevel(), helper.absolutePos(POS), Direction.EAST,
+                PartTypes.INVENTORY_READER, new ItemStack(PartTypes.INVENTORY_READER.getItem()));
+
+        // Create two aspect variables - input[0] is NOT a script variable (the negative case)
+        ItemStack firstAspectVariable = createVariableFromReader(
+                helper.getLevel(),
+                PartPos.of(helper.getLevel(), helper.absolutePos(POS), Direction.EAST),
+                Aspects.Read.Inventory.LIST_ITEMSTACKS);
+        ItemStack secondAspectVariable = createVariableFromReader(
+                helper.getLevel(),
+                PartPos.of(helper.getLevel(), helper.absolutePos(POS), Direction.EAST),
+                Aspects.Read.Inventory.LIST_ITEMSTACKS);
+
+        // Store the aspect variables so they can be resolved by ID
+        positions.variableStore().getInventory().setItem(0, firstAspectVariable);
+        positions.variableStore().getInventory().setItem(1, secondAspectVariable);
+
+        // Create the filter operator variable: OPERATOR_FILTER(aspectVar, aspectVar) - input[0] is aspect, NOT script
+        ItemStack variableFilter = createVariableForOperator(
+                helper.getLevel(),
+                org.cyclops.integrateddynamics.core.evaluate.operator.Operators.OPERATOR_FILTER,
+                new int[]{
+                        getVariableFacade(helper.getLevel(), firstAspectVariable).getId(),
+                        getVariableFacade(helper.getLevel(), secondAspectVariable).getId()
+                });
+
+        ServerPlayer player = makeMockPlayer(helper);
+
+        // Open display panel GUI for the player
+        PartHelpers.PartStateHolder displayHolder = PartHelpers.getPart(positions.displayPanel());
+        PartTypePanelDisplay displayPartType = (PartTypePanelDisplay) displayHolder.getPart();
+        PartHelpers.openContainerPart(player, positions.displayPanel(), displayPartType);
+
+        // Setting operator_filter with non-script input[0] should NOT trigger functions/filter_chest
+        ((PartTypePanelDisplay.State) displayHolder.getState()).getInventory().setItem(0, variableFilter);
+
+        helper.succeedIf(() -> assertAdvancementNotDone(helper, player, "functions/filter_chest"));
     }
 }
