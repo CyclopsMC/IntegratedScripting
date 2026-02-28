@@ -111,7 +111,7 @@ jobs:
 
   coveralls:
     name: Coverage check
-    needs: test
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Consolidate test coverage from different jobs
