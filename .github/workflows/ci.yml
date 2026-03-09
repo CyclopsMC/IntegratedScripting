@@ -73,6 +73,9 @@ jobs:
         run: ./gradlew test runGameTestServer jacocoTestReport
       - name: 'Submit coverage results'
         uses: coverallsapp/github-action@v2
+        with:
+            flag-name: ${{ matrix.java }}-${{ matrix.distribution }}
+            parallel: true
       - name: 'Deploy as GitHub CI artifacts'
         uses: actions/upload-artifact@v4
         if: startsWith(matrix.java, env.DEFAULT_JAVA_VERSION) && startsWith(matrix.java, env.DEFAULT_JAVA_VERSION) && startsWith(matrix.distribution, env.DEFAULT_JAVA_DISTRIBUTION)
@@ -105,3 +108,14 @@ jobs:
           branch: gh-pages
           folder: build/docs/javadoc
           clean: true
+
+  coveralls:
+    name: Coverage check
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consolidate test coverage from different jobs
+        uses: coverallsapp/github-action@v2
+        with:
+          parallel-finished: true
+          fail-on-error: false

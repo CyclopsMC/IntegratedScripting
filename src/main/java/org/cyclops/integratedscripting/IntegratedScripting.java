@@ -40,6 +40,7 @@ import org.cyclops.integratedscripting.core.language.LanguageHandlers;
 import org.cyclops.integratedscripting.core.network.ScriptingData;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslatorRegistry;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
+import org.cyclops.integratedscripting.gametest.GameTestsAdvancements;
 import org.cyclops.integratedscripting.gametest.GameTestsScripts;
 import org.cyclops.integratedscripting.inventory.container.ContainerScriptingDriveConfig;
 import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScriptingConfig;
@@ -174,6 +175,7 @@ public class IntegratedScripting extends ModBaseNeoForge<IntegratedScripting> {
     @Override
     public Class<?>[] getGameTestClasses() {
         return new Class<?>[]{
+                GameTestsAdvancements.class,
                 GameTestsScripts.class
         };
     }
