@@ -1,3 +1,0 @@
-[09Mar2026 18:55:36.978] [Test worker/WARN] [net.minecraft.nbt.NbtUtils/]: Unable to read property: waterlogged with value:  for blockstate: {Name:"minecraft:acacia_leaves",Properties:{distance:7,persistent:0b,waterlogged:0b}}
-[09Mar2026 18:55:36.979] [Test worker/WARN] [net.minecraft.nbt.NbtUtils/]: Unable to read property: distance with value:  for blockstate: {Name:"minecraft:acacia_leaves",Properties:{distance:7,persistent:0b,waterlogged:0b}}
-[09Mar2026 18:55:36.980] [Test worker/WARN] [net.minecraft.nbt.NbtUtils/]: Unable to read property: persistent with value:  for blockstate: {Name:"minecraft:acacia_leaves",Properties:{distance:7,persistent:0b,waterlogged:0b}}

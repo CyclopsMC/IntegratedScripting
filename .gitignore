@@ -25,3 +25,6 @@ keystore.jks
 secrets.properties
 build_number.properties
 changelog.txt
+
+# Ignore Minecraft runtime logs
+/logs
