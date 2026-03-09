@@ -1,0 +1,6 @@
+[09Mar2026 18:55:29.835] [Test worker/DEBUG] [io.netty.util.internal.logging.InternalLoggerFactory/]: Using SLF4J as the default logging framework
+[09Mar2026 18:55:29.847] [Test worker/DEBUG] [io.netty.util.ResourceLeakDetector/]: -Dio.netty.leakDetection.level: simple
+[09Mar2026 18:55:29.847] [Test worker/DEBUG] [io.netty.util.ResourceLeakDetector/]: -Dio.netty.leakDetection.targetRecords: 4
+[09Mar2026 18:55:36.978] [Test worker/WARN] [net.minecraft.nbt.NbtUtils/]: Unable to read property: waterlogged with value:  for blockstate: {Name:"minecraft:acacia_leaves",Properties:{distance:7,persistent:0b,waterlogged:0b}}
+[09Mar2026 18:55:36.979] [Test worker/WARN] [net.minecraft.nbt.NbtUtils/]: Unable to read property: distance with value:  for blockstate: {Name:"minecraft:acacia_leaves",Properties:{distance:7,persistent:0b,waterlogged:0b}}
+[09Mar2026 18:55:36.980] [Test worker/WARN] [net.minecraft.nbt.NbtUtils/]: Unable to read property: persistent with value:  for blockstate: {Name:"minecraft:acacia_leaves",Properties:{distance:7,persistent:0b,waterlogged:0b}}
