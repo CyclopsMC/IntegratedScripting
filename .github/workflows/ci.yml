@@ -6,7 +6,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  DEFAULT_JAVA_VERSION: 21
+  DEFAULT_JAVA_VERSION: 25
   DEFAULT_JAVA_DISTRIBUTION: 'microsoft'
 
 jobs:
@@ -17,14 +17,13 @@ jobs:
       fail-fast: false
       matrix:
         java:
-          - 21
-          - 22
-          - 23
+          - 25
+          - 26
         distribution:
           - 'adopt-hotspot'
           - 'oracle'
         include:
-          - java: 21
+          - java: 25
             distribution: 'microsoft'
     steps:
       - name: 'Checkout'

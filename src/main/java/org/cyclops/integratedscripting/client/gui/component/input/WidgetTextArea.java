@@ -7,7 +7,7 @@ import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.StringSplitter;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.MultilineTextField;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -94,10 +94,10 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                 }
 
                 @Override
-                public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+                public void extractWidgetRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
                     // Only show scrollbar if needed
                     if (this.needsScrollBars()) {
-                        super.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
+                        super.extractWidgetRenderState(guiGraphics, mouseX, mouseY, partialTicks);
                     }
                 }
             };
@@ -431,7 +431,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     }
 
     @Override
-    public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+    public void extractWidgetRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
         // Determine lines to show
         DisplayCache displayCache = this.getDisplayCache();
         List<LineInfo> lines = Arrays.asList(displayCache.lines);
@@ -440,7 +440,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         // Draw lines
         int lastLineNumber = -1;
         for(LineInfo line : lines) {
-            guiGraphics.drawString(this.font, line.asComponent, line.x, line.y - offsetY, ARGB.opaque(-16777216), false);
+            guiGraphics.text(this.font, line.asComponent, line.x, line.y - offsetY, ARGB.opaque(-16777216), false);
             // Draw line number
             if (this.showLineNumbers && lastLineNumber != line.lineNumber) {
                 IModHelpers.get().getRenderHelpers().drawScaledString(
@@ -466,23 +466,23 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
         // Render scrollbar
         if (this.scrollBar != null) {
-            this.scrollBar.render(guiGraphics, getX(), getY(), partialTicks);
+            this.scrollBar.extractRenderState(guiGraphics, getX(), getY(), partialTicks);
         }
     }
 
-    private void renderCursor(GuiGraphics guiGraphics, Pos2i pos, boolean cursorAtEnd) {
+    private void renderCursor(GuiGraphicsExtractor guiGraphics, Pos2i pos, boolean cursorAtEnd) {
         if (this.isFocused() && this.frameTick / 6 % 2 == 0) {
             pos = this.convertLocalToScreen(pos);
             if (!cursorAtEnd) {
                 guiGraphics.fill(pos.x, pos.y - 1, pos.x + 1, pos.y + 9, -16777216);
             } else {
-                guiGraphics.drawString(this.font, "_", pos.x, pos.y, ARGB.opaque(0));
+                guiGraphics.text(this.font, "_", pos.x, pos.y, ARGB.opaque(0), false);
             }
         }
 
     }
 
-    private void renderHighlight(GuiGraphics guiGraphics, Rect2i[] highlightAreas) {
+    private void renderHighlight(GuiGraphicsExtractor guiGraphics, Rect2i[] highlightAreas) {
         for (Rect2i rect2i : highlightAreas) {
             int i = rect2i.getX();
             int j = rect2i.getY();

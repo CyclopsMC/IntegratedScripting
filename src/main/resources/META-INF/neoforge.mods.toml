@@ -11,6 +11,8 @@ version="${mod_version}"
 displayName="${mod_name}"
 updateJSONURL="${neoforge_update_json_url}"
 description="${description}"
+[[accessTransformers]]
+    file="META-INF/accesstransformer.cfg"
 [[dependencies.${mod_id}]]
     modId="cyclopscore"
     type="required"

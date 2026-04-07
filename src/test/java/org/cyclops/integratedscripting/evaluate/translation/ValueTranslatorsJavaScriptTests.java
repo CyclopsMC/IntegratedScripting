@@ -1,6 +1,8 @@
 package org.cyclops.integratedscripting.evaluate.translation;
 
 import com.google.common.collect.Sets;
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.*;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.Identifier;
@@ -45,6 +47,13 @@ public class ValueTranslatorsJavaScriptTests {
 
     @BeforeAll
     public static void beforeAll() {
+        // Bind components so ItemStack construction works in 26.1 (components are normally bound during resource reload)
+        DataComponentMap defaultComponents = DataComponentMap.builder().set(DataComponents.MAX_STACK_SIZE, 64).build();
+        Items.ARROW.builtInRegistryHolder().bindComponents(defaultComponents);
+        Items.ACACIA_SAPLING.builtInRegistryHolder().bindComponents(defaultComponents);
+        Fluids.WATER.builtInRegistryHolder().bindComponents(defaultComponents);
+        Fluids.LAVA.builtInRegistryHolder().bindComponents(defaultComponents);
+
         VDC = ValueDeseralizationContextMocked.get();
         try {
             CTX = ScriptHelpers.createPopulatedContext(null, VDC);

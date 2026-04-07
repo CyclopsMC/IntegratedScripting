@@ -1,7 +1,7 @@
 package org.cyclops.integratedscripting.client.gui.component.input;
 
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.events.GuiEventListener;
@@ -48,7 +48,7 @@ public class WidgetDialog extends AbstractWidget implements GuiEventListener {
         this.buttonCancel = new ButtonText(x + WIDTH - 50 - 50, y + HEIGHT - 15 - 5, 50, 15, cancel, cancel, cancelCallback, true);
     }
 
-    protected void drawBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+    protected void drawBackground(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
         // Gray-out background
         guiGraphics.fill(0, 0, parent.width, parent.height, IModHelpers.get().getBaseHelpers().RGBAToInt(50, 50, 50, 100));
 
@@ -57,15 +57,15 @@ public class WidgetDialog extends AbstractWidget implements GuiEventListener {
     }
 
     @Override
-    protected void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+    public void extractWidgetRenderState(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
         drawBackground(guiGraphics, mouseX, mouseY, partialTicks);
 
-        this.buttonConfirm.render(guiGraphics, mouseX, mouseY, partialTicks);
-        this.buttonCancel.render(guiGraphics, mouseX, mouseY, partialTicks);
+        this.buttonConfirm.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
+        this.buttonCancel.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
 
-        guiGraphics.drawCenteredString(font, title, this.getX() + this.width / 2, this.getY() + 4, ARGB.opaque(16777215));
+        guiGraphics.centeredText(font, title, this.getX() + this.width / 2, this.getY() + 4, ARGB.opaque(16777215));
         FormattedCharSequence formattedcharsequence = message.getVisualOrderText();
-        guiGraphics.drawString(font, message, (this.getX() + this.width / 2 - font.width(formattedcharsequence) / 2), (this.getY() + 25), ARGB.opaque(4210752), false);
+        guiGraphics.text(font, message, (this.getX() + this.width / 2 - font.width(formattedcharsequence) / 2), (this.getY() + 25), ARGB.opaque(4210752), false);
     }
 
     @Override

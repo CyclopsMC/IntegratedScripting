@@ -1,5 +1,7 @@
 package org.cyclops.integratedscripting.evaluate.translation;
 
+import net.minecraft.core.component.DataComponentMap;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.IntTag;
 import net.minecraft.nbt.StringTag;
@@ -29,6 +31,10 @@ public class BenchmarkValueTranslators {
 
     @Test
     public void main() {
+        // Bind components so ItemStack construction works in 26.1 (components are normally bound during resource reload)
+        DataComponentMap defaultComponents = DataComponentMap.builder().set(DataComponents.MAX_STACK_SIZE, 64).build();
+        Items.ARROW.builtInRegistryHolder().bindComponents(defaultComponents);
+
         beforeAll();
 
         /*

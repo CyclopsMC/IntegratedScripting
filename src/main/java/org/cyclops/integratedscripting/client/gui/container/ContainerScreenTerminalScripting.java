@@ -6,7 +6,8 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -191,10 +192,10 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     }
 
     @Override
-    protected void renderBg(GuiGraphics guiGraphics, float partialTicks, int mouseX, int mouseY) {
-        super.renderBg(guiGraphics, partialTicks, mouseX, mouseY);
-        fieldDisk.render(guiGraphics, mouseX, mouseY, partialTicks);
-        scrollBar.render(guiGraphics, mouseX, mouseY, partialTicks);
+    public void extractBackground(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+        super.extractBackground(guiGraphics, mouseX, mouseY, partialTicks);
+        fieldDisk.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
+        scrollBar.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
 
         if (!this.getMenu().getAvailableDisks().isEmpty()) {
             this.renderScriptPaths(guiGraphics, mouseX, mouseY, partialTicks);
@@ -231,7 +232,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         return Collections.emptyList();
     }
 
-    protected void renderScriptPaths(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+    protected void renderScriptPaths(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
         List<Path> paths = getVisibleScriptPaths();
         int i = 0;
         for (Path path : paths) {
@@ -301,11 +302,11 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     }
 
     @Override
-    protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        super.renderLabels(guiGraphics, mouseX, mouseY);
+    protected void extractLabels(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY) {
+        super.extractLabels(guiGraphics, mouseX, mouseY);
 
         // Draw disk label
-        guiGraphics.drawString(font, IModHelpers.get().getL10NHelpers().localize("gui.integratedscripting.disk") + ":", 8, 6, ARGB.opaque(16777215));
+        guiGraphics.text(font, IModHelpers.get().getL10NHelpers().localize("gui.integratedscripting.disk") + ":", 8, 6, ARGB.opaque(16777215));
 
         displayErrors.drawForeground(guiGraphics, getMenu().getReadErrors(), getErrorX(), getErrorY(), mouseX, mouseY, this, this.leftPos, this.topPos);
     }
