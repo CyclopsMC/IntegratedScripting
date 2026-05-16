@@ -105,6 +105,18 @@ public class ScriptingData implements IScriptingData {
             e.printStackTrace();
         }
 
+        // Register watcher for all disk directories
+        try {
+            WatchKey watchKey = disksPath.register(watchService,
+                    StandardWatchEventKinds.ENTRY_CREATE,
+                    StandardWatchEventKinds.ENTRY_MODIFY,
+                    StandardWatchEventKinds.ENTRY_DELETE);
+            pathWatchers.put(disksPath, watchKey);
+            pathWatchersReverse.put(watchKey, disksPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
         // Collect all disk ids
         List<Integer> diskIds = Lists.newArrayList();
         try {
@@ -248,6 +260,7 @@ public class ScriptingData implements IScriptingData {
             }
 
             // Register watchers for all directories
+            this.registerPathWatcher(disk, null);
             for (Path path : scripts.keySet()) {
                 this.registerPathWatcher(disk, path.getParent());
             }
@@ -366,6 +379,8 @@ public class ScriptingData implements IScriptingData {
             } else {
                 scriptPathAbsolute.getParent().toFile().mkdirs();
                 FileUtils.write(scriptPathAbsolute.toFile(), script, StandardCharsets.UTF_8);
+                this.registerPathWatcher(disk, null);
+                this.registerPathWatcher(disk, scriptPathRelative.getParent());
             }
         } catch (IOException e) {
             e.printStackTrace();
