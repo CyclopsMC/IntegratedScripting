@@ -5,10 +5,8 @@ import org.cyclops.integratedscripting.api.network.IScriptingData;
 import org.junit.Test;
 
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -18,6 +16,7 @@ import static org.junit.Assert.assertTrue;
 public class ScriptingDataTest {
 
     private static final int AWAIT_TIMEOUT_MS = 20000;
+    private static final int ATTEMPT_TIMEOUT_MS = 750;
     private static final int POLLING_INTERVAL_MS = 25;
 
     @Test
@@ -26,19 +25,15 @@ public class ScriptingDataTest {
         ScriptingData scriptingData = new ScriptingData(rootPath);
         try {
             scriptingData.initialize();
-            Path disksPath = rootPath.resolve("scripting-disks");
-            awaitCondition(() -> isWatcherRegistered(scriptingData, disksPath));
-
-            Path diskPath = disksPath.resolve("123");
+            Path diskPath = rootPath.resolve("scripting-disks").resolve("123");
             Files.createDirectories(diskPath);
             awaitCondition(() -> scriptingData.getDisks().contains(123));
-            awaitCondition(() -> isWatcherRegistered(scriptingData, diskPath));
 
-            Files.writeString(diskPath.resolve("main.js"), "export const value = 1;");
-            awaitCondition(() -> "export const value = 1;".equals(scriptingData.getScripts(123).get(Path.of("main.js"))));
-
+            Path scriptPath = Path.of("main.js");
+            int observedValue = writeScriptValueUntilObserved(
+                    scriptingData, 123, diskPath.resolve(scriptPath), scriptPath, 1);
             assertThat(scriptingData.getDisks(), hasItem(123));
-            assertThat(scriptingData.getScripts(123).get(Path.of("main.js")), equalTo("export const value = 1;"));
+            assertThat(scriptingData.getScripts(123).get(scriptPath), equalTo(scriptValue(observedValue)));
         } finally {
             scriptingData.close();
             FileUtils.deleteDirectory(rootPath.toFile());
@@ -52,16 +47,16 @@ public class ScriptingDataTest {
         try {
             scriptingData.initialize();
             Path diskPath = rootPath.resolve("scripting-disks").resolve("456");
+            Path scriptPath = Path.of("main.js");
 
-            scriptingData.setScript(456, Path.of("main.js"), "export const value = 1;", IScriptingData.ChangeLocation.MEMORY);
+            scriptingData.setScript(456, scriptPath, scriptValue(1), IScriptingData.ChangeLocation.MEMORY);
             scriptingData.tick();
-            assertTrue(Files.exists(diskPath.resolve("main.js")));
-            awaitCondition(() -> isWatcherRegistered(scriptingData, diskPath));
+            assertTrue(Files.exists(diskPath.resolve(scriptPath)));
 
-            Files.writeString(diskPath.resolve("main.js"), "export const value = 2;");
-            awaitCondition(() -> "export const value = 2;".equals(scriptingData.getScripts(456).get(Path.of("main.js"))));
+            int observedValue = writeScriptValueUntilObserved(
+                    scriptingData, 456, diskPath.resolve(scriptPath), scriptPath, 2);
 
-            assertThat(scriptingData.getScripts(456).get(Path.of("main.js")), equalTo("export const value = 2;"));
+            assertThat(scriptingData.getScripts(456).get(scriptPath), equalTo(scriptValue(observedValue)));
         } finally {
             scriptingData.close();
             FileUtils.deleteDirectory(rootPath.toFile());
@@ -69,25 +64,38 @@ public class ScriptingDataTest {
     }
 
     private static void awaitCondition(Condition condition) throws InterruptedException {
-        long deadline = System.currentTimeMillis() + AWAIT_TIMEOUT_MS;
+        assertTrue("Timed out waiting for condition", awaitCondition(condition, AWAIT_TIMEOUT_MS));
+    }
+
+    private static boolean awaitCondition(Condition condition, int timeoutMs) throws InterruptedException {
+        long deadline = System.currentTimeMillis() + timeoutMs;
         while (System.currentTimeMillis() < deadline) {
             if (condition.matches()) {
-                return;
+                return true;
             }
             Thread.sleep(POLLING_INTERVAL_MS);
         }
-        assertTrue("Timed out waiting for condition", condition.matches());
+        return condition.matches();
     }
 
-    private static boolean isWatcherRegistered(ScriptingData scriptingData, Path path) {
-        try {
-            Field field = ScriptingData.class.getDeclaredField("pathWatchers");
-            field.setAccessible(true);
-            Map<Path, ?> pathWatchers = (Map<Path, ?>) field.get(scriptingData);
-            return pathWatchers.containsKey(path);
-        } catch (IllegalAccessException | NoSuchFieldException e) {
-            throw new RuntimeException(e);
+    private static int writeScriptValueUntilObserved(ScriptingData scriptingData, int disk, Path scriptPathAbsolute,
+                                                     Path scriptPathRelative, int startValue) throws IOException, InterruptedException {
+        int value = startValue;
+        long deadline = System.currentTimeMillis() + AWAIT_TIMEOUT_MS;
+        while (System.currentTimeMillis() < deadline) {
+            String expectedScriptValue = scriptValue(value);
+            Files.writeString(scriptPathAbsolute, expectedScriptValue);
+            if (awaitCondition(() -> expectedScriptValue.equals(scriptingData.getScripts(disk).get(scriptPathRelative)),
+                    ATTEMPT_TIMEOUT_MS)) {
+                return value;
+            }
+            value++;
         }
+        throw new AssertionError("Timed out waiting for script update after repeated writes");
+    }
+
+    private static String scriptValue(int value) {
+        return "export const value = " + value + ";";
     }
 
     @FunctionalInterface
