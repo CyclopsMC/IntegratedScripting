@@ -1,8 +1,15 @@
 # Changelog for Minecraft 1.21.1
 All notable changes to this project will be documented in this file.
 
+<a name="1.21.1-1.0.22"></a>
+## [1.21.1-1.0.22](https://github.com/CyclopsMC/IntegratedScripting/compare/1.21.1-1.0.21...1.21.1-1.0.22) - 2026-05-16 10:18:59
+
+
+### Fixed
+* Fix external script edits not syncing when directory is created before disk (#62), Closes #61
+
 <a name="1.21.1-1.0.21"></a>
-## [1.21.1-1.0.21](https://github.com/CyclopsMC/IntegratedScripting/compare/1.21.1-1.0.20...1.21.1-1.0.21) - 2025-12-24 13:43:13
+## [1.21.1-1.0.21](https://github.com/CyclopsMC/IntegratedScripting/compare/1.21.1-1.0.20...1.21.1-1.0.21) - 2025-12-24 13:43:13 +0100
 
 
 ### Fixed

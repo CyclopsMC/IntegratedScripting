@@ -106,6 +106,9 @@ public class ScriptingData implements IScriptingData {
             e.printStackTrace();
         }
 
+        // Register watcher for all disk directories
+        this.registerAbsolutePathWatcher(disksPath);
+
         // Collect all disk ids
         List<Integer> diskIds = Lists.newArrayList();
         try {
@@ -249,6 +252,7 @@ public class ScriptingData implements IScriptingData {
             }
 
             // Register watchers for all directories
+            this.registerPathWatcher(disk, null);
             for (Path path : scripts.keySet()) {
                 this.registerPathWatcher(disk, path.getParent());
             }
@@ -300,9 +304,16 @@ public class ScriptingData implements IScriptingData {
     protected void registerPathWatcher(int diskId, @Nullable Path pathRelative) {
         Path diskPath = getDiskPath(diskId);
         Path pathAbsolute = pathRelative == null ? diskPath : diskPath.resolve(pathRelative);
+        this.registerAbsolutePathWatcher(pathAbsolute);
+    }
+
+    protected void registerAbsolutePathWatcher(Path pathAbsolute) {
         if (!pathWatchers.containsKey(pathAbsolute)) {
             try {
-                WatchKey watchKey = pathAbsolute.register(watchService, StandardWatchEventKinds.ENTRY_CREATE, StandardWatchEventKinds.ENTRY_MODIFY, StandardWatchEventKinds.ENTRY_DELETE);
+                WatchKey watchKey = pathAbsolute.register(watchService,
+                        StandardWatchEventKinds.ENTRY_CREATE,
+                        StandardWatchEventKinds.ENTRY_MODIFY,
+                        StandardWatchEventKinds.ENTRY_DELETE);
                 pathWatchers.put(pathAbsolute, watchKey);
                 pathWatchersReverse.put(watchKey, pathAbsolute);
             } catch (IOException e) {
@@ -367,6 +378,8 @@ public class ScriptingData implements IScriptingData {
             } else {
                 scriptPathAbsolute.getParent().toFile().mkdirs();
                 FileUtils.write(scriptPathAbsolute.toFile(), script, StandardCharsets.UTF_8);
+                this.registerPathWatcher(disk, null);
+                this.registerPathWatcher(disk, scriptPathRelative.getParent());
             }
         } catch (IOException e) {
             e.printStackTrace();

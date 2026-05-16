@@ -31,3 +31,6 @@ changelog.txt
 
 .cache
 config
+
+# Ignore Minecraft runtime logs
+/logs

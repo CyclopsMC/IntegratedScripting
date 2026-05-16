@@ -1,8 +1,15 @@
 # Changelog for Minecraft 1.20.1
 All notable changes to this project will be documented in this file.
 
+<a name="1.20.1-1.0.17"></a>
+## [1.20.1-1.0.17](/compare/1.20.1-1.0.16...1.20.1-1.0.17) - 2026-05-16 10:17:12
+
+
+### Fixed
+* Fix external script edits not syncing when directory is created before disk (#62), Closes #61
+
 <a name="1.20.1-1.0.16"></a>
-## [1.20.1-1.0.16](/compare/1.20.1-1.0.15...1.20.1-1.0.16) - 2025-12-22 15:42:05
+## [1.20.1-1.0.16](/compare/1.20.1-1.0.15...1.20.1-1.0.16) - 2025-12-22 15:42:05 +0100
 
 
 ### Fixed
