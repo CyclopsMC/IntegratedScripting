@@ -15,8 +15,12 @@ import static org.junit.Assert.assertTrue;
 
 public class ScriptingDataTest {
 
+    private static final int AWAIT_TIMEOUT_MS = 5000;
+    private static final int POLLING_INTERVAL_MS = 25;
+    private static final int FILE_SYSTEM_STABILIZATION_DELAY_MS = 200;
+
     @Test
-    public void testExternalUpdatesOnRuntimeCreatedDiskFolderAreSynced() throws IOException, InterruptedException {
+    public void testExternalUpdatesOnRuntimeCreatedDiskFolderSynced() throws IOException, InterruptedException {
         Path rootPath = Files.createTempDirectory("integratedscripting-test");
         ScriptingData scriptingData = new ScriptingData(rootPath);
         try {
@@ -38,7 +42,7 @@ public class ScriptingDataTest {
     }
 
     @Test
-    public void testExternalUpdatesOnRuntimeFirstUsedDiskAreSynced() throws IOException, InterruptedException {
+    public void testExternalUpdatesOnRuntimeFirstUsedDiskSynced() throws IOException, InterruptedException {
         Path rootPath = Files.createTempDirectory("integratedscripting-test");
         ScriptingData scriptingData = new ScriptingData(rootPath);
         try {
@@ -47,6 +51,7 @@ public class ScriptingDataTest {
             scriptingData.setScript(456, Path.of("main.js"), "export const value = 1;", IScriptingData.ChangeLocation.MEMORY);
             scriptingData.tick();
             assertTrue(Files.exists(rootPath.resolve("scripting-disks").resolve("456").resolve("main.js")));
+            Thread.sleep(FILE_SYSTEM_STABILIZATION_DELAY_MS);
 
             Files.writeString(rootPath.resolve("scripting-disks").resolve("456").resolve("main.js"), "export const value = 2;");
             awaitCondition(() -> "export const value = 2;".equals(scriptingData.getScripts(456).get(Path.of("main.js"))));
@@ -59,12 +64,12 @@ public class ScriptingDataTest {
     }
 
     private static void awaitCondition(Condition condition) throws InterruptedException {
-        long deadline = System.currentTimeMillis() + 5000;
+        long deadline = System.currentTimeMillis() + AWAIT_TIMEOUT_MS;
         while (System.currentTimeMillis() < deadline) {
             if (condition.matches()) {
                 return;
             }
-            Thread.sleep(25);
+            Thread.sleep(POLLING_INTERVAL_MS);
         }
         assertTrue("Timed out waiting for condition", condition.matches());
     }
