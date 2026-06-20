@@ -278,7 +278,9 @@ shadowJar {
     relocate 'com.oracle.truffle.object', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle.object'
 //    relocate 'com.oracle.truffle.polyglot', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle.polyglot' // Relocation of src.com.oracle.truffle.polyglot.JDKSupport.java fails
     relocate 'com.oracle.truffle.regex', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle.regex'
-    relocate 'com.oracle.truffle.runtime', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle.runtime'
+    relocate('com.oracle.truffle.runtime', 'org.cyclops.integratedscripting.vendors.com.oracle.truffle.runtime') {
+        exclude 'com/oracle/truffle/runtime/hotspot/libgraal/LibGraal*.class'
+    }
 }
 assemble.dependsOn shadowJar
 jar {
