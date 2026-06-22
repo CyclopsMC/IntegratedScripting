@@ -1,6 +1,6 @@
 package org.cyclops.integratedscripting.core.language;
 
-import net.minecraft.client.resources.language.I18n;
+import net.minecraft.locale.Language;
 import org.cyclops.cyclopscore.helper.IModHelpers;
 import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
@@ -77,7 +77,7 @@ public class TypeScriptTypingsGenerator {
 
     private void handleDescriptionComment(StringBuilder sb, String unlocalizedKey) {
         if (IModHelpers.get().getMinecraftHelpers().isClientSide()) {
-            if (I18n.exists(unlocalizedKey)) {
+            if (Language.getInstance().has(unlocalizedKey)) {
                 sb.append("  /**\n");
                 sb.append("   * ");
                 sb.append(IModHelpers.get().getL10NHelpers().localize(unlocalizedKey));
