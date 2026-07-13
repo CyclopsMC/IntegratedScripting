@@ -1,8 +1,15 @@
 # Changelog for Minecraft 1.19.2
 All notable changes to this project will be documented in this file.
 
+<a name="1.19.2-1.0.13"></a>
+## [1.19.2-1.0.13](/compare/1.19.2-1.0.12...1.19.2-1.0.13) - 2026-07-13 20:29:10
+
+
+### Fixed
+* Check for path safety when setting scripts
+
 <a name="1.19.2-1.0.12"></a>
-## [1.19.2-1.0.12](/compare/1.19.2-1.0.11...1.19.2-1.0.12) - 2025-12-22 15:37:47
+## [1.19.2-1.0.12](/compare/1.19.2-1.0.11...1.19.2-1.0.12) - 2025-12-22 15:37:47 +0100
 
 
 ### Fixed
