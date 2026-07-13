@@ -1,8 +1,18 @@
 # Changelog for Minecraft 26.1.2
 All notable changes to this project will be documented in this file.
 
+<a name="26.1.2-1.0.23"></a>
+## [26.1.2-1.0.23](https://github.com/CyclopsMC/IntegratedScripting/compare/26.1.2-1.0.22...26.1.2-1.0.23) - 2026-07-13 20:25:08
+
+
+### Added
+* New Translations (#65)
+
+### Fixed
+* Check for path safety when setting scripts
+
 <a name="26.1.2-1.0.22"></a>
-## [26.1.2-1.0.22](https://github.com/CyclopsMC/IntegratedScripting/compare/26.1.2-1.0.21...26.1.2-1.0.22) - 2026-05-16 10:22:16
+## [26.1.2-1.0.22](https://github.com/CyclopsMC/IntegratedScripting/compare/26.1.2-1.0.21...26.1.2-1.0.22) - 2026-05-16 10:22:16 +0200
 
 
 ### Fixed
