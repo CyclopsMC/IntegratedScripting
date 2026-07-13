@@ -1,8 +1,15 @@
 # Changelog for Minecraft 1.20.1
 All notable changes to this project will be documented in this file.
 
+<a name="1.20.1-1.0.18"></a>
+## [1.20.1-1.0.18](/compare/1.20.1-1.0.17...1.20.1-1.0.18) - 2026-07-13 20:11:23
+
+
+### Fixed
+* Check for path safety when setting scripts
+
 <a name="1.20.1-1.0.17"></a>
-## [1.20.1-1.0.17](/compare/1.20.1-1.0.16...1.20.1-1.0.17) - 2026-05-16 10:17:12
+## [1.20.1-1.0.17](/compare/1.20.1-1.0.16...1.20.1-1.0.17) - 2026-05-16 10:17:12 +0200
 
 
 ### Fixed

@@ -1,8 +1,15 @@
 # Changelog for Minecraft 1.21.1
 All notable changes to this project will be documented in this file.
 
+<a name="1.21.1-1.0.23"></a>
+## [1.21.1-1.0.23](https://github.com/CyclopsMC/IntegratedScripting/compare/1.21.1-1.0.22...1.21.1-1.0.23) - 2026-07-13 20:13:16
+
+
+### Fixed
+* Check for path safety when setting scripts
+
 <a name="1.21.1-1.0.22"></a>
-## [1.21.1-1.0.22](https://github.com/CyclopsMC/IntegratedScripting/compare/1.21.1-1.0.21...1.21.1-1.0.22) - 2026-05-16 10:18:59
+## [1.21.1-1.0.22](https://github.com/CyclopsMC/IntegratedScripting/compare/1.21.1-1.0.21...1.21.1-1.0.22) - 2026-05-16 10:18:59 +0200
 
 
 ### Fixed
