@@ -268,8 +268,30 @@ public class ScriptingData implements IScriptingData {
         }
     }
 
+    boolean isScriptPathSafe(int disk, Path supplied) {
+        if (supplied == null || supplied.isAbsolute()) {
+            return false;
+        }
+
+        Path relative = supplied.normalize();
+
+        if (relative.getNameCount() == 0 || relative.startsWith("..")) {
+            return false;
+        }
+
+        Path diskRoot = getDiskPath(disk).toAbsolutePath().normalize();
+        Path resolved = diskRoot.resolve(relative).normalize();
+
+        return resolved.startsWith(diskRoot);
+    }
+
     @Override
     public void setScript(int disk, Path scriptPathRelative, @Nullable String script, ChangeLocation changeLocation) {
+        // Validate that the path is safe and contained within the disk root
+        if (!isScriptPathSafe(disk, scriptPathRelative)) {
+            return;
+        }
+
         // Update script data
         Map<Path, String> scripts = diskScripts.get(disk);
         if (scripts == null) {
