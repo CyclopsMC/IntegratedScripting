@@ -368,7 +368,18 @@ jacocoTestReport {
 }
 
 // Also measure coverage for game tests
-jacocoTestReport.dependsOn test, runGameTestServer
+jacocoTestReport {
+    dependsOn test, runGameTestServer
+
+    // This filter is necessary, as the packaged dependencies cause problems with jacoco
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, include: [
+                    "org/cyclops/**/*"
+            ])
+        }))
+    }
+}
 jacoco {
     toolVersion = "0.8.14"
     applyTo runGameTestServer
