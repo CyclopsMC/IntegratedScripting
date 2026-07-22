@@ -1,0 +1,7 @@
+As always, don't forget to backup your world before updating!
+Requires CyclopsCore version 1.25.5 or higher.
+
+Fixes:
+* Rewrite shadowing graal using fallback classloader
+This commit has been cherry-picked from @wagyourtail's PR in #36.
+Closes #63

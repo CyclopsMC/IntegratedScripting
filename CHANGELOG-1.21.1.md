@@ -1,8 +1,17 @@
 # Changelog for Minecraft 1.21.1
 All notable changes to this project will be documented in this file.
 
+<a name="1.21.1-1.0.24"></a>
+## [1.21.1-1.0.24](https://github.com/CyclopsMC/IntegratedScripting/compare/1.21.1-1.0.23...1.21.1-1.0.24) - 2026-07-22 16:26:07
+
+
+### Fixed
+* Rewrite shadowing graal using fallback classloader
+This commit has been cherry-picked from @wagyourtail's PR in #36.
+Closes #63
+
 <a name="1.21.1-1.0.23"></a>
-## [1.21.1-1.0.23](https://github.com/CyclopsMC/IntegratedScripting/compare/1.21.1-1.0.22...1.21.1-1.0.23) - 2026-07-13 20:13:16
+## [1.21.1-1.0.23](https://github.com/CyclopsMC/IntegratedScripting/compare/1.21.1-1.0.22...1.21.1-1.0.23) - 2026-07-13 20:13:16 +0200
 
 
 ### Fixed
