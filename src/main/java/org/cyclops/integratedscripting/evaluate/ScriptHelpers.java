@@ -7,6 +7,7 @@ import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationC
 import org.cyclops.integrateddynamics.core.evaluate.operator.Operators;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeOperator;
 import org.cyclops.integratedscripting.GeneralConfig;
+import org.cyclops.integratedscripting.UnsafeHelper;
 import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExceptionFactory;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
 import org.graalvm.polyglot.*;
@@ -21,10 +22,18 @@ import java.util.function.Function;
  */
 public class ScriptHelpers {
 
-    private static final Engine ENGINE = Engine
-            .newBuilder()
-            .option("engine.WarnInterpreterOnly", "false")
-            .build();
+    private static final Engine ENGINE;
+    static {
+        ClassLoader c = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(UnsafeHelper.makeFallbackClassloader());
+        try {
+            ENGINE = Engine.newBuilder()
+                .option("engine.WarnInterpreterOnly", "false")
+                .build();
+        } finally {
+            Thread.currentThread().setContextClassLoader(c);
+        }
+    }
 
     public static Context createBaseContext(@Nullable Function<Context.Builder, Context.Builder> contextBuilderModifier) {
         Context.Builder contextBuilder = Context
