@@ -16,6 +16,7 @@ org.cyclops.integratedscripting.core.evaluate
 org.cyclops.integratedscripting.core.item
 org.cyclops.integratedscripting.core.language
 org.cyclops.integratedscripting.core.network
+org.cyclops.integratedscripting.core.packageddependencies
 org.cyclops.integratedscripting.evaluate
 org.cyclops.integratedscripting.evaluate.translation
 org.cyclops.integratedscripting.evaluate.translation.translator
