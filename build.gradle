@@ -391,7 +391,18 @@ jacocoTestReport {
 // Also measure coverage for game tests
 tasks.whenTaskAdded { task ->
     if (task.name.equals('runGameTestServer')) {
-        jacocoTestReport.dependsOn test, task
+        jacocoTestReport {
+            dependsOn test, task
+
+            // This filter is necessary, as the packaged dependencies cause problems with jacoco
+            afterEvaluate {
+                classDirectories.setFrom(files(classDirectories.files.collect {
+                    fileTree(dir: it, include: [
+                            "org/cyclops/**/*"
+                    ])
+                }))
+            }
+        }
         jacoco {
             toolVersion = "0.8.12"
             applyTo task
