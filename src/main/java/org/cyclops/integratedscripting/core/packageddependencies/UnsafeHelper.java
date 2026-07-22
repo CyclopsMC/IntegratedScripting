@@ -1,4 +1,4 @@
-package org.cyclops.integratedscripting;
+package org.cyclops.integratedscripting.core.packageddependencies;
 
 import net.neoforged.fml.classloading.ModuleClassLoader;
 import sun.misc.Unsafe;

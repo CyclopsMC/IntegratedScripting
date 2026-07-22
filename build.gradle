@@ -97,7 +97,7 @@ sourceSets.main.resources { srcDir 'src/generated/resources' }
 
 configurations {
     modLib
-    graaldeps
+    packageddependencies
     implementation.extendsFrom modLib
 }
 
@@ -159,12 +159,12 @@ dependencies {
 
     // https://mvnrepository.com/artifact/org.graalvm.sdk/graal-sdk
     compileOnly(testImplementation("org.graalvm.sdk:graal-sdk:${project.graal_version}"))
-    graaldeps "org.graalvm.sdk:graal-sdk:${project.graal_version}"
+    packageddependencies "org.graalvm.sdk:graal-sdk:${project.graal_version}"
     // https://mvnrepository.com/artifact/org.graalvm.js/js
     compileOnly(testImplementation("org.graalvm.js:js:${project.graal_version}") {
         exclude group: 'com.ibm.icu', module: 'icu4j'
     })
-    graaldeps "org.graalvm.js:js:${project.graal_version}"
+    packageddependencies "org.graalvm.js:js:${project.graal_version}"
 }
 
 test {
@@ -267,15 +267,18 @@ processResources {
             'commoncapabilities_version_semver'     : commoncapabilities_version.replaceAll("-.*\$", ""),
             'integrateddynamics_version'            : integrateddynamics_version,
             'integrateddynamics_version_semver'     : integrateddynamics_version.replaceAll("-.*\$", ""),
-            'graaldeps' : configurations.graaldeps.files.findAll { it.name.endsWith(".jar") }.collect { "\"META-INF/graaldeps/${it.name}\"" }.join(", ")
+            'packageddependencies'                  : configurations.packageddependencies.files
+                                                        .findAll { it.name.endsWith(".jar") }
+                                                        .collect { "\"META-INF/packageddependencies/${it.name}\"" }
+                                                        .join(", ")
     ]
 
-    filesMatching(['pack.mcmeta', 'META-INF/mods.toml', 'META-INF/neoforge.mods.toml', 'mixins.*.json', 'graaldeps.json']) {
+    filesMatching(['pack.mcmeta', 'META-INF/mods.toml', 'META-INF/neoforge.mods.toml', 'mixins.*.json', 'META-INF/packageddependencies.json']) {
         expand expandProps
     }
-    from(configurations.graaldeps.files) {
+    from(configurations.packageddependencies.files) {
         include("*.jar")
-        into "META-INF/graaldeps"
+        into "META-INF/packageddependencies"
     }
     inputs.properties(expandProps)
 }
