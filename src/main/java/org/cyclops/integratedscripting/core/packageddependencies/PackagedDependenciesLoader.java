@@ -6,6 +6,7 @@ import net.minecraft.util.GsonHelper;
 import net.neoforged.fml.loading.FMLLoader;
 import org.apache.commons.io.function.IOStream;
 import org.cyclops.integratedscripting.IntegratedScripting;
+import org.graalvm.polyglot.Context;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,7 +28,7 @@ import java.util.stream.Stream;
 public class PackagedDependenciesLoader {
     public static void load() throws IOException {
         JsonObject jo;
-        Path tmp = FMLLoader.getCurrent().getGameDir().resolve("libraries-integratedscripting");
+        Path tmp = FMLLoader.getGamePath().resolve("libraries-integratedscripting");
         Files.createDirectories(tmp);
         Set<Path> outFiles = new HashSet<>();
         try (InputStream is = IntegratedScripting.class.getResourceAsStream("/META-INF/packageddependencies.json")) {
@@ -54,5 +55,18 @@ public class PackagedDependenciesLoader {
         }
 
         IntegratedScripting.clog(outFiles.size() + " Packaged dependencies loaded");
+
+        // Pre-load GraalJS fully in the fallback classloader.
+        ClassLoader f = UnsafeHelper.makeFallbackClassloader();
+        ClassLoader p = Thread.currentThread().getContextClassLoader();
+        Thread.currentThread().setContextClassLoader(f);
+        try {
+            Context.Builder build = Context.newBuilder("js");
+            Context con = build.build();
+            con.eval("js", "console.log('graaljs has been pre-loaded.')");
+            con.close();
+        } finally {
+            Thread.currentThread().setContextClassLoader(p);
+        }
     }
 }

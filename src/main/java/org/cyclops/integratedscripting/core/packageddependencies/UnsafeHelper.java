@@ -1,6 +1,6 @@
 package org.cyclops.integratedscripting.core.packageddependencies;
 
-import net.neoforged.fml.classloading.ModuleClassLoader;
+import cpw.mods.cl.ModuleClassLoader;
 import sun.misc.Unsafe;
 
 import java.lang.invoke.MethodHandle;
