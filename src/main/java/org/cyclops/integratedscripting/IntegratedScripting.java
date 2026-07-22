@@ -35,6 +35,7 @@ import org.cyclops.integratedscripting.command.CommandTestScript;
 import org.cyclops.integratedscripting.component.DataComponentDiskIdConfig;
 import org.cyclops.integratedscripting.core.client.model.ScriptingVariableModelProviders;
 import org.cyclops.integratedscripting.core.evaluate.ScriptVariableFacadeHandler;
+import org.cyclops.integratedscripting.core.packageddependencies.PackagedDependenciesLoader;
 import org.cyclops.integratedscripting.core.language.LanguageHandlerRegistry;
 import org.cyclops.integratedscripting.core.language.LanguageHandlers;
 import org.cyclops.integratedscripting.core.network.ScriptingData;
@@ -48,6 +49,8 @@ import org.cyclops.integratedscripting.item.ItemScriptingDiskConfig;
 import org.cyclops.integratedscripting.part.PartTypes;
 import org.cyclops.integratedscripting.proxy.ClientProxy;
 import org.cyclops.integratedscripting.proxy.CommonProxy;
+
+import java.io.IOException;
 
 /**
  * The main mod class of this mod.
@@ -63,6 +66,12 @@ public class IntegratedScripting extends ModBaseNeoForge<IntegratedScripting> {
 
     public IntegratedScripting(IEventBus modEventBus) {
         super(Reference.MOD_ID, (instance) -> _instance = instance, modEventBus);
+
+        try {
+            PackagedDependenciesLoader.load();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
 
         getRegistryManager().addRegistry(IValueTranslatorRegistry.class, ValueTranslatorRegistry.getInstance());
         getRegistryManager().addRegistry(ILanguageHandlerRegistry.class, LanguageHandlerRegistry.getInstance());

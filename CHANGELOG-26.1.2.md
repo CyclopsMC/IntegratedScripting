@@ -1,8 +1,17 @@
 # Changelog for Minecraft 26.1.2
 All notable changes to this project will be documented in this file.
 
+<a name="26.1.2-1.0.24"></a>
+## [26.1.2-1.0.24](https://github.com/CyclopsMC/IntegratedScripting/compare/26.1.2-1.0.23...26.1.2-1.0.24) - 2026-07-22 16:29:38
+
+
+### Fixed
+* Rewrite shadowing graal using fallback classloader
+This commit has been cherry-picked from @wagyourtail's PR in #36.
+Closes #63
+
 <a name="26.1.2-1.0.23"></a>
-## [26.1.2-1.0.23](https://github.com/CyclopsMC/IntegratedScripting/compare/26.1.2-1.0.22...26.1.2-1.0.23) - 2026-07-13 20:25:08
+## [26.1.2-1.0.23](https://github.com/CyclopsMC/IntegratedScripting/compare/26.1.2-1.0.22...26.1.2-1.0.23) - 2026-07-13 20:25:08 +0200
 
 
 ### Added
