@@ -46,7 +46,13 @@ public class GraalScriptFactory implements IScriptFactory {
 
         try {
             // Read script
-            Source source = Source.newBuilder(this.languageId, ScriptingNetworkHelpers.getScriptingData().getScripts(disk).get(path), path.toString()).build();
+            String contents = ScriptingNetworkHelpers.getScriptingData().getScripts(disk).get(path);
+            if (contents == null) {
+                throw EvaluationExceptionResolutionHelpers.resolveOnScriptChange(
+                        new EvaluationException(Component.translatable("script.integratedscripting.error.script_missing", path.toString(), disk)),
+                        disk, path);
+            }
+            Source source = Source.newBuilder(this.languageId, contents, path.toString()).build();
             try {
                 graalContext.eval(source);
             } catch (PolyglotException e) {
