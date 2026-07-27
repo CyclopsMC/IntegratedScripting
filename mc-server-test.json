@@ -1,0 +1,26 @@
+{
+  "name": "Server with Game Tests",
+  "steps": [
+    {
+      "type": "ENDS_WITH",
+      "message": "For help, type \"help\""
+    },
+    {
+      "type": "SEND",
+      "message": "test run integratedscripting:*"
+    },
+    {
+      "type": "ENDS_WITH",
+      "message": "All required tests passed :)",
+      "timeout": 600
+    },
+    {
+      "type": "SEND",
+      "message": "stop",
+      "timeout": 60
+    },
+    {
+      "type": "SUCCESS"
+    }
+  ]
+}

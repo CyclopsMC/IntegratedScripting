@@ -22,9 +22,13 @@ jobs:
         distribution:
           - 'adopt-hotspot'
           - 'oracle'
+          - 'graalvm'
         include:
           - java: 25
             distribution: 'microsoft'
+        exclude:
+          - java: 26 # GraalVM doesn't support Java 26 yet
+            distribution: 'graalvm'
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
@@ -81,6 +85,18 @@ jobs:
         with:
           if-no-files-found: error
           path: build/libs/*
+      - name: 'Copy mod jars to production server'
+        run: ./gradlew copyDependencies
+      - name: 'Test in production server'
+        timeout-minutes: 10
+        uses: headlesshq/mc-server-test@1.1.1
+        env:
+          CYCLOPSMC_ENABLEDGAMETESTSGLOBAL: true
+        with:
+          java: ${{ env.java_version }}
+          mc: 26.1.2
+          modloader: neoforge
+          test-file: './mc-server-test.json'
       - name: 'Deploy to CurseForge'
         if: (startsWith(github.ref, 'refs/tags/') || (!startsWith(github.event.head_commit.message, 'Bump mod version') && startsWith(github.ref, 'refs/heads/master'))) && startsWith(matrix.java, env.DEFAULT_JAVA_VERSION) && startsWith(matrix.distribution, env.DEFAULT_JAVA_DISTRIBUTION)
         env:

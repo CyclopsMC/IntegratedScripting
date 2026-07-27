@@ -405,3 +405,17 @@ compileJava.dependsOn updateGitHooks
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8' // Use the UTF-8 charset for Java compilation
 }
+
+def cyclopsArtifacts = configurations.runtimeClasspath.incoming.artifacts.resolvedArtifacts.map { artifacts ->
+    artifacts.findAll { artifact ->
+        def id = artifact.variant.owner
+        id instanceof org.gradle.api.artifacts.component.ModuleComponentIdentifier &&
+                id.group.startsWith("org.cyclops")
+    }.collect { it.file }
+}
+tasks.register("copyDependencies", Copy) {
+    from(cyclopsArtifacts)
+    from(tasks.named("jar"))
+    into(layout.projectDirectory.dir("run/mods"))
+    dependsOn(tasks.named("jar"))
+}
