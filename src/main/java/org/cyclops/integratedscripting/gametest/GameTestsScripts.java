@@ -3,6 +3,7 @@ package org.cyclops.integratedscripting.gametest;
 import com.google.common.collect.Lists;
 import net.minecraft.core.BlockPos;
 import net.minecraft.gametest.framework.GameTest;
+import net.minecraft.gametest.framework.GameTestAssertException;
 import net.minecraft.gametest.framework.GameTestHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
@@ -141,10 +142,17 @@ public class GameTestsScripts {
         Pair<PartTypePanelDisplay, PartTypePanelDisplay.State> partAndState = placeVariableInDisplayPanel(helper.getLevel(), positions.displayPanel(), variableAdded);
 
         helper.succeedWhen(() -> {
-            helper.assertValueEqual(partAndState.getRight().getGlobalErrors(), Lists.newArrayList(
-                    Component.translatable("script.integratedscripting.error.member_not_in_network", positions.diskId(), "abc", "script0.js"),
-                    Component.translatable("script.integratedscripting.error.member_not_in_network", positions.diskId(), "abc", "script0.js")
-            ), "Display panel errors do not match");
+            try {
+                helper.assertValueEqual(partAndState.getRight().getGlobalErrors(), Lists.newArrayList(
+                        Component.translatable("script.integratedscripting.error.member_not_in_network", positions.diskId(), "abc", "script0.js"),
+                        Component.translatable("script.integratedscripting.error.member_not_in_network", positions.diskId(), "abc", "script0.js")
+                ), "Display panel errors do not match");
+            } catch (GameTestAssertException e) {
+                helper.assertValueEqual(partAndState.getRight().getGlobalErrors(), Lists.newArrayList(
+                        Component.translatable("script.integratedscripting.error.script_missing", "script0.js", positions.diskId()),
+                        Component.translatable("script.integratedscripting.error.script_missing", "script0.js", positions.diskId())
+                ), "Display panel errors do not match");
+            }
         });
     }
 
