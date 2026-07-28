@@ -1,8 +1,15 @@
 # Changelog for Minecraft 26.1.2
 All notable changes to this project will be documented in this file.
 
+<a name="26.1.2-1.0.25"></a>
+## [26.1.2-1.0.25](https://github.com/CyclopsMC/IntegratedScripting/compare/26.1.2-1.0.24...26.1.2-1.0.25) - 2026-07-28 16:57:46
+
+
+### Fixed
+* Don't crash when evaluating a non-existing script
+
 <a name="26.1.2-1.0.24"></a>
-## [26.1.2-1.0.24](https://github.com/CyclopsMC/IntegratedScripting/compare/26.1.2-1.0.23...26.1.2-1.0.24) - 2026-07-22 16:29:38
+## [26.1.2-1.0.24](https://github.com/CyclopsMC/IntegratedScripting/compare/26.1.2-1.0.23...26.1.2-1.0.24) - 2026-07-22 16:29:38 +0200
 
 
 ### Fixed
