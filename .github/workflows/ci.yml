@@ -22,6 +22,7 @@ jobs:
         distribution:
           - 'adopt-hotspot'
           - 'oracle'
+          - 'temurin'
           - 'graalvm'
         include:
           - java: 25
