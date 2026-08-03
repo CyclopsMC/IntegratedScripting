@@ -23,6 +23,7 @@ jobs:
         distribution:
           - 'adopt-hotspot'
           - 'oracle'
+          - 'temurin'
         include:
           - java: 21
             distribution: 'microsoft'
