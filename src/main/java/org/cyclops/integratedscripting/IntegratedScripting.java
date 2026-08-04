@@ -66,7 +66,6 @@ public class IntegratedScripting extends ModBaseNeoForge<IntegratedScripting> {
 
     public IntegratedScripting(IEventBus modEventBus) {
         super(Reference.MOD_ID, (instance) -> _instance = instance, modEventBus);
-        System.out.println("RUNNING ON OS: " + System.getProperty("os.name") + " " + System.getProperty("os.version") + " " + System.getProperty("os.arch"));
 
         try {
             PackagedDependenciesLoader.load();
