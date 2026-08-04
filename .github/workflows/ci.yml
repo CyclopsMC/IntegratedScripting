@@ -11,11 +11,13 @@ env:
 
 jobs:
   build:
-    name: Build for Java ${{ matrix.java }} on ${{ matrix.distribution }}
+    name: Build for Java ${{ matrix.java }} on ${{ matrix.distribution }} on ${{ matrix.os }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
+        os:
+          - 'ubuntu-latest'
         java:
           - 21
           - 22
@@ -27,11 +29,20 @@ jobs:
         include:
           - java: 21
             distribution: 'microsoft'
+          - os: 'openbsd'
+            java: 21
+            distribution: 'temurin'
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
         with:
           submodules: true
+      - name: Start VM
+        if: matrix.os == 'openbsd'
+        uses: cross-platform-actions/action@v1.3.0
+        with:
+          operating_system: freebsd
+          version: '15.1'
       - name: 'Setup Java'
         uses: actions/setup-java@v4
         with:
