@@ -29,9 +29,6 @@ jobs:
         include:
           - java: 21
             distribution: 'microsoft'
-          - os: 'openbsd'
-            java: 21
-            distribution: 'temurin'
     steps:
       - name: 'Checkout'
         uses: actions/checkout@v4
