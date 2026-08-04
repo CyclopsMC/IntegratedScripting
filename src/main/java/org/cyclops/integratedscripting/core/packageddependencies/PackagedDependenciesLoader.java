@@ -27,6 +27,11 @@ import java.util.stream.Stream;
  */
 public class PackagedDependenciesLoader {
     public static void load() throws IOException {
+        // Forcefully make Graal run on unsupported OSes (such as OpenBSD). It will fall back to a slower version.
+        System.setProperty("polyglot.engine.allowUnsupportedPlatform", "true");
+        System.setProperty("polyglot.engine.userResourceCache", System.getProperty("java.io.tmpdir"));
+
+        // Load libraries
         JsonObject jo;
         Path tmp = FMLLoader.getGamePath().resolve("libraries-integratedscripting");
         Files.createDirectories(tmp);
