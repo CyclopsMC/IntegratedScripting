@@ -1,8 +1,19 @@
 # Changelog for Minecraft 1.21.1
 All notable changes to this project will be documented in this file.
 
+<a name="1.21.1-1.0.25"></a>
+## [1.21.1-1.0.25](https://github.com/CyclopsMC/IntegratedScripting/compare/1.21.1-1.0.24...1.21.1-1.0.25) - 2026-08-04 07:40:56
+
+
+### Changed
+* Update to Graal 25.1.3
+
+### Fixed
+* Fix unable to run on some OSes such as OpenBSD
+* Don't crash when evaluating a non-existing script
+
 <a name="1.21.1-1.0.24"></a>
-## [1.21.1-1.0.24](https://github.com/CyclopsMC/IntegratedScripting/compare/1.21.1-1.0.23...1.21.1-1.0.24) - 2026-07-22 16:26:07
+## [1.21.1-1.0.24](https://github.com/CyclopsMC/IntegratedScripting/compare/1.21.1-1.0.23...1.21.1-1.0.24) - 2026-07-22 16:26:07 +0200
 
 
 ### Fixed
