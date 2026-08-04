@@ -1,8 +1,18 @@
 # Changelog for Minecraft 26.1.2
 All notable changes to this project will be documented in this file.
 
+<a name="26.1.2-1.0.26"></a>
+## [26.1.2-1.0.26](https://github.com/CyclopsMC/IntegratedScripting/compare/26.1.2-1.0.25...26.1.2-1.0.26) - 2026-08-04 07:44:11
+
+
+### Changed
+* Update to Graal 25.1.3
+
+### Fixed
+* Fix unable to run on some OSes such as OpenBSD
+
 <a name="26.1.2-1.0.25"></a>
-## [26.1.2-1.0.25](https://github.com/CyclopsMC/IntegratedScripting/compare/26.1.2-1.0.24...26.1.2-1.0.25) - 2026-07-28 16:57:46
+## [26.1.2-1.0.25](https://github.com/CyclopsMC/IntegratedScripting/compare/26.1.2-1.0.24...26.1.2-1.0.25) - 2026-07-28 16:57:46 +0200
 
 
 ### Fixed
