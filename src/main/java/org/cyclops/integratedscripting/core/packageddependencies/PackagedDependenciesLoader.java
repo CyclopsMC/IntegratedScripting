@@ -6,6 +6,7 @@ import net.minecraft.util.GsonHelper;
 import net.neoforged.fml.loading.FMLLoader;
 import org.apache.commons.io.function.IOStream;
 import org.cyclops.integratedscripting.IntegratedScripting;
+import org.cyclops.integratedscripting.evaluate.ScriptHelpers;
 import org.graalvm.polyglot.Context;
 
 import java.io.IOException;
@@ -73,5 +74,10 @@ public class PackagedDependenciesLoader {
         } finally {
             Thread.currentThread().setContextClassLoader(p);
         }
+        ScriptHelpers.load();
+
+        // Clear properties to avoid conflicts with other mods that package Graal on a different version (such as Cobblemon)
+        System.clearProperty("polyglot.engine.allowUnsupportedPlatform");
+        System.clearProperty("polyglot.engine.userResourceCache");
     }
 }

@@ -1,8 +1,21 @@
 # Changelog for Minecraft 26.1.2
 All notable changes to this project will be documented in this file.
 
+<a name="26.1.2-1.0.27"></a>
+## [26.1.2-1.0.27](https://github.com/CyclopsMC/IntegratedScripting/compare/26.1.2-1.0.26...26.1.2-1.0.27) - 2026-08-13 18:42:32
+
+
+### Changed
+* Update graal_version from 25.1.3 to 25.2.4
+
+### Fixed
+* Only temporarily set polyglot system props
+  This fixes compat issues with Cobblemon, which package an older version
+  of Graal that crashes on these system props.
+  Closes #66
+
 <a name="26.1.2-1.0.26"></a>
-## [26.1.2-1.0.26](https://github.com/CyclopsMC/IntegratedScripting/compare/26.1.2-1.0.25...26.1.2-1.0.26) - 2026-08-04 07:44:11
+## [26.1.2-1.0.26](https://github.com/CyclopsMC/IntegratedScripting/compare/26.1.2-1.0.25...26.1.2-1.0.26) - 2026-08-04 07:44:11 +0200
 
 
 ### Changed

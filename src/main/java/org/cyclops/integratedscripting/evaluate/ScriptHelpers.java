@@ -35,6 +35,10 @@ public class ScriptHelpers {
         }
     }
 
+    public static void load() {
+        // Do nothing
+    }
+
     public static Context createBaseContext(@Nullable Function<Context.Builder, Context.Builder> contextBuilderModifier) {
         Context.Builder contextBuilder = Context
                 .newBuilder()
