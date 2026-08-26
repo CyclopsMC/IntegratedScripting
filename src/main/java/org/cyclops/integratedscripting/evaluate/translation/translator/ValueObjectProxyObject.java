@@ -5,12 +5,14 @@ import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
+import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
 import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
 import org.cyclops.integrateddynamics.core.evaluate.operator.CurriedOperator;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueObjectTypeBase;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeOperator;
 import org.cyclops.integrateddynamics.core.evaluate.variable.Variable;
 import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExceptionFactory;
+import org.cyclops.integratedscripting.api.evaluate.translation.IValueProxy;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
@@ -23,7 +25,7 @@ import java.util.Map;
  * A Graal proxy object for object values.
  * @author rubensworks
  */
-public class ValueObjectProxyObject<V extends IValue> implements ProxyObject {
+public class ValueObjectProxyObject<V extends IValue> implements ProxyObject, IValueProxy {
 
     private final Context context;
     private final IEvaluationExceptionFactory exceptionFactory;
@@ -50,6 +52,11 @@ public class ValueObjectProxyObject<V extends IValue> implements ProxyObject {
 
     public ValueObjectTypeBase<V> getValueType() {
         return valueType;
+    }
+
+    @Override
+    public IValueType<?> getProxiedValueType() {
+        return this.valueType;
     }
 
     @Nullable
