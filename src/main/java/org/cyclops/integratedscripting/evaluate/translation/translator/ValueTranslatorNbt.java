@@ -112,13 +112,8 @@ public class ValueTranslatorNbt implements IValueTranslator<ValueTypeNbt.ValueNb
     @Override
     public ValueTypeNbt.ValueNbt translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory, ValueDeseralizationContext valueDeseralizationContext) throws EvaluationException {
         // Unwrap the value if it was translated in the opposite direction before.
-        if (value.isProxyObject()) {
-            try {
-                NbtCompoundTagProxyObject proxy = value.asProxyObject();
-                return ValueTypeNbt.ValueNbt.of(proxy.getTag());
-            } catch (ClassCastException classCastException) {
-                // Fallback to case below
-            }
+        if (value.isProxyObject() && value.asProxyObject() instanceof NbtCompoundTagProxyObject proxy) {
+            return ValueTypeNbt.ValueNbt.of(proxy.getTag());
         }
 
         if (value.getMemberKeys().equals(Sets.newHashSet(KEY_END_TAG))) {
