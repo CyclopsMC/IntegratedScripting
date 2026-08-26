@@ -11,6 +11,7 @@ import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExcep
 import org.cyclops.integratedscripting.core.packageddependencies.UnsafeHelper;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
 import org.graalvm.polyglot.*;
+import org.graalvm.polyglot.proxy.ProxyExecutable;
 
 import javax.annotation.Nullable;
 import java.nio.file.Path;
@@ -34,6 +35,32 @@ public class ScriptHelpers {
             Thread.currentThread().setContextClassLoader(c);
         }
     }
+
+    /**
+     * A factory for the {@code idContext} object, with {@code ops} defined as a self-replacing lazy getter.
+     * This way, the global operators are only translated once a script actually accesses them,
+     * while accesses after the first one are plain property reads.
+     */
+    private static final Source SOURCE_ID_CONTEXT = Source.newBuilder("js", """
+            (function(resolveOps) {
+                var idContext = {};
+                Object.defineProperty(idContext, 'ops', {
+                    configurable: true,
+                    enumerable: true,
+                    get: function() {
+                        var ops = resolveOps();
+                        Object.defineProperty(idContext, 'ops', {
+                            value: ops,
+                            configurable: true,
+                            enumerable: true,
+                            writable: true,
+                        });
+                        return ops;
+                    },
+                });
+                return idContext;
+            })
+            """, "integratedscripting_idcontext.js").buildLiteral();
 
     public static void load() {
         // Do nothing
@@ -78,15 +105,23 @@ public class ScriptHelpers {
     public static Context createPopulatedContext(@Nullable Function<Context.Builder, Context.Builder> contextBuilderModifier, ValueDeseralizationContext valueDeseralizationContext) throws EvaluationException {
         Context context = createBaseContext(contextBuilderModifier);
 
-        // Create idContext field with ops
+        // Create idContext field with ops.
+        // The ops object is populated lazily, because translating all global operators is expensive,
+        // while many scripts never touch them.
         Value jsBindings = context.getBindings("js");
-        Value jsObjectClass = jsBindings.getMember("Object");
-        Value idContext = jsObjectClass.newInstance();
-        Value ops = jsObjectClass.newInstance();
-        for (Map.Entry<String, IOperator> entry : Operators.REGISTRY.getGlobalInteractOperators().entrySet()) {
-            ops.putMember(entry.getKey(), ValueTranslators.REGISTRY.translateToGraal(context, ValueTypeOperator.ValueOperator.of(entry.getValue()), getDummyEvaluationExceptionFactory(), valueDeseralizationContext));
-        }
-        idContext.putMember("ops", ops);
+        Value idContext = context.eval(SOURCE_ID_CONTEXT).execute((ProxyExecutable) args -> {
+            Value ops = jsBindings.getMember("Object").newInstance();
+            try {
+                for (Map.Entry<String, IOperator> entry : Operators.REGISTRY.getGlobalInteractOperators().entrySet()) {
+                    ops.putMember(entry.getKey(), ValueTranslators.REGISTRY.translateToGraal(context,
+                            ValueTypeOperator.ValueOperator.of(entry.getValue()),
+                            getDummyEvaluationExceptionFactory(), valueDeseralizationContext));
+                }
+            } catch (EvaluationException e) {
+                throw new RuntimeException(e);
+            }
+            return ops;
+        });
         jsBindings.putMember("idContext", idContext);
 
         return context;
