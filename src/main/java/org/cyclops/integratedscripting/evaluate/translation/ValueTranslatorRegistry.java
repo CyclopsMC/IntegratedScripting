@@ -9,11 +9,13 @@ import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
 import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
 import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExceptionFactory;
+import org.cyclops.integratedscripting.api.evaluate.translation.IValueProxy;
 import org.cyclops.integratedscripting.api.evaluate.translation.IValueTranslator;
 import org.cyclops.integratedscripting.api.evaluate.translation.IValueTranslatorRegistry;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
 
+import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -87,6 +89,14 @@ public class ValueTranslatorRegistry implements IValueTranslatorRegistry {
             } else {
                 if (!valueMembersResolved) {
                     valueMembersResolved = true;
+
+                    // Fast path for values that were translated to Graal before:
+                    // their proxy directly tells us which value type they correspond to.
+                    IValueTranslator proxiedTranslator = getProxiedValueTranslator(scriptValue);
+                    if (proxiedTranslator != null) {
+                        return proxiedTranslator;
+                    }
+
                     valueMemberKeys = scriptValue.hasMembers() ? scriptValue.getMemberKeys() : null;
                 }
                 if (valueMemberKeys != null
@@ -95,6 +105,14 @@ public class ValueTranslatorRegistry implements IValueTranslatorRegistry {
                     return translators[i];
                 }
             }
+        }
+        return null;
+    }
+
+    @Nullable
+    protected IValueTranslator getProxiedValueTranslator(Value scriptValue) {
+        if (scriptValue.isProxyObject() && scriptValue.asProxyObject() instanceof IValueProxy valueProxy) {
+            return getValueTypeTranslator(valueProxy.getProxiedValueType());
         }
         return null;
     }
