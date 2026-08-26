@@ -53,12 +53,10 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
     @Override
     public boolean canHandleGraalValue(Value value) {
         if (value.isProxyObject()) {
-            try {
-                ValueObjectProxyObject<?> proxyObject = value.asProxyObject();
-                return proxyObject.getValue() != null && proxyObject.getValue().getType() == this.valueType;
-            } catch (ClassCastException e) {
-                // Ignore error
-            }
+            Object proxyObject = value.asProxyObject();
+            return proxyObject instanceof ValueObjectProxyObject<?> valueObjectProxyObject
+                    && valueObjectProxyObject.getValue() != null
+                    && valueObjectProxyObject.getValue().getType() == this.valueType;
         }
         return value.getMemberKeys().equals(this.keys);
     }
@@ -103,13 +101,8 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
     @Override
     public V translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory, ValueDeseralizationContext valueDeseralizationContext) throws EvaluationException {
         // Unwrap the value if it was translated in the opposite direction before.
-        if (value.isProxyObject()) {
-            try {
-                ValueObjectProxyObject proxyObject = value.asProxyObject();
-                return (V) proxyObject.getValue();
-            } catch (ClassCastException e) {
-                // Fallback to case below
-            }
+        if (value.isProxyObject() && value.asProxyObject() instanceof ValueObjectProxyObject<?> proxyObject) {
+            return (V) proxyObject.getValue();
         }
 
         Value idBlock = value.getMember(this.key);
