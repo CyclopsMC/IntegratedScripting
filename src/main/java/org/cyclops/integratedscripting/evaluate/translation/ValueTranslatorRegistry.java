@@ -16,6 +16,7 @@ import org.graalvm.polyglot.Value;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author rubensworks
@@ -26,6 +27,10 @@ public class ValueTranslatorRegistry implements IValueTranslatorRegistry {
 
     private final List<IValueTranslator> translators = Lists.newArrayList();
     private final Map<IValueType<?>, IValueTranslator> valueTypeTranslators = Maps.newIdentityHashMap();
+
+    // Snapshots of translators, and the member keys they dispatch on, to avoid repeated lookups while dispatching.
+    private IValueTranslator[] translatorsArray = new IValueTranslator[0];
+    private String[] translatorMemberKeys = new String[0];
 
     private ValueTranslatorRegistry() {
     }
@@ -41,6 +46,11 @@ public class ValueTranslatorRegistry implements IValueTranslatorRegistry {
     public void register(IValueTranslator translator) {
         translators.add(translator);
         valueTypeTranslators.put(translator.getValueType(), translator);
+
+        this.translatorsArray = translators.toArray(new IValueTranslator[0]);
+        this.translatorMemberKeys = translators.stream()
+                .map(IValueTranslator::getGraalValueMemberKey)
+                .toArray(String[]::new);
     }
 
     @Override
@@ -59,9 +69,31 @@ public class ValueTranslatorRegistry implements IValueTranslatorRegistry {
 
     @Override
     public IValueTranslator getScriptValueTranslator(Value scriptValue) {
-        for (IValueTranslator translator : translators) {
-            if (translator.canHandleGraalValue(scriptValue)) {
-                return translator;
+        // Translators that dispatch on a single member key are all matched against the same member key set,
+        // which is only materialized once, and only once such a translator is actually reached.
+        // Crossing the host boundary is relatively expensive,
+        // so the number of calls on the Graal value is deliberately kept as low as possible here.
+        Set<String> valueMemberKeys = null;
+        boolean valueMembersResolved = false;
+
+        IValueTranslator[] translators = this.translatorsArray;
+        String[] translatorMemberKeys = this.translatorMemberKeys;
+        for (int i = 0; i < translators.length; i++) {
+            String translatorMemberKey = translatorMemberKeys[i];
+            if (translatorMemberKey == null) {
+                if (translators[i].canHandleGraalValue(scriptValue)) {
+                    return translators[i];
+                }
+            } else {
+                if (!valueMembersResolved) {
+                    valueMembersResolved = true;
+                    valueMemberKeys = scriptValue.hasMembers() ? scriptValue.getMemberKeys() : null;
+                }
+                if (valueMemberKeys != null
+                        && valueMemberKeys.size() == 1
+                        && valueMemberKeys.contains(translatorMemberKey)) {
+                    return translators[i];
+                }
             }
         }
         return null;
