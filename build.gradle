@@ -446,3 +446,9 @@ task benchmark(type: JavaExec) {
     main = "org.cyclops.integratedscripting.evaluate.translation.BenchmarkValueTranslators"
 }
 test.dependsOn benchmark
+
+task benchmarkScriptEvaluation(type: JavaExec) {
+    classpath sourceSets.test.runtimeClasspath
+    main = "org.cyclops.integratedscripting.evaluate.translation.BenchmarkScriptEvaluation"
+}
+test.dependsOn benchmarkScriptEvaluation
