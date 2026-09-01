@@ -39,24 +39,24 @@ public class BenchmarkValueTranslators {
 
         /*
 Latest results
-FromGraal-int: 1.6E-4ms/op
-FromGraal-boolean: 1.8E-4ms/op
-FromGraal-double: 3.1E-4ms/op
-FromGraal-long: 1.1E-4ms/op
-FromGraal-string: 1.3E-4ms/op
-FromGraal-list: 0.0033ms/op
-FromGraal-operator: 0.00185ms/op
-FromGraal-nbt: 0.0222ms/op
-FromGraal-item: 0.00963ms/op
-ToGraal-int: 3.1E-4ms/op
-ToGraal-boolean: 2.5E-4ms/op
-ToGraal-double: 2.9E-4ms/op
-ToGraal-long: 2.8E-4ms/op
-ToGraal-string: 2.5E-4ms/op
-ToGraal-list: 8.3E-4ms/op
-ToGraal-operator: 3.1E-4ms/op
-ToGraal-nbt: 4.2E-4ms/op
-ToGraal-item: 6.7E-4ms/op
+FromGraal-int: 0.000005884ms/op
+FromGraal-boolean: 0.00002270ms/op
+FromGraal-double: 0.00003193ms/op
+FromGraal-long: 0.00002828ms/op
+FromGraal-string: 0.00004549ms/op
+FromGraal-list: 0.0007997ms/op
+FromGraal-operator: 0.0004249ms/op
+FromGraal-nbt: 0.008248ms/op
+FromGraal-item: 0.004357ms/op
+ToGraal-int: 0.00009166ms/op
+ToGraal-boolean: 0.000005404ms/op
+ToGraal-double: 0.00006237ms/op
+ToGraal-long: 0.00006071ms/op
+ToGraal-string: 0.00004514ms/op
+ToGraal-list: 0.0002058ms/op
+ToGraal-operator: 0.00007643ms/op
+ToGraal-nbt: 0.00007930ms/op
+ToGraal-item: 0.00007836ms/op
          */
 
         runFromGraal("int", getJsValue("10"), REPLICATION);
@@ -110,17 +110,36 @@ ToGraal-item: 6.7E-4ms/op
     }
 
     public static void benchmark(String label, ThrowingRunnable runnable, int replication) {
-        long startTime = System.currentTimeMillis();
+        benchmark(label, runnable, replication / 10, replication);
+    }
+
+    public static int ROUNDS = 5;
+
+    public static void benchmark(String label, ThrowingRunnable runnable, int warmup, int replication) {
         try {
-            for (int i = 0; i < replication; i++) {
+            // Warm up the JIT (and Graal's own profiling) before measuring.
+            for (int i = 0; i < warmup; i++) {
                 runnable.run();
             }
+
+            // Run multiple rounds, and report the fastest one,
+            // as that is the least affected by GC pauses and other noise.
+            long best = Long.MAX_VALUE;
+            for (int round = 0; round < ROUNDS; round++) {
+                long startTime = System.nanoTime();
+                for (int i = 0; i < replication; i++) {
+                    runnable.run();
+                }
+                best = Math.min(best, System.nanoTime() - startTime);
+            }
+            System.out.println(label + ": " + format(((double) best) / replication / 1_000_000D) + "ms/op");
         } catch (EvaluationException e) {
             e.printStackTrace();
         }
-        long stopTime = System.currentTimeMillis();
-        long elapsedTime = stopTime - startTime;
-        System.out.println(label + ": " + ((double) elapsedTime) / replication + "ms/op");
+    }
+
+    private static String format(double value) {
+        return new java.math.BigDecimal(value).round(new java.math.MathContext(4)).toPlainString();
     }
 
     @FunctionalInterface

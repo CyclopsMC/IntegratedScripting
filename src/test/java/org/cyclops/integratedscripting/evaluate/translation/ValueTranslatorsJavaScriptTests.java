@@ -505,6 +505,25 @@ public class ValueTranslatorsJavaScriptTests {
     // Entity, ingredients, and recipe are not easily testable
 
     @Test
+    public void testNbtEndTagDoesNotOverrideExports() throws EvaluationException {
+        CTX.eval("js", "exports = { marker: 1 };");
+        ValueTranslators.REGISTRY.translateToGraal(CTX, ValueTypeNbt.ValueNbt.of(EndTag.INSTANCE), EF, VDC);
+        assertThat(CTX.getBindings("js").getMember("exports").getMemberKeys(), equalTo(Sets.newHashSet("marker")));
+    }
+
+    @Test
+    public void testGlobalFunctionsLazyResolution() {
+        Value idContext = CTX.getBindings("js").getMember("idContext");
+
+        // The ops object is resolved lazily, but must be stable once resolved.
+        Value ops = idContext.getMember("ops");
+        assertThat(ops.hasMembers(), is(true));
+        assertThat(ops.getMemberKeys().isEmpty(), is(false));
+        assertThat(CTX.eval("js", "idContext.ops === idContext.ops").asBoolean(), is(true));
+        assertThat(CTX.eval("js", "Object.keys(idContext.ops).length > 0").asBoolean(), is(true));
+    }
+
+    @Test
     public void testGlobalFunctions() throws EvaluationException {
         Value ops = CTX.getBindings("js").getMember("idContext").getMember("ops");
 
