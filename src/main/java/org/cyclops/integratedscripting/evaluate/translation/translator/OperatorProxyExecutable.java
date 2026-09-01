@@ -6,7 +6,10 @@ import org.cyclops.integrateddynamics.api.evaluate.variable.IVariable;
 import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeOperator;
 import org.cyclops.integrateddynamics.core.evaluate.variable.Variable;
+import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypes;
+import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
 import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExceptionFactory;
+import org.cyclops.integratedscripting.api.evaluate.translation.IValueProxy;
 import org.cyclops.integratedscripting.evaluate.ScriptHelpers;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
 import org.graalvm.polyglot.Context;
@@ -17,7 +20,7 @@ import org.graalvm.polyglot.proxy.ProxyExecutable;
  * A Graal proxy executable for operator values.
  * @author rubensworks
  */
-public class OperatorProxyExecutable implements ProxyExecutable {
+public class OperatorProxyExecutable implements ProxyExecutable, IValueProxy {
     private final Context context;
     private final ValueTypeOperator.ValueOperator value;
     private final IEvaluationExceptionFactory exceptionFactory;
@@ -32,6 +35,11 @@ public class OperatorProxyExecutable implements ProxyExecutable {
 
     public ValueTypeOperator.ValueOperator getValue() {
         return value;
+    }
+
+    @Override
+    public IValueType<?> getProxiedValueType() {
+        return ValueTypes.OPERATOR;
     }
 
     @Override

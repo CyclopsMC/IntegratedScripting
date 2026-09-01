@@ -31,7 +31,6 @@ import java.util.Set;
 public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTranslator<V> {
 
     private final String key;
-    private final Set<String> keys;
     private final ValueObjectTypeBase<V> valueType;
 
     @Nullable
@@ -39,7 +38,6 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
 
     public ValueTranslatorObjectAdapter(String key, ValueObjectTypeBase<V> valueType) {
         this.key = key;
-        this.keys = Sets.newHashSet(this.key);
         this.valueType = valueType;
     }
 
@@ -55,14 +53,19 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
     @Override
     public boolean canHandleGraalValue(Value value) {
         if (value.isProxyObject()) {
-            try {
-                ValueObjectProxyObject<?> proxyObject = value.asProxyObject();
-                return proxyObject.getValue() != null && proxyObject.getValue().getType() == this.valueType;
-            } catch (ClassCastException e) {
-                // Ignore error
-            }
+            Object proxyObject = value.asProxyObject();
+            return proxyObject instanceof ValueObjectProxyObject<?> valueObjectProxyObject
+                    && valueObjectProxyObject.getValue() != null
+                    && valueObjectProxyObject.getValue().getType() == this.valueType;
         }
-        return value.getMemberKeys().equals(this.keys);
+        Set<String> memberKeys = value.getMemberKeys();
+        return memberKeys.size() == 1 && memberKeys.contains(this.key);
+    }
+
+    @Nullable
+    @Override
+    public String getGraalValueMemberKey() {
+        return this.key;
     }
 
     @Override
@@ -105,13 +108,8 @@ public class ValueTranslatorObjectAdapter<V extends IValue> implements IValueTra
     @Override
     public V translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory, ValueDeseralizationContext valueDeseralizationContext) throws EvaluationException {
         // Unwrap the value if it was translated in the opposite direction before.
-        if (value.isProxyObject()) {
-            try {
-                ValueObjectProxyObject proxyObject = value.asProxyObject();
-                return (V) proxyObject.getValue();
-            } catch (ClassCastException e) {
-                // Fallback to case below
-            }
+        if (value.isProxyObject() && value.asProxyObject() instanceof ValueObjectProxyObject<?> proxyObject) {
+            return (V) proxyObject.getValue();
         }
 
         Value idBlock = value.getMember(this.key);

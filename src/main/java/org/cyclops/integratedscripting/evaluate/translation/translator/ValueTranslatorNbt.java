@@ -1,5 +1,6 @@
 package org.cyclops.integratedscripting.evaluate.translation.translator;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import net.minecraft.nbt.*;
 import net.minecraft.network.chat.Component;
@@ -15,6 +16,7 @@ import org.cyclops.integratedscripting.api.evaluate.translation.IValueTranslator
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
+import org.graalvm.polyglot.proxy.ProxyObject;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
@@ -25,6 +27,9 @@ import java.util.Map;
  * @author rubensworks
  */
 public class ValueTranslatorNbt implements IValueTranslator<ValueTypeNbt.ValueNbt> {
+
+    private static final String KEY_END_TAG = "nbt_end";
+    private static final ProxyObject PROXY_END_TAG = ProxyObject.fromMap(ImmutableMap.of(KEY_END_TAG, true));
 
     @Override
     public IValueType<?> getValueType() {
@@ -53,7 +58,7 @@ public class ValueTranslatorNbt implements IValueTranslator<ValueTypeNbt.ValueNb
     public Value translateTag(Context context, Tag tag, IEvaluationExceptionFactory exceptionFactory, ValueDeseralizationContext valueDeseralizationContext) throws EvaluationException {
         switch (tag.getId()) {
             case Tag.TAG_END -> {
-                return context.eval("js", "exports = { 'nbt_end': true }");
+                return context.asValue(PROXY_END_TAG);
             }
             case Tag.TAG_BYTE -> {
                 return context.asValue(tag.asByte().orElseThrow());
@@ -107,16 +112,11 @@ public class ValueTranslatorNbt implements IValueTranslator<ValueTypeNbt.ValueNb
     @Override
     public ValueTypeNbt.ValueNbt translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory, ValueDeseralizationContext valueDeseralizationContext) throws EvaluationException {
         // Unwrap the value if it was translated in the opposite direction before.
-        if (value.isProxyObject()) {
-            try {
-                NbtCompoundTagProxyObject proxy = value.asProxyObject();
-                return ValueTypeNbt.ValueNbt.of(proxy.getTag());
-            } catch (ClassCastException classCastException) {
-                // Fallback to case below
-            }
+        if (value.isProxyObject() && value.asProxyObject() instanceof NbtCompoundTagProxyObject proxy) {
+            return ValueTypeNbt.ValueNbt.of(proxy.getTag());
         }
 
-        if (value.getMemberKeys().equals(Sets.newHashSet("nbt_end"))) {
+        if (value.getMemberKeys().equals(Sets.newHashSet(KEY_END_TAG))) {
             return ValueTypeNbt.ValueNbt.of(EndTag.INSTANCE);
         }
 

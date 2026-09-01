@@ -55,13 +55,8 @@ public class ValueTranslatorOperator implements IValueTranslator<ValueTypeOperat
     @Override
     public ValueTypeOperator.ValueOperator translateFromGraal(Context context, Value value, IEvaluationExceptionFactory exceptionFactory, ValueDeseralizationContext valueDeseralizationContext) throws EvaluationException {
         // Unwrap the value if it was translated in the opposite direction before.
-        if (value.isProxyObject()) {
-            try {
-                OperatorProxyExecutable cast = value.asProxyObject();
-                return cast.getValue();
-            } catch (ClassCastException classCastException) {
-                // Fallback to case below
-            }
+        if (value.isProxyObject() && value.asProxyObject() instanceof OperatorProxyExecutable proxy) {
+            return proxy.getValue();
         }
 
         // Determine input args of the function

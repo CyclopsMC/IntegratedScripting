@@ -4,7 +4,10 @@ import net.minecraft.nbt.CompoundTag;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
 import org.cyclops.integrateddynamics.api.evaluate.variable.IValue;
+import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
 import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
+import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypes;
+import org.cyclops.integratedscripting.api.evaluate.translation.IValueProxy;
 import org.cyclops.integrateddynamics.core.evaluate.operator.CurriedOperator;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeOperator;
 import org.cyclops.integrateddynamics.core.evaluate.variable.Variable;
@@ -22,7 +25,7 @@ import java.util.Map;
  * A Graal proxy object for NBT CompoundTag values.
  * @author rubensworks
  */
-public class NbtCompoundTagProxyObject implements ProxyObject {
+public class NbtCompoundTagProxyObject implements ProxyObject, IValueProxy {
 
     private final Context context;
     private final IEvaluationExceptionFactory exceptionFactory;
@@ -45,6 +48,11 @@ public class NbtCompoundTagProxyObject implements ProxyObject {
 
     public CompoundTag getTag() {
         return tag;
+    }
+
+    @Override
+    public IValueType<?> getProxiedValueType() {
+        return ValueTypes.NBT;
     }
 
     @Nullable
