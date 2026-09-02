@@ -70,6 +70,11 @@ public class PackagedDependenciesLoader {
             Context.Builder build = Context.newBuilder("js");
             Context con = build.build();
             con.eval("js", "console.log('graaljs has been pre-loaded.')");
+            // Force-initialize TRegex here as well.
+            // Its static loggers resolve the 'regex' language id via the thread context classloader,
+            // which only points to Graal within this block.
+            // Initializing it later (on a server thread) fails permanently for the whole JVM session.
+            con.eval("js", "/graaljs/.test('graaljs')");
             con.close();
         } finally {
             Thread.currentThread().setContextClassLoader(p);
