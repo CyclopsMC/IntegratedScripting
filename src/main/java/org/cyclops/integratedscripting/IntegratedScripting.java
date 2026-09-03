@@ -39,6 +39,7 @@ import org.cyclops.integratedscripting.core.evaluate.ScriptVariableFacadeHandler
 import org.cyclops.integratedscripting.core.language.LanguageHandlerRegistry;
 import org.cyclops.integratedscripting.core.language.LanguageHandlers;
 import org.cyclops.integratedscripting.core.network.ScriptingData;
+import org.cyclops.integratedscripting.evaluate.EvaluationExceptionResolutionHelpers;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslatorRegistry;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
 import org.cyclops.integratedscripting.inventory.container.ContainerScriptingDriveConfig;
@@ -116,6 +117,7 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
             this.scriptingData.close();
         }
         this.scriptingData = null;
+        EvaluationExceptionResolutionHelpers.reset();
     }
 
     @SubscribeEvent
