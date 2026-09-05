@@ -1,8 +1,25 @@
 # Changelog for Minecraft 1.21.1
 All notable changes to this project will be documented in this file.
 
+<a name="1.21.1-1.0.27"></a>
+## [1.21.1-1.0.27](https://github.com/CyclopsMC/IntegratedScripting/compare/1.21.1-1.0.26...1.21.1-1.0.27) - 2026-09-05 13:06:05
+
+
+### Changed
+* Improve overall performance
+  * Resolve value translators for round-tripped Graal proxies directly
+  * Dispatch object value translators on their member key
+  * Unwrap Graal proxies with instanceof instead of ClassCastException
+  * Lazily populate idContext.ops in script contexts
+
+### Fixed
+* Register one script change listener per script instead of per error (#74), Closes #67
+* Translate script values back to NBT when an operator expects NBT (#73), Closes #67
+* Fix error when using regexes (#72), Closes #68
+* Don't overwrite the exports binding when translating an NBT end tag
+
 <a name="1.21.1-1.0.26"></a>
-## [1.21.1-1.0.26](https://github.com/CyclopsMC/IntegratedScripting/compare/1.21.1-1.0.25...1.21.1-1.0.26) - 2026-08-13 18:39:13
+## [1.21.1-1.0.26](https://github.com/CyclopsMC/IntegratedScripting/compare/1.21.1-1.0.25...1.21.1-1.0.26) - 2026-08-13 18:39:13 +0200
 
 
 ### Changed
