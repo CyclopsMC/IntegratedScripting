@@ -1,0 +1,16 @@
+As always, don't forget to backup your world before updating!
+Requires CyclopsCore version 1.30.1 or higher.
+
+Changes:
+* Improve overall performance
+  * Resolve value translators for round-tripped Graal proxies directly
+  * Dispatch object value translators on their member key
+  * Unwrap Graal proxies with instanceof instead of ClassCastException
+  * Lazily populate idContext.ops in script contexts
+
+Fixes:
+* Register one script change listener per script instead of per error (#74), Closes #67
+* Translate script values back to NBT when an operator expects NBT (#73), Closes #67
+* Fix error when using regexes (#72), Closes #68
+* Don't overwrite the exports binding when translating an NBT end tag
+* Only temporarily set polyglot system props, Closes #66

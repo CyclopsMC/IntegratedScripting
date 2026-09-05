@@ -39,6 +39,7 @@ import org.cyclops.integratedscripting.core.packageddependencies.PackagedDepende
 import org.cyclops.integratedscripting.core.language.LanguageHandlerRegistry;
 import org.cyclops.integratedscripting.core.language.LanguageHandlers;
 import org.cyclops.integratedscripting.core.network.ScriptingData;
+import org.cyclops.integratedscripting.evaluate.EvaluationExceptionResolutionHelpers;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslatorRegistry;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
 import org.cyclops.integratedscripting.gametest.GameTestsAdvancements;
@@ -125,6 +126,7 @@ public class IntegratedScripting extends ModBaseNeoForge<IntegratedScripting> {
             this.scriptingData.close();
         }
         this.scriptingData = null;
+        EvaluationExceptionResolutionHelpers.reset();
     }
 
     @SubscribeEvent
