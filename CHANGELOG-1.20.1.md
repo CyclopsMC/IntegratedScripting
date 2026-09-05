@@ -1,8 +1,16 @@
 # Changelog for Minecraft 1.20.1
 All notable changes to this project will be documented in this file.
 
+<a name="1.20.1-1.0.19"></a>
+## [1.20.1-1.0.19](/compare/1.20.1-1.0.18...1.20.1-1.0.19) - 2026-09-05 12:59:51
+
+
+### Fixed
+* Register one script change listener per script instead of per error (#74), Closes #67
+* Translate script values back to NBT when an operator expects NBT (#73), Closes #67
+
 <a name="1.20.1-1.0.18"></a>
-## [1.20.1-1.0.18](/compare/1.20.1-1.0.17...1.20.1-1.0.18) - 2026-07-13 20:11:23
+## [1.20.1-1.0.18](/compare/1.20.1-1.0.17...1.20.1-1.0.18) - 2026-07-13 20:11:24 +0200
 
 
 ### Fixed
