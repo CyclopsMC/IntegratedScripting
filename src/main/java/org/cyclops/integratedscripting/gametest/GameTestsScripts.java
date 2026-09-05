@@ -13,6 +13,7 @@ import org.cyclops.integrateddynamics.core.evaluate.operator.Operators;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueObjectTypeItemStack;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeBoolean;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeInteger;
+import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeString;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypes;
 import org.cyclops.integrateddynamics.part.PartTypePanelDisplay;
 import org.cyclops.integratedscripting.Reference;
@@ -95,6 +96,37 @@ public class GameTestsScripts {
 
         // Create constants as input to the script's function
         ItemStack variableConst1 = createVariableForValue(helper.getLevel(), ValueTypes.OBJECT_ITEMSTACK, ValueObjectTypeItemStack.ValueItemStack.of(new ItemStack(Items.APPLE, 32)));
+
+        // Insert all variables into the variable store
+        positions.variableStore().getInventory().setItem(0, variableScript);
+        positions.variableStore().getInventory().setItem(1, variableConst1);
+
+        // Create variable card for applying the function
+        ItemStack variableApplied = createVariableForOperator(helper.getLevel(), Operators.OPERATOR_APPLY, new int[]{
+                getVariableFacade(helper.getLevel(), variableScript).getId(),
+                getVariableFacade(helper.getLevel(), variableConst1).getId(),
+        });
+
+        // Place variable in display
+        Pair<PartTypePanelDisplay, PartTypePanelDisplay.State> partAndState = placeVariableInDisplayPanel(helper.getLevel(), positions.displayPanel(), variableApplied);
+
+        helper.succeedWhen(() -> {
+            assertValueEqual(helper, partAndState.getRight().getDisplayValue(), ValueTypeBoolean.ValueBoolean.of(true));
+        });
+    }
+
+    @GameTest(template = TEMPLATE_EMPTY, timeoutTicks = TIMEOUT)
+    public void testScriptsDisplayScriptRegex(GameTestHelper helper) {
+        GameTestHelpersIntegratedScripting.NetworkPositions positions = createBasicNetwork(helper, POS);
+
+        // Write script
+        ScriptingNetworkHelpers.getScriptingData().setScript(positions.diskId(), Path.of("script0.js"), "function abc(a) { return /^aether:.+_gloves/.test(a); }", IScriptingData.ChangeLocation.MEMORY);
+
+        // Create variable from script
+        ItemStack variableScript = createVariableForScript(helper.getLevel(), positions.diskId(), Path.of("script0.js"), "abc");
+
+        // Create constants as input to the script's function
+        ItemStack variableConst1 = createVariableForValue(helper.getLevel(), ValueTypes.STRING, ValueTypeString.ValueString.of("aether:leather_gloves"));
 
         // Insert all variables into the variable store
         positions.variableStore().getInventory().setItem(0, variableScript);
