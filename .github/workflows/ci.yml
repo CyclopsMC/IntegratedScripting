@@ -105,7 +105,7 @@ jobs:
           CYCLOPSMC_ENABLEDGAMETESTSGLOBAL: true
         with:
           java: ${{ env.java_version }}
-          mc: 26.2
+          mc: 26.3
           modloader: neoforge
           test-file: './mc-server-test.json'
       - name: 'Deploy to CurseForge'
