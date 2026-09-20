@@ -39,7 +39,7 @@ import org.cyclops.integratedscripting.core.language.LanguageHandlers;
 import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScripting;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingDeleteScriptPacket;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingModifiedScriptPacket;
-import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
 
 import javax.annotation.Nullable;
 import java.nio.file.Path;
@@ -506,13 +506,13 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     @Override
     public boolean keyPressed(KeyEvent event) {
         // Make active dialog consume all input
-        if (event.key() != GLFW.GLFW_KEY_ESCAPE && pendingScriptRemovalDialog != null) {
+        if (event.key() != InputConstants.KEY_ESCAPE && pendingScriptRemovalDialog != null) {
             return false;
         }
 
         if (textArea.isFocused()) {
             boolean ret = textArea.keyPressed(event);
-            if (event.key() != GLFW.GLFW_KEY_ESCAPE) {
+            if (event.key() != InputConstants.KEY_ESCAPE) {
                 return ret;
             }
         }
