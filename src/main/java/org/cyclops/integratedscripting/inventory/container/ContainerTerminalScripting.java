@@ -11,6 +11,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Prediction;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -132,7 +133,7 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
         if (!player.level().isClientSide()) {
             ItemStack itemStack = getContainerInventory().getItem(0);
             if(!itemStack.isEmpty()) {
-                player.drop(itemStack, false);
+                player.drop(itemStack, false, Prediction.SERVER_ONLY);
             }
         }
     }
@@ -392,11 +393,11 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
         }
 
         public void writeToPacketBuffer(FriendlyByteBuf packetBuffer) {
-            packetBuffer.writeIntIdList(getAvailableDisks());
+            packetBuffer.writeVarIntArray(getAvailableDisks().toIntArray());
         }
 
         public static InitData readFromPacketBuffer(FriendlyByteBuf packetBuffer) {
-            return new InitData(packetBuffer.readIntIdList());
+            return new InitData(IntList.of(packetBuffer.readVarIntArray()));
         }
 
     }

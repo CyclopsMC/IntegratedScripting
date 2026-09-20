@@ -311,10 +311,8 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     @Override
     public boolean charTyped(CharacterEvent event) {
-        if (super.charTyped(event)) {
-            this.setFocused(true);
-            return true;
-        } else if (event.isAllowedChatCharacter()) {
+        // Don't delegate to EditBox, as it would insert into its own unused value instead of ours
+        if (event.isAllowedChatCharacter()) {
             this.textFieldHelper.insertText(event.codepointAsString());
             this.clearDisplayCache();
             this.setFocused(true);
