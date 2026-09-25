@@ -1,6 +1,7 @@
 package org.cyclops.integratedscripting.client.gui.component.input;
 
 import com.google.common.collect.Lists;
+import com.mojang.blaze3d.platform.InputConstants;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import net.minecraft.util.Util;
@@ -222,14 +223,14 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent mouse, boolean isDoubleClick) {
-        if (mouse.button() == 1 && mouse.x() >= this.getX() && mouse.x() < this.getX() + this.width
+        if (mouse.button() == InputConstants.MOUSE_BUTTON_RIGHT && mouse.x() >= this.getX() && mouse.x() < this.getX() + this.width
                 && mouse.y() >= this.getY() && mouse.y() < this.getY() + this.height) {
             // Select everything
             this.setFocused(true);
             textFieldHelper.selectAll();
             return true;
         } else {
-            if (mouse.button() == 0 && mouse.x() >= this.getX() && mouse.x() < this.getX() + this.width
+            if (mouse.button() == InputConstants.MOUSE_BUTTON_LEFT && mouse.x() >= this.getX() && mouse.x() < this.getX() + this.width
                     && mouse.y() >= this.getY() && mouse.y() < this.getY() + this.height) {
                 this.setFocused(true);
                 long i = Util.getMillis();
@@ -285,7 +286,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             return this.scrollBar.mouseDragged(mouse, offsetX, offsetY);
         }
 
-        if (mouse.button() == 0 && mouse.x() >= this.getX() && mouse.x() < this.getX() + this.width
+        if (mouse.button() == InputConstants.MOUSE_BUTTON_LEFT && mouse.x() >= this.getX() && mouse.x() < this.getX() + this.width
                 && mouse.y() >= this.getY() && mouse.y() < this.getY() + this.height) {
             DisplayCache bookeditscreen$displaycache = this.getDisplayCache();
             int i = bookeditscreen$displaycache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i((int)mouse.x(), (int)mouse.y())));
