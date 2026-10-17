@@ -479,7 +479,13 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     }
 
     private boolean textFieldKeyPressed(int p_98153_, int p_98154_, int p_98155_) {
-        if (Screen.isSelectAll(p_98153_)) {
+        if (hasControlDown(p_98155_) && p_98153_ == GLFW.GLFW_KEY_SLASH) {
+            this.setState(TextEditing.toggleComment(this.getState()));
+            return true;
+        } else if ((p_98155_ & GLFW.GLFW_MOD_ALT) != 0 && (p_98153_ == GLFW.GLFW_KEY_UP || p_98153_ == GLFW.GLFW_KEY_DOWN)) {
+            this.setState(TextEditing.moveLines(this.getState(), p_98153_ == GLFW.GLFW_KEY_UP ? -1 : 1));
+            return true;
+        } else if (Screen.isSelectAll(p_98153_)) {
             this.textFieldHelper.selectAll();
             return true;
         } else if (Screen.isCopy(p_98153_)) {

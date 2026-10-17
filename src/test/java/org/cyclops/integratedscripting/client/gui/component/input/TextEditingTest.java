@@ -161,4 +161,44 @@ public class TextEditingTest {
         assertThat(TextEditing.findPrevious("abc", "x", 2), equalTo(-1));
     }
 
+    @Test
+    public void testToggleCommentAdds() {
+        assertThat(TextEditing.toggleComment(s("a\nb", 3)), equalTo(s("a\n//b", 5)));
+    }
+
+    @Test
+    public void testToggleCommentRemoves() {
+        assertThat(TextEditing.toggleComment(s("//a\n//b", 0, 7)), equalTo(s("a\nb", 0, 3)));
+    }
+
+    @Test
+    public void testToggleCommentMixedAdds() {
+        assertThat(TextEditing.toggleComment(s("//a\nb", 0, 5)), equalTo(s("////a\n//b", 2, 9)));
+    }
+
+    @Test
+    public void testMoveLineUp() {
+        assertThat(TextEditing.moveLines(s("a\nbc\nd", 4), -1), equalTo(s("bc\na\nd", 2)));
+    }
+
+    @Test
+    public void testMoveLineUpAtTop() {
+        assertThat(TextEditing.moveLines(s("a\nb", 1), -1), equalTo(s("a\nb", 1)));
+    }
+
+    @Test
+    public void testMoveLineDown() {
+        assertThat(TextEditing.moveLines(s("a\nbc\nd", 0), 1), equalTo(s("bc\na\nd", 3)));
+    }
+
+    @Test
+    public void testMoveLineDownAtBottom() {
+        assertThat(TextEditing.moveLines(s("a\nb", 2), 1), equalTo(s("a\nb", 2)));
+    }
+
+    @Test
+    public void testMoveMultipleLinesDown() {
+        assertThat(TextEditing.moveLines(s("a\nb\nc", 0, 3), 1), equalTo(s("c\na\nb", 2, 5)));
+    }
+
 }
