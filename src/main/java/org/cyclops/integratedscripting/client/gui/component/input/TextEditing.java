@@ -25,6 +25,14 @@ public class TextEditing {
         return i < 0 ? value.length() : i;
     }
 
+    private static String leadingWhitespace(String value, int lineStart) {
+        int i = lineStart;
+        while (i < value.length() && (value.charAt(i) == ' ' || value.charAt(i) == '\t')) {
+            i++;
+        }
+        return value.substring(lineStart, i);
+    }
+
     private static boolean isMultiLineSelection(TextHistory.State state) {
         return state.value().substring(start(state), end(state)).indexOf('\n') >= 0;
     }
@@ -99,6 +107,39 @@ public class TextEditing {
             lineStart = lineEnd + 1;
         }
         return pos + delta;
+    }
+
+    /**
+     * Insert a newline that keeps the indentation of the current line,
+     * and indents one more level after an opening bracket.
+     */
+    public static TextHistory.State newline(TextHistory.State state) {
+        String value = state.value();
+        int start = start(state);
+        int end = end(state);
+        int lineStart = lineStart(value, start);
+        String indent = leadingWhitespace(value, lineStart);
+        indent = indent.substring(0, Math.min(indent.length(), start - lineStart));
+        String before = value.substring(lineStart, start).stripTrailing();
+        char open = before.isEmpty() ? 0 : before.charAt(before.length() - 1);
+        boolean opens = open == '{' || open == '(' || open == '[';
+        String insert = "\n" + indent + (opens ? INDENT : "");
+        int cursor = start + insert.length();
+        // Put a directly following closing bracket on its own line
+        if (opens && end < value.length() && value.charAt(end) == closing(open)) {
+            insert += "\n" + indent;
+        }
+        String newValue = value.substring(0, start) + insert + value.substring(end);
+        return new TextHistory.State(newValue, cursor, cursor);
+    }
+
+    private static char closing(char open) {
+        return switch (open) {
+            case '{' -> '}';
+            case '(' -> ')';
+            case '[' -> ']';
+            default -> 0;
+        };
     }
 
 }

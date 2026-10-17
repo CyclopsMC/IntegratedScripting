@@ -418,7 +418,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             switch (p_98153_) {
                 case 257:
                 case 335:
-                    this.textFieldHelper.insertText("\n");
+                    this.setState(TextEditing.newline(this.getState()));
                     return true;
                 case GLFW.GLFW_KEY_TAB:
                     this.setState((p_98155_ & GLFW.GLFW_MOD_SHIFT) != 0 ? TextEditing.unindent(this.getState()) : TextEditing.indent(this.getState()));
