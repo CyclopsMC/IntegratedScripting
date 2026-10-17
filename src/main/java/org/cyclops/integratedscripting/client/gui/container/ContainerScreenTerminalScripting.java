@@ -135,6 +135,11 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             return false;
         });
         getMenu().setRemoteScriptChangeListener(this::onRemoteScriptChanged);
+        getMenu().setSyntaxErrorListener((disk, path) -> {
+            if (disk == getMenu().getActiveDisk() && path.equals(getMenu().getActiveScriptPath())) {
+                this.textArea.setSyntaxError(getMenu().getSyntaxError(disk, path));
+            }
+        });
         textArea.setListenerSelection(this::onSelectionModified);
         textArea.setListenerCursor(this::onSelectionModified);
         textArea.setMarkupProvider((style, line) -> {
@@ -466,6 +471,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         String script = getMenu().getActiveScript();
         this.textArea.setValue(script == null ? "" : script);
         Path path = getMenu().getActiveScriptPath();
+        this.textArea.setSyntaxError(path == null ? null : getMenu().getSyntaxError(getMenu().getActiveDisk(), path));
         this.textArea.setHistory(path == null ? new TextHistory() : scriptHistories.computeIfAbsent(Pair.of(getMenu().getActiveDisk(), path), k -> new TextHistory()));
     }
 

@@ -115,7 +115,7 @@
   "info_book.integratedscripting.terminal.text4": "If the disk does not contain any script files yet, you can create them by clicking on the \"+\"-button on the bottom-left side of the screen.",
   "info_book.integratedscripting.terminal.text5": "The script file list on the left-hand side of the screen is used to select a script for editing. When clicking on a script, its editable contents will show up on the right-hand-side of the screen.",
   "info_book.integratedscripting.terminal.text6": "The text field on the right-hand side of the screen allows you to edit the contents of script files, which will be saved automatically after each modification.",
-  "info_book.integratedscripting.terminal.text7": "While the editor will perform limited syntax highlighting, it is not able to detect syntax errors at this time. Syntax errors will be reported when executing scripts via &lVariable Cards&r.",
+  "info_book.integratedscripting.terminal.text7": "The editor performs limited syntax highlighting, and marks the line of the first syntax error in red. Hover over that line to see the error message.",
   "info_book.integratedscripting.terminal.text8": "In order to use a script member as &lIntegrated Dynamics&r logic, you can bind it to a &lVariable Card&r.",
   "info_book.integratedscripting.terminal.text9": "You can do this by first selecting a script member in the text editor by selecting it with your cursor, such as a variable name or function name.",
   "info_book.integratedscripting.terminal.text10": "After that, you can insert a &lVariable Card&r into the slot on the right-hand side of the screen to bind it to this script member.",

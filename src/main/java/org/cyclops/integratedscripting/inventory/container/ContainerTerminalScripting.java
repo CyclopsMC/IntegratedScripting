@@ -18,6 +18,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.cyclops.cyclopscore.helper.ValueNotifierHelpers;
 import org.cyclops.cyclopscore.inventory.SimpleInventory;
 import org.cyclops.cyclopscore.inventory.container.InventoryContainer;
@@ -33,14 +34,18 @@ import org.cyclops.integrateddynamics.core.inventory.container.slot.SlotVariable
 import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.RegistryEntries;
 import org.cyclops.integratedscripting.api.item.IScriptVariableFacade;
+import org.cyclops.integratedscripting.api.language.ILanguageHandler;
+import org.cyclops.integratedscripting.api.language.ScriptSyntaxError;
 import org.cyclops.integratedscripting.api.network.IScriptingData;
 import org.cyclops.integratedscripting.api.network.IScriptingNetwork;
 import org.cyclops.integratedscripting.core.evaluate.ScriptVariableFacadeHandler;
 import org.cyclops.integratedscripting.core.item.ScriptVariableFacade;
+import org.cyclops.integratedscripting.core.language.LanguageHandlers;
 import org.cyclops.integratedscripting.core.network.ScriptingNetworkHelpers;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingCreateNewScriptPacket;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingDeleteScriptPacket;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingModifiedScriptPacket;
+import org.cyclops.integratedscripting.network.packet.TerminalScriptingSyntaxErrorPacket;
 import org.cyclops.integratedscripting.part.PartTypeTerminalScripting;
 
 import javax.annotation.Nullable;
@@ -54,6 +59,8 @@ import java.util.regex.Pattern;
  * @author rubensworks
  */
 public class ContainerTerminalScripting extends InventoryContainer implements IDirtyMarkListener {
+
+    public static final int SYNTAX_CHECK_DELAY_TICKS = 10;
 
     public static Pattern INVALID_MEMBER_NAME = Pattern.compile("[^0-9a-zA-Z_]");
     public static Pattern VALID_MEMBER_NAME = Pattern.compile("[0-9a-zA-Z_]+");
@@ -73,6 +80,14 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
     private final int selectionId;
     @Nullable
     private BiConsumer<Integer, Path> remoteScriptChangeListener;
+    private final Map<Pair<Integer, Path>, ScriptSyntaxError> syntaxErrors = Maps.newHashMap();
+    @Nullable
+    private BiConsumer<Integer, Path> syntaxErrorListener;
+    @Nullable
+    private Triple<Integer, Path, String> syntaxCheckPending;
+    @Nullable
+    private Triple<Integer, Path, String> syntaxCheckDone;
+    private int syntaxCheckTicks;
 
     public ContainerTerminalScripting(int id, Inventory playerInventory, RegistryFriendlyByteBuf packetBuffer) {
         this(id, playerInventory, PartHelpers.readPartTarget(packetBuffer), Optional.empty(),
@@ -216,7 +231,58 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
                     }
                 }
             });
+
+            this.checkActiveScriptSyntax();
         }
+    }
+
+    /**
+     * Check the active script for syntax errors once it hasn't changed for a while, and send the result to the client.
+     */
+    protected void checkActiveScriptSyntax() {
+        Path path = getActiveScriptPath();
+        int disk = getActiveDisk();
+        if (path == null || disk < 0) {
+            return;
+        }
+        String script = ScriptingNetworkHelpers.getScriptingData().getScripts(disk).get(path);
+        if (script == null) {
+            return;
+        }
+        Triple<Integer, Path, String> key = Triple.of(disk, path, script);
+        if (!key.equals(this.syntaxCheckPending)) {
+            this.syntaxCheckPending = key;
+            this.syntaxCheckTicks = 0;
+            return;
+        }
+        if (key.equals(this.syntaxCheckDone) || ++this.syntaxCheckTicks < SYNTAX_CHECK_DELAY_TICKS) {
+            return;
+        }
+        this.syntaxCheckDone = key;
+        ILanguageHandler languageHandler = LanguageHandlers.REGISTRY.getProvider(path);
+        ScriptSyntaxError error = languageHandler == null ? null : languageHandler.checkSyntax(path, script);
+        IntegratedScripting._instance.getPacketHandler()
+                .sendToPlayer(new TerminalScriptingSyntaxErrorPacket(disk, path, error), (ServerPlayer) player);
+    }
+
+    public void setSyntaxErrorListener(@Nullable BiConsumer<Integer, Path> syntaxErrorListener) {
+        this.syntaxErrorListener = syntaxErrorListener;
+    }
+
+    public void setSyntaxError(int disk, Path path, @Nullable ScriptSyntaxError error) {
+        if (error == null) {
+            this.syntaxErrors.remove(Pair.of(disk, path));
+        } else {
+            this.syntaxErrors.put(Pair.of(disk, path), error);
+        }
+        if (this.syntaxErrorListener != null) {
+            this.syntaxErrorListener.accept(disk, path);
+        }
+    }
+
+    @Nullable
+    public ScriptSyntaxError getSyntaxError(int disk, Path path) {
+        return this.syntaxErrors.get(Pair.of(disk, path));
     }
 
     @Override

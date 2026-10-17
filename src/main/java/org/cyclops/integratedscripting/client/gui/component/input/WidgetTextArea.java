@@ -39,6 +39,7 @@ import org.cyclops.cyclopscore.client.gui.component.WidgetScrollBar;
 import org.cyclops.cyclopscore.client.gui.component.input.IInputListener;
 import org.cyclops.cyclopscore.helper.Helpers;
 import org.cyclops.cyclopscore.helper.RenderHelpers;
+import org.cyclops.integratedscripting.api.language.ScriptSyntaxError;
 import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.Nullable;
@@ -96,6 +97,8 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     private boolean draggingSelection;
     @Nullable
     private IntPredicate shortcutListener;
+    @Nullable
+    private ScriptSyntaxError syntaxError;
 
     public WidgetTextArea(Font font, int x, int y, int width, int height, Component narrationMessage, boolean scrollBar, boolean showLineNumbers) {
         super(font, x, y, width, height, narrationMessage);
@@ -173,6 +176,10 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         this.textFieldHelper.setSelectionRange(end, start);
         this.clearDisplayCache();
         this.ensureCursorVisible();
+    }
+
+    public void setSyntaxError(@Nullable ScriptSyntaxError syntaxError) {
+        this.syntaxError = syntaxError;
     }
 
     public void setHistory(TextHistory history) {
@@ -587,12 +594,16 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                         this.getX(),
                         line.y - offsetY + 2,
                         0.5f,
-                        line.hasCursor ? 0 : Helpers.RGBToInt(120, 120, 120),
+                        this.syntaxError != null && this.syntaxError.line() == line.lineNumber + 1 ? Helpers.RGBToInt(220, 0, 0) : (line.hasCursor ? 0 : Helpers.RGBToInt(120, 120, 120)),
                         false,
                         Font.DisplayMode.NORMAL
                 );
             }
             lastLineNumber = line.lineNumber;
+        }
+
+        if (this.syntaxError != null) {
+            this.renderSyntaxError(guiGraphics, displayCache, lines, mouseX, mouseY);
         }
 
         // Show highlighting and cursor
@@ -604,6 +615,28 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         // Render scrollbar
         if (this.scrollBar != null) {
             this.scrollBar.render(guiGraphics, getX(), getY(), partialTicks);
+        }
+    }
+
+    private void renderSyntaxError(GuiGraphics guiGraphics, DisplayCache displayCache, List<LineInfo> lines, int mouseX, int mouseY) {
+        String value = this.getValue();
+        // Underline the character at the error position
+        int pos = Math.min(value.length(), TextEditing.lineOffset(value, this.syntaxError.line()) + Math.max(0, this.syntaxError.column() - 1));
+        int line = findLineFromPos(displayCache.lineStarts, pos);
+        int row = line - this.firstRow;
+        if (row >= 0 && row < this.getHeight() / ROW_HEIGHT) {
+            int x = this.font.width(value.substring(displayCache.lineStarts[line], pos));
+            int width = pos < value.length() && value.charAt(pos) != '\n' ? this.font.width(value.substring(pos, pos + 1)) : 4;
+            Pos2i screenPos = this.convertLocalToScreen(new Pos2i(x, row * ROW_HEIGHT));
+            guiGraphics.fill(screenPos.x, screenPos.y + ROW_HEIGHT - 2, screenPos.x + width, screenPos.y + ROW_HEIGHT - 1, Helpers.RGBAToInt(220, 0, 0, 255));
+        }
+
+        // Show the message when hovering the error line
+        for (LineInfo lineInfo : lines) {
+            if (lineInfo.lineNumber + 1 == this.syntaxError.line() && mouseX >= this.getX() && mouseX < this.getX() + this.getWidth()
+                    && mouseY >= lineInfo.y && mouseY < lineInfo.y + ROW_HEIGHT && Minecraft.getInstance().screen != null) {
+                Minecraft.getInstance().screen.setTooltipForNextRenderPass(this.font.split(Component.literal(this.syntaxError.message()), 200));
+            }
         }
     }
 
