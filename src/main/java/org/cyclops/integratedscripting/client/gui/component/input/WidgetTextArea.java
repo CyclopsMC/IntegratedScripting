@@ -93,6 +93,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     private WidgetScrollBar scrollBar;
     private int firstRow;
     private TextHistory history = new TextHistory();
+    private boolean draggingSelection;
     @Nullable
     private IntPredicate shortcutListener;
 
@@ -266,8 +267,10 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             this.setFocused(true);
             return true;
         } else {
+            this.draggingSelection = false;
             if (mouseButton == 0 && mouseX >= this.getX() && mouseX < this.getX() + this.width
                     && mouseY >= this.getY() && mouseY < this.getY() + this.height) {
+                this.draggingSelection = this.scrollBar == null || mouseX < this.getX() + this.width - SCROLLBAR_WIDTH;
                 this.setFocused(true);
                 long i = Util.getMillis();
                 DisplayCache displayCache = this.getDisplayCache();
@@ -317,15 +320,22 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double offsetX, double offsetY) {
-        if (this.scrollBar != null && mouseX >= this.getX() + this.width - 12 && mouseX < this.getX() + this.width
+        if (!this.draggingSelection && this.scrollBar != null && mouseX >= this.getX() + this.width - 12 && mouseX < this.getX() + this.width
                 && mouseY >= this.getY() && mouseY < this.getY() + this.height) {
             return this.scrollBar.mouseDragged(mouseX, mouseY, mouseButton, offsetX, offsetY);
         }
 
-        if (mouseButton == 0 && mouseX >= this.getX() && mouseX < this.getX() + this.width
-                && mouseY >= this.getY() && mouseY < this.getY() + this.height) {
+        if (mouseButton == 0 && this.draggingSelection) {
+            // Scroll when dragging a selection beyond the top or bottom
+            if (mouseY < this.getY()) {
+                this.setFirstRow(this.firstRow - 1, true);
+            } else if (mouseY >= this.getY() + this.height) {
+                this.setFirstRow(this.firstRow + 1, true);
+            }
+            int x = (int) Math.max(this.getX(), Math.min(this.getX() + this.width - 1, mouseX));
+            int y = (int) Math.max(this.getY(), Math.min(this.getY() + this.height - 1, mouseY));
             DisplayCache bookeditscreen$displaycache = this.getDisplayCache();
-            int i = bookeditscreen$displaycache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i((int)mouseX, (int)mouseY)));
+            int i = bookeditscreen$displaycache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i(x, y)));
             this.textFieldHelper.setCursorPos(i, true);
             this.clearDisplayCache();
             this.setFocused(true);
