@@ -16,6 +16,14 @@ public class TextEditing {
         return Math.max(state.cursorPos(), state.selectionPos());
     }
 
+    /**
+     * @return The end of the selection, excluding a line on which the selection ends at the start.
+     */
+    private static int selectionEnd(TextHistory.State state) {
+        int end = end(state);
+        return end > start(state) && state.value().charAt(end - 1) == '\n' ? end - 1 : end;
+    }
+
     public static int lineStart(String value, int pos) {
         return value.lastIndexOf('\n', pos - 1) + 1;
     }
@@ -73,9 +81,7 @@ public class TextEditing {
     private static TextHistory.State mapLines(TextHistory.State state, java.util.function.UnaryOperator<String> mapper) {
         String value = state.value();
         int from = lineStart(value, start(state));
-        // A selection ending at the start of a line doesn't include that line
-        int endPos = end(state) > start(state) && value.charAt(end(state) - 1) == '\n' ? end(state) - 1 : end(state);
-        int to = lineEnd(value, endPos);
+        int to = lineEnd(value, selectionEnd(state));
         String[] lines = value.substring(from, to).split("\n", -1);
         String[] newLines = new String[lines.length];
         for (int i = 0; i < lines.length; i++) {
@@ -213,6 +219,52 @@ public class TextEditing {
             pos = next + 1;
         }
         return pos;
+    }
+
+    /**
+     * Comment out the lines touched by the cursor or selection, or uncomment them if they are all commented out.
+     */
+    public static TextHistory.State toggleComment(TextHistory.State state) {
+        String value = state.value();
+        int from = lineStart(value, start(state));
+        int to = lineEnd(value, selectionEnd(state));
+        boolean allCommented = true;
+        for (String line : value.substring(from, to).split("\n", -1)) {
+            if (!line.isBlank() && !line.startsWith("//")) {
+                allCommented = false;
+            }
+        }
+        boolean uncomment = allCommented;
+        return mapLines(state, line -> uncomment ? (line.startsWith("//") ? line.substring(2) : line) : "//" + line);
+    }
+
+    /**
+     * Move the lines touched by the cursor or selection one line up or down.
+     * @param direction -1 for up, 1 for down.
+     */
+    public static TextHistory.State moveLines(TextHistory.State state, int direction) {
+        String value = state.value();
+        int from = lineStart(value, start(state));
+        int to = lineEnd(value, selectionEnd(state));
+        if (direction < 0) {
+            if (from == 0) {
+                return state;
+            }
+            int otherFrom = lineStart(value, from - 1);
+            String other = value.substring(otherFrom, from - 1);
+            String newValue = value.substring(0, otherFrom) + value.substring(from, to) + "\n" + other + value.substring(to);
+            int shift = -(other.length() + 1);
+            return new TextHistory.State(newValue, state.cursorPos() + shift, state.selectionPos() + shift);
+        } else {
+            if (to == value.length()) {
+                return state;
+            }
+            int otherTo = lineEnd(value, to + 1);
+            String other = value.substring(to + 1, otherTo);
+            String newValue = value.substring(0, from) + other + "\n" + value.substring(from, to) + value.substring(otherTo);
+            int shift = other.length() + 1;
+            return new TextHistory.State(newValue, state.cursorPos() + shift, state.selectionPos() + shift);
+        }
     }
 
 }
