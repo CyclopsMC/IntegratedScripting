@@ -108,6 +108,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             this.saveCursorPos();
         }
         pendingScriptRemovalDialog = null;
+        fieldNavigate = null;
 
         super.init();
 
