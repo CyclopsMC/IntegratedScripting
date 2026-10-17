@@ -228,6 +228,38 @@ public class ScriptingDataTest {
     }
 
     @Test
+    public void testDiskReloadKeepsUnflushedChanges() throws IOException {
+        Path rootPath = Files.createTempDirectory("integratedscripting-test");
+        ScriptingData scriptingData = new ScriptingData(rootPath);
+        try {
+            Path diskPath = rootPath.resolve("scripting-disks").resolve("654");
+            Files.createDirectories(diskPath);
+            Files.writeString(diskPath.resolve("old.js"), "old");
+            Files.writeString(diskPath.resolve("other.js"), "other");
+            scriptingData.initialize();
+
+            // Rename old.js to new.js in memory, without flushing it to disk yet
+            scriptingData.setScript(654, Path.of("new.js"), "old", IScriptingData.ChangeLocation.MEMORY);
+            scriptingData.setScript(654, Path.of("old.js"), null, IScriptingData.ChangeLocation.MEMORY);
+
+            // A file watcher reload, for example caused by another file, must not undo these changes
+            scriptingData.initializeDiskScripts(654);
+            assertThat(scriptingData.getScripts(654).get(Path.of("new.js")), equalTo("old"));
+            assertThat(scriptingData.getScripts(654).get(Path.of("old.js")), nullValue());
+            assertThat(scriptingData.getScripts(654).get(Path.of("other.js")), equalTo("other"));
+
+            // After flushing, the disk contents are used again
+            scriptingData.tick();
+            scriptingData.initializeDiskScripts(654);
+            assertThat(scriptingData.getScripts(654).get(Path.of("new.js")), equalTo("old"));
+            assertFalse(Files.exists(diskPath.resolve("old.js")));
+        } finally {
+            scriptingData.close();
+            FileUtils.deleteDirectory(rootPath.toFile());
+        }
+    }
+
+    @Test
     public void testDiskReloadDuringFirstFlushKeepsScript() throws IOException {
         Path rootPath = Files.createTempDirectory("integratedscripting-test");
         ScriptingData scriptingData = new ScriptingData(rootPath);

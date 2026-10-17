@@ -37,6 +37,11 @@
   "gui.integratedscripting.removal_dialog.message": "Do you want to delete \"%s\"?",
   "gui.integratedscripting.removal_dialog.delete": "Delete",
   "gui.integratedscripting.removal_dialog.keep": "Keep",
+  "gui.integratedscripting.rename_dialog.title": "Rename script",
+  "gui.integratedscripting.rename_dialog.message": "New path, such as dir/name.js:",
+  "gui.integratedscripting.rename_dialog.rename": "Rename",
+  "gui.integratedscripting.rename_dialog.cancel": "Cancel",
+  "gui.integratedscripting.rename_hint": "Right-click to rename",
   "gui.integratedscripting.error.invalid_member": "Select a valid function name or variable name inside the script editor to bind with.",
   "gui.integratedscripting.error.invalid_member.current": "Current selection: \"%s\"",
   "gui.integratedscripting.error.reserved_member": "\"%s\" is a keyword, so it can not be bound. Select a function name or variable name instead.",
@@ -142,6 +147,7 @@
   "info_book.integratedscripting.terminal_shortcuts.text1": "The script editor of the &lScripting Terminal&r has the keyboard shortcuts shown below. You can change them in the &oControls&r settings, under &oIntegrated Scripting&r. Most of these actions are also available as buttons above the editor.",
   "info_book.integratedscripting.terminal_shortcuts.text2": "Some keys can not be changed: &oTab&r and &oShift+Tab&r indent and unindent the selected lines, &oPage Up&r and &oPage Down&r move by a page, &oCtrl+Left&r and &oCtrl+Right&r (&oOption&r on Mac) move by word, &oHome&r and &oEnd&r (also &oCmd+Left&r and &oCmd+Right&r on Mac) move to the start or end of the line, &oCtrl+Home&r and &oCtrl+End&r (also &oCmd+Up&r and &oCmd+Down&r on Mac) move to the start or end of the script, and &oCtrl+Shift+Z&r (&oCmd+Shift+Z&r on Mac) also redoes.",
   "info_book.integratedscripting.terminal_shortcuts.text3": "While finding text or going to a line, &oEnter&r and &oShift+Enter&r go to the next and previous match, and &oEscape&r closes the search bar.",
+  "info_book.integratedscripting.terminal_shortcuts.text4": "To rename a script, right-click it in the script list.",
 
   "info_book.integratedscripting.writing": "Writing Scripts",
 

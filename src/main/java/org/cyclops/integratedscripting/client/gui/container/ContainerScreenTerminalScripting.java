@@ -12,6 +12,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
@@ -46,9 +47,11 @@ import org.cyclops.integratedscripting.core.language.LanguageHandlers;
 import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScripting;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingDeleteScriptPacket;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingModifiedScriptPacket;
+import org.cyclops.integratedscripting.network.packet.TerminalScriptingRenameScriptPacket;
 import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.Nullable;
+import java.nio.file.InvalidPathException;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -87,7 +90,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     private ButtonIcon buttonUndo;
     private ButtonIcon buttonRedo;
     private int toolbarLeft;
-    private WidgetDialog pendingScriptRemovalDialog;
+    private WidgetDialog pendingDialog;
     @Nullable
     private WidgetSearchBar searchBar;
     private int lastClientSyncTick;
@@ -115,7 +118,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         if (textArea != null) {
             this.saveCursorPos();
         }
-        pendingScriptRemovalDialog = null;
+        pendingDialog = null;
         searchBar = null;
 
         super.init();
@@ -366,8 +369,10 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             // If hovering, show the full path, as it may be truncated, and render removal button
             if (hovering) {
                 // Don't draw over an open dialog
-                if (pendingScriptRemovalDialog == null) {
-                    this.setTooltipForNextRenderPass(Component.literal(path.toString()));
+                if (pendingDialog == null) {
+                    this.setTooltipForNextRenderPass(Lists.newArrayList(
+                            Component.literal(path.toString()).getVisualOrderText(),
+                            Component.translatable("gui.integratedscripting.rename_hint").withStyle(ChatFormatting.GRAY).getVisualOrderText()));
                 }
                 guiGraphics.pose().pushPose();
                 float scale = 0.4F;
@@ -455,33 +460,38 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
         // Make active dialog consume all input
-        if (pendingScriptRemovalDialog != null) {
-            return pendingScriptRemovalDialog.mouseClicked(mouseX, mouseY, mouseButton);
+        if (pendingDialog != null) {
+            return pendingDialog.mouseClicked(mouseX, mouseY, mouseButton);
         }
 
         // Handle script path clicks
         Path hoveredScriptPath = getHoveredScriptPath(mouseX, mouseY);
+        if (hoveredScriptPath != null && mouseButton == 1) {
+            this.fieldDisk.playDownSound(Minecraft.getInstance().getSoundManager());
+            this.openRenameDialog(hoveredScriptPath);
+            return true;
+        }
         if (hoveredScriptPath != null) {
             // Handle script removal clicks
             if (mouseX >= this.leftPos + PATHS_X + PATHS_WIDTH - (int) (Images.ERROR.getWidth() * 0.4F) - 1) {
                 this.fieldDisk.playDownSound(Minecraft.getInstance().getSoundManager());
 
                 // Show confirmation dialog
-                pendingScriptRemovalDialog = new WidgetDialog(font, leftPos + getBaseXSize() / 2 - WidgetDialog.WIDTH / 2, topPos + 50, this,
+                pendingDialog = new WidgetDialog(font, leftPos + getBaseXSize() / 2 - WidgetDialog.WIDTH / 2, topPos + 50, this,
                         Component.translatable("gui.integratedscripting.removal_dialog.title"),
                         Component.translatable("gui.integratedscripting.removal_dialog.message", hoveredScriptPath.toString()),
                         Component.translatable("gui.integratedscripting.removal_dialog.delete"),
                         Component.translatable("gui.integratedscripting.removal_dialog.keep"),
                         (b) -> {
-                            removeWidget(pendingScriptRemovalDialog);
-                            pendingScriptRemovalDialog = null;
+                            removeWidget(pendingDialog);
+                            pendingDialog = null;
                             this.removeScript(hoveredScriptPath);
                         },
                         (b) -> {
-                            removeWidget(pendingScriptRemovalDialog);
-                            pendingScriptRemovalDialog = null;
+                            removeWidget(pendingDialog);
+                            pendingDialog = null;
                         });
-                addRenderableWidget(pendingScriptRemovalDialog);
+                addRenderableWidget(pendingDialog);
 
                 return true;
             } else {
@@ -631,6 +641,53 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         getMenu().setSelection(selected);
     }
 
+    private void openRenameDialog(Path path) {
+        pendingDialog = new WidgetDialog(font, leftPos + getBaseXSize() / 2 - WidgetDialog.WIDTH / 2, topPos + 50, this,
+                Component.translatable("gui.integratedscripting.rename_dialog.title"),
+                Component.translatable("gui.integratedscripting.rename_dialog.message"),
+                Component.translatable("gui.integratedscripting.rename_dialog.rename"),
+                Component.translatable("gui.integratedscripting.rename_dialog.cancel"),
+                (b) -> {
+                    String name = pendingDialog.getInput().getValue();
+                    removeWidget(pendingDialog);
+                    pendingDialog = null;
+                    this.renameScript(path, name);
+                },
+                (b) -> {
+                    removeWidget(pendingDialog);
+                    pendingDialog = null;
+                }, path.toString());
+        addRenderableWidget(pendingDialog);
+    }
+
+    private void renameScript(Path from, String name) {
+        int disk = getMenu().getActiveDisk();
+        Map<Path, String> scripts = getActiveScripts();
+        Path to;
+        try {
+            to = Path.of(name.trim());
+        } catch (InvalidPathException e) {
+            return;
+        }
+        if (scripts == null || to.toString().isEmpty() || scripts.containsKey(to) || !scripts.containsKey(from)) {
+            return;
+        }
+
+        // Apply the rename locally, so an open script stays open with its editor state
+        String script = scripts.get(from);
+        boolean active = from.equals(getMenu().getActiveScriptPath());
+        getMenu().setLastScript(disk, to, script);
+        getMenu().setLastScript(disk, from, null);
+        TextHistory history = scriptHistories.remove(Pair.of(disk, from));
+        if (history != null) {
+            scriptHistories.put(Pair.of(disk, to), history);
+        }
+        if (active) {
+            getMenu().setActiveScriptPath(to);
+        }
+        IntegratedScripting._instance.getPacketHandler().sendToServer(new TerminalScriptingRenameScriptPacket(disk, from, to));
+    }
+
     private void removeScript(Path path) {
         IntegratedScripting._instance.getPacketHandler()
                 .sendToServer(new TerminalScriptingDeleteScriptPacket(getMenu().getActiveDisk(), path));
@@ -647,7 +704,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double offsetX, double offsetY) {
         // Make active dialog consume all input
-        if (pendingScriptRemovalDialog != null) {
+        if (pendingDialog != null) {
             return false;
         }
 
@@ -667,7 +724,17 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     @Override
     public boolean keyPressed(int typedChar, int keyCode, int modifiers) {
         // Make active dialog consume all input
-        if (typedChar != GLFW.GLFW_KEY_ESCAPE && pendingScriptRemovalDialog != null) {
+        if (pendingDialog != null && pendingDialog.getInput() != null) {
+            if (typedChar == GLFW.GLFW_KEY_ESCAPE) {
+                pendingDialog.cancel();
+            } else if (typedChar == GLFW.GLFW_KEY_ENTER || typedChar == GLFW.GLFW_KEY_KP_ENTER) {
+                pendingDialog.confirm();
+            } else {
+                pendingDialog.getInput().keyPressed(typedChar, keyCode, modifiers);
+            }
+            return true;
+        }
+        if (typedChar != GLFW.GLFW_KEY_ESCAPE && pendingDialog != null) {
             return false;
         }
 
@@ -796,8 +863,8 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     @Override
     public boolean charTyped(char p_94683_, int p_94684_) {
         // Make active dialog consume all input
-        if (pendingScriptRemovalDialog != null) {
-            return false;
+        if (pendingDialog != null) {
+            return pendingDialog.getInput() != null && pendingDialog.getInput().charTyped(p_94683_, p_94684_);
         }
         if (this.searchBar != null && this.searchBar.isFocused()) {
             return this.searchBar.charTyped(p_94683_, p_94684_);
