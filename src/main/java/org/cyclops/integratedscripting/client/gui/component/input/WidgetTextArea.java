@@ -312,6 +312,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         if (flag) {
             this.clearDisplayCache();
             this.setFocused(true);
+            this.ensureCursorVisible();
             return true;
         } else {
             this.setFocused(false);
@@ -328,6 +329,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             this.textFieldHelper.insertText(Character.toString(typedChar));
             this.clearDisplayCache();
             this.setFocused(true);
+            this.ensureCursorVisible();
             return true;
         } else {
             this.setFocused(false);
@@ -404,16 +406,19 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         DisplayCache displayCache = this.getDisplayCache();
         int j = displayCache.changeLine(cursorPos, p_98098_);
         this.textFieldHelper.setCursorPos(j, Screen.hasShiftDown());
+    }
 
-        // Modify scroll position when cursor goes out of screen
+    /**
+     * Scroll the viewport so that the cursor is visible.
+     */
+    public void ensureCursorVisible() {
         if (this.scrollBar != null) {
-            int cursorLine = findLineFromPos(Arrays.stream(displayCache.lineStarts).toArray(), cursorPos);
-            if (cursorLine < this.firstRow + 2) {
-                // Cursor is above viewport
-                this.setFirstRow(cursorLine - 2, true);
-            } else if (cursorLine > this.firstRow + this.scrollBar.getVisibleRows() - 3) {
-                // Cursor is below viewport
-                this.setFirstRow(cursorLine - (this.scrollBar.getVisibleRows() - 3), true);
+            int cursorLine = findLineFromPos(this.getDisplayCache().lineStarts, this.textFieldHelper.getCursorPos());
+            int visibleRows = this.scrollBar.getVisibleRows();
+            if (cursorLine < this.firstRow) {
+                this.setFirstRow(cursorLine, true);
+            } else if (cursorLine >= this.firstRow + visibleRows) {
+                this.setFirstRow(cursorLine - visibleRows + 1, true);
             }
         }
     }
@@ -570,6 +575,13 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                     lineNumber.increment();
                 }
             });
+            // Add an empty line after a trailing newline, so the cursor can be placed and scrolled there
+            if (mutableboolean.isTrue()) {
+                linePositionsOld.add(s.length());
+                linesRaw.add(Pair.of("", Style.EMPTY));
+                lineNumbers.add(lineNumber.intValue());
+                linesHasCursor.add(cursorPos == s.length());
+            }
 
             // Keep scroll position within bounds, as the text may have shrunk
             if (this.scrollBar != null) {
@@ -597,14 +609,9 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
             int[] lineStartsArr = lineStarts.toIntArray();
             boolean flag = cursorPos == s.length();
-            Pos2i cursor;
-            if (flag && mutableboolean.isTrue()) {
-                cursor = new Pos2i(0, lines.size() * 9);
-            } else {
-                int cursorLine = findLineFromPos(lineStartsArr, cursorPos);
-                int cursorX = this.font.width(s.substring(lineStartsArr[cursorLine], cursorPos));
-                cursor = new Pos2i(cursorX, (cursorLine - this.firstRow) * 9); // We have to offset the firstRow here!
-            }
+            int cursorLine = findLineFromPos(lineStartsArr, cursorPos);
+            int cursorX = this.font.width(s.substring(lineStartsArr[cursorLine], cursorPos));
+            Pos2i cursor = new Pos2i(cursorX, (cursorLine - this.firstRow) * 9); // We have to offset the firstRow here!
             // Hide cursor if out of view
             if (cursor.y < 0 || cursor.y > getHeight()) {
                 cursor = null;
