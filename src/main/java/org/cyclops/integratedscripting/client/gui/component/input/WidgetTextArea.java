@@ -93,6 +93,10 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     private WidgetScrollBar scrollBar;
     private int firstRow;
     private TextHistory history = new TextHistory();
+    private boolean draggingSelection;
+    private double dragMouseX;
+    private double dragMouseY;
+    private float dragScrollProgress;
     @Nullable
     private String searchQuery;
     @Nullable
@@ -308,6 +312,21 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     public void tick() {
         ++this.frameTick;
+
+        // Keep scrolling while a selection is dragged above or below the editor, faster when further away
+        if (this.draggingSelection) {
+            double distance = this.dragMouseY < this.getY() ? this.getY() - this.dragMouseY
+                    : this.dragMouseY - this.clampToVisibleRows(this.dragMouseY);
+            if (distance > 0) {
+                this.dragScrollProgress += (float) Math.min(2.5, 0.15 + distance / 24);
+                int rows = (int) this.dragScrollProgress;
+                this.dragScrollProgress -= rows;
+                if (rows > 0) {
+                    this.setFirstRow(this.firstRow + (this.dragMouseY < this.getY() ? -rows : rows), true);
+                    this.updateDragSelection();
+                }
+            }
+        }
     }
 
     @Override
@@ -318,8 +337,13 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             this.setFocused(true);
             return true;
         } else {
+            this.draggingSelection = false;
             if (mouseButton == 0 && mouseX >= this.getX() && mouseX < this.getX() + this.width
                     && mouseY >= this.getY() && mouseY < this.getY() + this.height) {
+                this.draggingSelection = this.scrollBar == null || mouseX < this.getX() + this.width - SCROLLBAR_WIDTH;
+                this.dragMouseX = mouseX;
+                this.dragMouseY = mouseY;
+                this.dragScrollProgress = 0;
                 this.setFocused(true);
                 long i = Util.getMillis();
                 DisplayCache displayCache = this.getDisplayCache();
@@ -369,22 +393,39 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double offsetX, double offsetY) {
-        if (this.scrollBar != null && mouseX >= this.getX() + this.width - 12 && mouseX < this.getX() + this.width
+        if (!this.draggingSelection && this.scrollBar != null && mouseX >= this.getX() + this.width - 12 && mouseX < this.getX() + this.width
                 && mouseY >= this.getY() && mouseY < this.getY() + this.height) {
             return this.scrollBar.mouseDragged(mouseX, mouseY, mouseButton, offsetX, offsetY);
         }
 
-        if (mouseButton == 0 && mouseX >= this.getX() && mouseX < this.getX() + this.width
-                && mouseY >= this.getY() && mouseY < this.getY() + this.height) {
-            DisplayCache bookeditscreen$displaycache = this.getDisplayCache();
-            int i = bookeditscreen$displaycache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i((int)mouseX, this.clampToVisibleRows(mouseY))));
-            this.textFieldHelper.setCursorPos(i, true);
-            this.clearDisplayCache();
-            this.setFocused(true);
+        if (mouseButton == 0 && this.draggingSelection) {
+            // Scrolling beyond the top or bottom happens in tick, so it continues while the mouse is held still
+            this.dragMouseX = mouseX;
+            this.dragMouseY = mouseY;
+            this.updateDragSelection();
             return true;
         }
         // Let other drags through, such as spreading items over inventory slots
         return false;
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int mouseButton) {
+        if (mouseButton == 0) {
+            this.draggingSelection = false;
+            this.dragScrollProgress = 0;
+        }
+        return super.mouseReleased(mouseX, mouseY, mouseButton);
+    }
+
+    private void updateDragSelection() {
+        int x = (int) Math.max(this.getX(), Math.min(this.getX() + this.width - 1, this.dragMouseX));
+        int y = this.clampToVisibleRows(Math.max(this.getY(), this.dragMouseY));
+        DisplayCache bookeditscreen$displaycache = this.getDisplayCache();
+        int i = bookeditscreen$displaycache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i(x, y)));
+        this.textFieldHelper.setCursorPos(i, true);
+        this.clearDisplayCache();
+        this.setFocused(true);
     }
 
     @Override
