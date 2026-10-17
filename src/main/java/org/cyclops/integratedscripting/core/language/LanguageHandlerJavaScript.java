@@ -12,9 +12,17 @@ import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.Reference;
 import org.cyclops.integratedscripting.api.language.ILanguageHandler;
+import org.cyclops.integratedscripting.api.language.ScriptSyntaxError;
 import org.cyclops.integratedscripting.api.network.IScriptFactory;
 import org.cyclops.integratedscripting.client.gui.image.ScriptImages;
 import org.cyclops.integratedscripting.core.network.GraalScriptFactory;
+import org.cyclops.integratedscripting.evaluate.ScriptHelpers;
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.PolyglotException;
+import org.graalvm.polyglot.Source;
+import org.graalvm.polyglot.SourceSection;
+
+import javax.annotation.Nullable;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -127,6 +135,27 @@ public class LanguageHandlerJavaScript implements ILanguageHandler {
     @Override
     public IScriptFactory getScriptFactory() throws EvaluationException {
         return this.scriptFactory;
+    }
+
+    @Nullable
+    @Override
+    public ScriptSyntaxError checkSyntax(Path path, String script) {
+        try (Context context = ScriptHelpers.createBaseContext(null)) {
+            // Parsing doesn't execute the script
+            context.parse(Source.newBuilder("js", script, path.toString()).build());
+            return null;
+        } catch (PolyglotException e) {
+            if (!e.isSyntaxError()) {
+                return null;
+            }
+            SourceSection location = e.getSourceLocation();
+            // Only keep the first line, as the following lines contain a source excerpt
+            return new ScriptSyntaxError(e.getMessage().split("\n", 2)[0],
+                    location != null && location.hasLines() ? location.getStartLine() : 1,
+                    location != null && location.hasColumns() ? location.getStartColumn() : 1);
+        } catch (IOException e) {
+            return null;
+        }
     }
 
     @Override
