@@ -171,6 +171,61 @@ public class ScriptingDataTest {
         }
     }
 
+    @Test
+    public void testFlushDoesNotExposePartialContents() throws IOException, InterruptedException {
+        Path rootPath = Files.createTempDirectory("integratedscripting-test");
+        ScriptingData scriptingData = new ScriptingData(rootPath);
+        try {
+            scriptingData.initialize();
+            Path scriptPath = Path.of("main.js");
+            String body = "x".repeat(1_000_000);
+
+            // The file watcher reloads the disk after each flush, which must never see a partially written file
+            for (int i = 0; i < 20; i++) {
+                scriptingData.setScript(789, scriptPath, body + i + "//end", IScriptingData.ChangeLocation.MEMORY);
+                scriptingData.tick();
+                long deadline = System.currentTimeMillis() + 100;
+                while (System.currentTimeMillis() < deadline) {
+                    String script = scriptingData.getScripts(789).get(scriptPath);
+                    assertTrue("Observed partial script contents", script != null && script.endsWith("//end"));
+                }
+            }
+
+            try (var files = Files.list(rootPath)) {
+                assertTrue("Temporary files were left behind", files.noneMatch(f -> f.toString().endsWith(".tmp")));
+            }
+        } finally {
+            scriptingData.close();
+            FileUtils.deleteDirectory(rootPath.toFile());
+        }
+    }
+
+    @Test
+    public void testFlushKeepsFilePermissions() throws IOException {
+        Path rootPath = Files.createTempDirectory("integratedscripting-test");
+        ScriptingData scriptingData = new ScriptingData(rootPath);
+        try {
+            org.junit.Assume.assumeTrue(Files.getFileStore(rootPath).supportsFileAttributeView(java.nio.file.attribute.PosixFileAttributeView.class));
+            Path scriptPath = Path.of("main.js");
+            Path scriptPathAbsolute = rootPath.resolve("scripting-disks").resolve("321").resolve(scriptPath);
+
+            // New files are readable by others
+            scriptingData.setScript(321, scriptPath, scriptValue(1), IScriptingData.ChangeLocation.MEMORY);
+            scriptingData.tick();
+            assertThat(java.nio.file.attribute.PosixFilePermissions.toString(Files.getPosixFilePermissions(scriptPathAbsolute)), equalTo("rw-r--r--"));
+
+            // Existing permissions are kept
+            Files.setPosixFilePermissions(scriptPathAbsolute, java.nio.file.attribute.PosixFilePermissions.fromString("rw-rw-r--"));
+            scriptingData.setScript(321, scriptPath, scriptValue(2), IScriptingData.ChangeLocation.MEMORY);
+            scriptingData.tick();
+            assertThat(java.nio.file.attribute.PosixFilePermissions.toString(Files.getPosixFilePermissions(scriptPathAbsolute)), equalTo("rw-rw-r--"));
+            assertThat(Files.readString(scriptPathAbsolute), equalTo(scriptValue(2)));
+        } finally {
+            scriptingData.close();
+            FileUtils.deleteDirectory(rootPath.toFile());
+        }
+    }
+
     private static void awaitCondition(Condition condition) throws InterruptedException {
         assertTrue("Timed out waiting for condition", awaitCondition(condition, AWAIT_TIMEOUT_MS));
     }

@@ -18,14 +18,18 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -390,6 +394,28 @@ public class ScriptingData implements IScriptingData {
         );
     }
 
+    /**
+     * Write a file without exposing partially written contents to the file watcher.
+     * The temporary file is created outside the watched disk directories.
+     */
+    protected void writeAtomically(Path path, String contents) throws IOException {
+        Path tempFile = Files.createTempFile(rootPath, "flush", ".tmp");
+        try {
+            // Temporary files are only accessible by their owner, so use the permissions of a regular file instead
+            if (Files.getFileStore(tempFile).supportsFileAttributeView(PosixFileAttributeView.class)) {
+                Files.setPosixFilePermissions(tempFile, Files.exists(path) ? Files.getPosixFilePermissions(path) : PosixFilePermissions.fromString("rw-r--r--"));
+            }
+            Files.writeString(tempFile, contents, StandardCharsets.UTF_8);
+            try {
+                Files.move(tempFile, path, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException e) {
+                Files.move(tempFile, path, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally {
+            Files.deleteIfExists(tempFile);
+        }
+    }
+
     protected void flushScript(int disk, Path scriptPathRelative) {
         Map<Path, String> scripts = getScripts(disk);
         String script = scripts.get(scriptPathRelative);
@@ -399,7 +425,7 @@ public class ScriptingData implements IScriptingData {
                 FileUtils.delete(scriptPathAbsolute.toFile());
             } else {
                 scriptPathAbsolute.getParent().toFile().mkdirs();
-                FileUtils.write(scriptPathAbsolute.toFile(), script, StandardCharsets.UTF_8);
+                writeAtomically(scriptPathAbsolute, script);
                 this.registerPathWatcher(disk, null);
                 this.registerPathWatcher(disk, scriptPathRelative.getParent());
             }
