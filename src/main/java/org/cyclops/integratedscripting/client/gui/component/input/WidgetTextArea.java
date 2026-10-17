@@ -66,6 +66,7 @@ import java.util.stream.Stream;
 public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     public static final int ROW_HEIGHT = 9;
+    public static final int SCROLLBAR_WIDTH = 14;
 
     private final TextFieldHelperExtended textFieldHelper;
     private final Font font;
@@ -97,7 +98,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         this.showLineNumbers = showLineNumbers;
         this.textFieldHelper = new TextFieldHelperExtended(this::getValue, this::setValuePassive, this::getClipboard, this::setClipboard, s -> true, this::setSelected, this::onCursorPosChanged);
         if (scrollBar) {
-            this.scrollBar = new WidgetScrollBar(x + width - 14, y, height,
+            this.scrollBar = new WidgetScrollBar(x + width - SCROLLBAR_WIDTH, y, height,
                     Component.translatable("gui.cyclopscore.scrollbar"), firstRow -> setFirstRow(firstRow, false), height / ROW_HEIGHT) {
                 @Override
                 public int getTotalRows() {
@@ -526,6 +527,11 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         RenderSystem.setShaderColor(1, 1, 1, 1);
     }
 
+    private int getTextWidth() {
+        // Don't render text below the scrollbar
+        return this.getWidth() - getLinesXOffset() - (this.scrollBar != null ? SCROLLBAR_WIDTH : 0);
+    }
+
     private int getLinesXOffset() {
         return this.showLineNumbers ? 14 : 0;
     }
@@ -564,7 +570,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             MutableBoolean mutableboolean = new MutableBoolean();
             StringSplitter stringsplitter = this.font.getSplitter();
             MutableInt lineNumber = new MutableInt();
-            stringsplitter.splitLines(s, this.getWidth() - getLinesXOffset() /* changed */, Style.EMPTY, true, (style, startPos, endPos) -> {
+            stringsplitter.splitLines(s, getTextWidth() /* changed */, Style.EMPTY, true, (style, startPos, endPos) -> {
                 String stringPart = s.substring(startPos, endPos);
                 boolean hasNewLine = stringPart.endsWith("\n");
                 mutableboolean.setValue(hasNewLine);
