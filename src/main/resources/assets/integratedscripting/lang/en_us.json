@@ -32,6 +32,11 @@
   "gui.integratedscripting.removal_dialog.message": "Do you want to delete \"%s\"?",
   "gui.integratedscripting.removal_dialog.delete": "Delete",
   "gui.integratedscripting.removal_dialog.keep": "Keep",
+  "gui.integratedscripting.rename_dialog.title": "Rename script",
+  "gui.integratedscripting.rename_dialog.message": "New path, such as dir/name.js:",
+  "gui.integratedscripting.rename_dialog.rename": "Rename",
+  "gui.integratedscripting.rename_dialog.cancel": "Cancel",
+  "gui.integratedscripting.rename_hint": "Right-click to rename",
   "gui.integratedscripting.error.invalid_member": "Select a valid function name or variable name inside the script editor to bind with.",
   "gui.integratedscripting.error.invalid_member.current": "Current selection: \"%s\"",
 

@@ -336,6 +336,35 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
         ScriptingNetworkHelpers.getScriptingData().setScript(disk, path, script, IScriptingData.ChangeLocation.MEMORY);
     }
 
+    /**
+     * Rename a script on the server.
+     * The client already applied the rename to its own state, so it is corrected if the rename fails.
+     */
+    public void renameServerScript(int disk, Path from, Path to) {
+        IScriptingData scriptingData = ScriptingNetworkHelpers.getScriptingData();
+        String script = scriptingData.getScripts(disk).get(from);
+        if (script != null && !scriptingData.getScripts(disk).containsKey(to)) {
+            scriptingData.setScript(disk, to, script, IScriptingData.ChangeLocation.MEMORY);
+            // Only remove the original if the new path was accepted
+            if (script.equals(scriptingData.getScripts(disk).get(to))) {
+                scriptingData.setScript(disk, from, null, IScriptingData.ChangeLocation.MEMORY);
+            }
+        }
+
+        // Send the actual state of both paths, which also corrects the client if the rename failed
+        for (Path path : new Path[]{from, to}) {
+            String value = scriptingData.getScripts(disk).get(path);
+            setLastScript(disk, path, value);
+            if (value != null) {
+                IntegratedScripting._instance.getPacketHandler()
+                        .sendToPlayer(new TerminalScriptingModifiedScriptPacket(disk, path, value), (ServerPlayer) player);
+            } else {
+                IntegratedScripting._instance.getPacketHandler()
+                        .sendToPlayer(new TerminalScriptingDeleteScriptPacket(disk, path), (ServerPlayer) player);
+            }
+        }
+    }
+
     public void createNewServerScript(int disk) {
         // Determine unique script name
         Set<Path> existingScripts = ScriptingNetworkHelpers.getScriptingData().getScripts(disk).keySet();
