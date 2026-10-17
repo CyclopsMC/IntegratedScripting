@@ -27,6 +27,8 @@
   "gui.integratedscripting.script": "Script",
   "gui.integratedscripting.create_file": "Create File",
   "gui.integratedscripting.find": "Find",
+  "gui.integratedscripting.focus_mode.enter": "Enlarge editor",
+  "gui.integratedscripting.focus_mode.exit": "Back to normal size (Escape)",
   "gui.integratedscripting.goto_line": "Go to line",
   "gui.integratedscripting.removal_dialog.title": "Confirm script deletion",
   "gui.integratedscripting.removal_dialog.message": "Do you want to delete \"%s\"?",

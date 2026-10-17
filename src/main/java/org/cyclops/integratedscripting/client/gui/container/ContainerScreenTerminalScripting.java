@@ -10,6 +10,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
@@ -73,6 +75,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     public static int SCRIPT_Y = 18;
     public static int SCRIPT_WIDTH = 168;
     public static int SCRIPT_HEIGHT = 115;
+    public static int FOCUS_MARGIN = 20;
 
     private final Player player;
 
@@ -81,6 +84,8 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     private int firstRow;
     private WidgetTextArea textArea;
     private ButtonText buttonCreateFile;
+    private ButtonText buttonFocus;
+    private boolean focusMode;
     private WidgetDialog pendingDialog;
     @Nullable
     private EditBox fieldNavigate;
@@ -137,7 +142,13 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             }
         };
 
-        textArea = new WidgetTextArea(Minecraft.getInstance().font, this.leftPos + SCRIPT_X + 1, this.topPos + SCRIPT_Y + 1, SCRIPT_WIDTH, SCRIPT_HEIGHT, Component.translatable("gui.integratedscripting.script"), true, true);
+        if (focusMode) {
+            // Let the editor take up most of the screen
+            int height = (this.height - 2 * FOCUS_MARGIN) / WidgetTextArea.ROW_HEIGHT * WidgetTextArea.ROW_HEIGHT;
+            textArea = new WidgetTextArea(Minecraft.getInstance().font, FOCUS_MARGIN, FOCUS_MARGIN, this.width - 2 * FOCUS_MARGIN, height, Component.translatable("gui.integratedscripting.script"), true, true);
+        } else {
+            textArea = new WidgetTextArea(Minecraft.getInstance().font, this.leftPos + SCRIPT_X + 1, this.topPos + SCRIPT_Y + 1, SCRIPT_WIDTH, SCRIPT_HEIGHT, Component.translatable("gui.integratedscripting.script"), true, true);
+        }
         textArea.setListener(this::onActiveScriptModified);
         textArea.setShortcutListener(key -> {
             if (key == GLFW.GLFW_KEY_F || key == GLFW.GLFW_KEY_G) {
@@ -163,7 +174,15 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
         buttonCreateFile = new ButtonText(this.leftPos + 19, this.topPos + 222, 56, 10, Component.translatable("gui.integratedscripting.create_file"), Component.literal("+"),
                 (button) -> getMenu().createNewFile(), true);
-        addRenderableWidget(buttonCreateFile);
+        if (!focusMode) {
+            addRenderableWidget(buttonCreateFile);
+        }
+
+        Component focusLabel = Component.translatable(focusMode ? "gui.integratedscripting.focus_mode.exit" : "gui.integratedscripting.focus_mode.enter");
+        buttonFocus = new ButtonText(focusMode ? this.width - FOCUS_MARGIN - 12 : this.leftPos + SCRIPT_X + SCRIPT_WIDTH - 11, focusMode ? FOCUS_MARGIN - 12 : this.topPos + 5, 12, 10,
+                focusLabel, Component.literal(focusMode ? "><" : "<>"), (button) -> this.toggleFocusMode(), true);
+        buttonFocus.setTooltip(Tooltip.create(focusLabel));
+        addRenderableWidget(buttonFocus);
 
         // Restore the open script in the new editor
         if (getMenu().getActiveScriptPath() != null) {
@@ -228,8 +247,44 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         return 139;
     }
 
+    private void toggleFocusMode() {
+        this.focusMode = !this.focusMode;
+        // Recreates the widgets, which keeps the open script
+        this.rebuildWidgets();
+    }
+
+    @Override
+    protected void drawCurrentScreen(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+        if (focusMode) {
+            // Only show the editor, without the container contents
+            guiGraphics.fill(textArea.getX() - 2, textArea.getY() - 2, textArea.getX() + textArea.getWidth() + 2, textArea.getY() + textArea.getHeight() + 2, Helpers.RGBAToInt(85, 85, 85, 255));
+            guiGraphics.fill(textArea.getX() - 1, textArea.getY() - 1, textArea.getX() + textArea.getWidth() + 1, textArea.getY() + textArea.getHeight() + 1, Helpers.RGBAToInt(224, 224, 224, 255));
+            Path path = getMenu().getActiveScriptPath();
+            if (path != null) {
+                guiGraphics.drawString(font, path.toString(), FOCUS_MARGIN, FOCUS_MARGIN - 11, 16777215);
+            }
+            for (net.minecraft.client.gui.components.Renderable renderable : this.renderables) {
+                renderable.render(guiGraphics, mouseX, mouseY, partialTicks);
+            }
+        } else {
+            super.drawCurrentScreen(guiGraphics, mouseX, mouseY, partialTicks);
+        }
+    }
+
+    @Override
+    protected void renderTooltip(GuiGraphics guiGraphics, int x, int y) {
+        // Slots are hidden in focus mode
+        if (!focusMode) {
+            super.renderTooltip(guiGraphics, x, y);
+        }
+    }
+
     @Override
     protected void renderBg(GuiGraphics guiGraphics, float partialTicks, int mouseX, int mouseY) {
+        // Only the editor is shown in focus mode
+        if (focusMode) {
+            return;
+        }
         super.renderBg(guiGraphics, partialTicks, mouseX, mouseY);
         RenderHelpers.bindTexture(this.texture);
         fieldDisk.render(guiGraphics, mouseX, mouseY, partialTicks);
@@ -364,6 +419,17 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         // Make active dialog consume all input
         if (pendingDialog != null) {
             return pendingDialog.mouseClicked(mouseX, mouseY, mouseButton);
+        }
+
+        // Only the editor widgets are visible in focus mode, so don't let clicks reach the container
+        if (focusMode) {
+            for (GuiEventListener child : this.children()) {
+                if (child.mouseClicked(mouseX, mouseY, mouseButton)) {
+                    this.setFocused(child);
+                    return true;
+                }
+            }
+            return true;
         }
 
         // Handle script path clicks
@@ -642,6 +708,12 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
                 this.fieldNavigate.keyPressed(typedChar, keyCode, modifiers);
             }
             // Don't let typing trigger screen actions, such as closing the screen
+            return true;
+        }
+
+        // Leave focus mode instead of closing the screen
+        if (focusMode && typedChar == GLFW.GLFW_KEY_ESCAPE && pendingDialog == null) {
+            this.toggleFocusMode();
             return true;
         }
 
