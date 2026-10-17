@@ -462,7 +462,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                 RenderHelpers.drawScaledString(
                         guiGraphics,
                         font,
-                        String.valueOf(line.lineNumber),
+                        String.valueOf(line.lineNumber + 1), // Line numbers start at 1, like in error messages
                         this.getX(),
                         line.y - offsetY + 2,
                         0.5f,
