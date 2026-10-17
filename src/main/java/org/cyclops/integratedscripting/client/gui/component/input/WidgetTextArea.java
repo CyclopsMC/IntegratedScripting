@@ -39,6 +39,7 @@ import org.cyclops.cyclopscore.client.gui.component.WidgetScrollBar;
 import org.cyclops.cyclopscore.client.gui.component.input.IInputListener;
 import org.cyclops.cyclopscore.helper.Helpers;
 import org.cyclops.cyclopscore.helper.RenderHelpers;
+import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
@@ -314,25 +315,25 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             this.setFocused(true);
             this.ensureCursorVisible();
             return true;
-        } else {
+        } else if (typedChar == GLFW.GLFW_KEY_ESCAPE) {
             this.setFocused(false);
             return false;
+        } else {
+            // Consume all other keys, so they don't trigger screen actions (such as closing the screen) while typing
+            return true;
         }
     }
 
     @Override
     public boolean charTyped(char typedChar, int keyCode) {
-        if (super.charTyped(typedChar, keyCode)) {
-            this.setFocused(true);
-            return true;
-        } else if (StringUtil.isAllowedChatCharacter(typedChar)) {
+        // Don't delegate to EditBox, as that would consume the character into its own (unused) value
+        if (StringUtil.isAllowedChatCharacter(typedChar)) {
             this.textFieldHelper.insertText(Character.toString(typedChar));
             this.clearDisplayCache();
             this.setFocused(true);
             this.ensureCursorVisible();
             return true;
         } else {
-            this.setFocused(false);
             return false;
         }
     }
