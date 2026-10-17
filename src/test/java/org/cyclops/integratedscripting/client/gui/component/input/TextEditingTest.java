@@ -3,6 +3,7 @@ package org.cyclops.integratedscripting.client.gui.component.input;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.equalTo;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 public class TextEditingTest {
@@ -88,6 +89,31 @@ public class TextEditingTest {
     @Test
     public void testNewlineInMiddleOfIndent() {
         assertThat(TextEditing.newline(s("    a", 2)), equalTo(s("  \n    a", 5)));
+    }
+
+    @Test
+    public void testMatchingBracketAfterCursor() {
+        assertThat(TextEditing.findMatchingBrackets("f(a(b))", 1), equalTo(new int[]{1, 6}));
+    }
+
+    @Test
+    public void testMatchingBracketBeforeCursor() {
+        assertThat(TextEditing.findMatchingBrackets("f(a(b))", 7), equalTo(new int[]{1, 6}));
+    }
+
+    @Test
+    public void testMatchingBracketNested() {
+        assertThat(TextEditing.findMatchingBrackets("{[()]}", 1), equalTo(new int[]{1, 4}));
+    }
+
+    @Test
+    public void testMatchingBracketUnbalanced() {
+        assertThat(TextEditing.findMatchingBrackets("((a)", 0), nullValue());
+    }
+
+    @Test
+    public void testMatchingBracketNone() {
+        assertThat(TextEditing.findMatchingBrackets("abc", 1), nullValue());
     }
 
 }

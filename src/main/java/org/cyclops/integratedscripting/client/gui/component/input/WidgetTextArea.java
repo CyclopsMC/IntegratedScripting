@@ -551,6 +551,16 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         List<LineInfo> lines = Arrays.asList(displayCache.lines);
         int offsetY = 0;
 
+        // Highlight the bracket pair around the cursor
+        if (this.isFocused()) {
+            int[] brackets = TextEditing.findMatchingBrackets(this.getValue(), this.textFieldHelper.getCursorPos());
+            if (brackets != null) {
+                for (int bracket : brackets) {
+                    this.renderCharBackground(guiGraphics, displayCache, bracket, Helpers.RGBAToInt(160, 200, 255, 255));
+                }
+            }
+        }
+
         // Draw lines
         int lastLineNumber = -1;
         for(LineInfo line : lines) {
@@ -582,6 +592,19 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         if (this.scrollBar != null) {
             this.scrollBar.render(guiGraphics, getX(), getY(), partialTicks);
         }
+    }
+
+    private void renderCharBackground(GuiGraphics guiGraphics, DisplayCache displayCache, int pos, int color) {
+        int line = findLineFromPos(displayCache.lineStarts, pos);
+        int row = line - this.firstRow;
+        if (row < 0 || row >= this.getHeight() / ROW_HEIGHT) {
+            return;
+        }
+        String value = this.getValue();
+        int x = this.font.width(value.substring(displayCache.lineStarts[line], pos));
+        int width = this.font.width(value.substring(pos, pos + 1));
+        Pos2i screenPos = this.convertLocalToScreen(new Pos2i(x, row * ROW_HEIGHT));
+        guiGraphics.fill(screenPos.x, screenPos.y - 1, screenPos.x + width, screenPos.y + ROW_HEIGHT - 1, color);
     }
 
     private void renderCursor(GuiGraphics guiGraphics, Pos2i pos, boolean cursorAtEnd) {
