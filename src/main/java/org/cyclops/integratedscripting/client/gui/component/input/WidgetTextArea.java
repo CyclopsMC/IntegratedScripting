@@ -91,6 +91,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     @Nullable
     private WidgetScrollBar scrollBar;
     private int firstRow;
+    private TextHistory history = new TextHistory();
 
     public WidgetTextArea(Font font, int x, int y, int width, int height, Component narrationMessage, boolean scrollBar, boolean showLineNumbers) {
         super(font, x, y, width, height, narrationMessage);
@@ -150,6 +151,10 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     public void setListenerCursor(@Nullable IInputListener listenerCursor) {
         this.listenerCursor = listenerCursor;
+    }
+
+    public void setHistory(TextHistory history) {
+        this.history = history;
     }
 
     public void setMarkupProvider(@Nullable IMarkupProvider markupProvider) {
@@ -236,9 +241,8 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
         if (mouseButton == 1 && mouseX >= this.getX() && mouseX < this.getX() + this.width
                 && mouseY >= this.getY() && mouseY < this.getY() + this.height) {
-            // Select everything
+            // Don't select everything on right-click, as typing would then replace the whole script
             this.setFocused(true);
-            textFieldHelper.selectAll();
             return true;
         } else {
             if (mouseButton == 0 && mouseX >= this.getX() && mouseX < this.getX() + this.width
@@ -312,8 +316,13 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     @Override
     public boolean keyPressed(int typedChar, int keyCode, int modifiers) {
-        boolean flag = this.textFieldKeyPressed(typedChar, keyCode, modifiers);
+        TextHistory.State before = this.getState();
+        boolean history = this.historyKeyPressed(typedChar, modifiers);
+        boolean flag = history || this.textFieldKeyPressed(typedChar, keyCode, modifiers);
         if (flag) {
+            if (!history) {
+                this.recordHistory(before, false);
+            }
             this.clearDisplayCache();
             this.setFocused(true);
             this.ensureCursorVisible();
@@ -331,7 +340,9 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     public boolean charTyped(char typedChar, int keyCode) {
         // Don't delegate to EditBox, as that would consume the character into its own (unused) value
         if (StringUtil.isAllowedChatCharacter(typedChar)) {
+            TextHistory.State before = this.getState();
             this.textFieldHelper.insertText(Character.toString(typedChar));
+            this.recordHistory(before, true);
             this.clearDisplayCache();
             this.setFocused(true);
             this.ensureCursorVisible();
@@ -339,6 +350,45 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         } else {
             return false;
         }
+    }
+
+    private TextHistory.State getState() {
+        return new TextHistory.State(this.getValue(), this.textFieldHelper.getCursorPos(), this.textFieldHelper.getSelectionPos());
+    }
+
+    private void setState(TextHistory.State state) {
+        this.setValuePassive(state.value());
+        this.textFieldHelper.setSelectionRange(state.cursorPos(), state.selectionPos());
+    }
+
+    private void recordHistory(TextHistory.State before, boolean typing) {
+        if (!before.value().equals(this.getValue())) {
+            this.history.record(before, typing, Util.getMillis());
+        }
+    }
+
+    // Modifiers are read from the key event instead of the global keyboard state
+    private static boolean hasControlDown(int modifiers) {
+        return (modifiers & (Minecraft.ON_OSX ? GLFW.GLFW_MOD_SUPER : GLFW.GLFW_MOD_CONTROL)) != 0;
+    }
+
+    private boolean historyKeyPressed(int key, int modifiers) {
+        if (!hasControlDown(modifiers)) {
+            return false;
+        }
+        boolean shift = (modifiers & GLFW.GLFW_MOD_SHIFT) != 0;
+        TextHistory.State state;
+        if (key == GLFW.GLFW_KEY_Z && !shift) {
+            state = this.history.undo(this.getState());
+        } else if (key == GLFW.GLFW_KEY_Y || (key == GLFW.GLFW_KEY_Z && shift)) {
+            state = this.history.redo(this.getState());
+        } else {
+            return false;
+        }
+        if (state != null) {
+            this.setState(state);
+        }
+        return true;
     }
 
     private boolean textFieldKeyPressed(int p_98153_, int p_98154_, int p_98155_) {

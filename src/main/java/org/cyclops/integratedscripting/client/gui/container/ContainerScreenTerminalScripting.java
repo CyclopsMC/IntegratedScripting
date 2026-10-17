@@ -30,6 +30,7 @@ import org.cyclops.integratedscripting.GeneralConfig;
 import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.Reference;
 import org.cyclops.integratedscripting.api.language.ILanguageHandler;
+import org.cyclops.integratedscripting.client.gui.component.input.TextHistory;
 import org.cyclops.integratedscripting.client.gui.component.input.WidgetDialog;
 import org.cyclops.integratedscripting.client.gui.component.input.WidgetTextArea;
 import org.cyclops.integratedscripting.client.gui.image.ScriptImages;
@@ -81,6 +82,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     private final Map<Path, Integer> lastScriptCursorPos = Maps.newHashMap();
     private final Map<Path, Integer> lastScriptSelectionPos = Maps.newHashMap();
     private final Int2ObjectMap<Path> lastDiskScript = new Int2ObjectAVLTreeMap<>();
+    private final Map<Pair<Integer, Path>, TextHistory> scriptHistories = Maps.newHashMap();
 
     public ContainerScreenTerminalScripting(ContainerTerminalScripting container, Inventory inventory, Component title) {
         super(container, inventory, title);
@@ -499,6 +501,8 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     private void onActiveScriptSelected() {
         String script = getMenu().getActiveScript();
         this.textArea.setValue(script == null ? "" : script);
+        Path path = getMenu().getActiveScriptPath();
+        this.textArea.setHistory(path == null ? new TextHistory() : scriptHistories.computeIfAbsent(Pair.of(getMenu().getActiveDisk(), path), k -> new TextHistory()));
     }
 
     private void onActiveScriptModified() {
