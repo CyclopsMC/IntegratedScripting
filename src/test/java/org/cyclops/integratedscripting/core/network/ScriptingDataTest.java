@@ -200,6 +200,32 @@ public class ScriptingDataTest {
         }
     }
 
+    @Test
+    public void testFlushKeepsFilePermissions() throws IOException {
+        Path rootPath = Files.createTempDirectory("integratedscripting-test");
+        ScriptingData scriptingData = new ScriptingData(rootPath);
+        try {
+            org.junit.Assume.assumeTrue(Files.getFileStore(rootPath).supportsFileAttributeView(java.nio.file.attribute.PosixFileAttributeView.class));
+            Path scriptPath = Path.of("main.js");
+            Path scriptPathAbsolute = rootPath.resolve("scripting-disks").resolve("321").resolve(scriptPath);
+
+            // New files are readable by others
+            scriptingData.setScript(321, scriptPath, scriptValue(1), IScriptingData.ChangeLocation.MEMORY);
+            scriptingData.tick();
+            assertThat(java.nio.file.attribute.PosixFilePermissions.toString(Files.getPosixFilePermissions(scriptPathAbsolute)), equalTo("rw-r--r--"));
+
+            // Existing permissions are kept
+            Files.setPosixFilePermissions(scriptPathAbsolute, java.nio.file.attribute.PosixFilePermissions.fromString("rw-rw-r--"));
+            scriptingData.setScript(321, scriptPath, scriptValue(2), IScriptingData.ChangeLocation.MEMORY);
+            scriptingData.tick();
+            assertThat(java.nio.file.attribute.PosixFilePermissions.toString(Files.getPosixFilePermissions(scriptPathAbsolute)), equalTo("rw-rw-r--"));
+            assertThat(Files.readString(scriptPathAbsolute), equalTo(scriptValue(2)));
+        } finally {
+            scriptingData.close();
+            FileUtils.deleteDirectory(rootPath.toFile());
+        }
+    }
+
     private static void awaitCondition(Condition condition) throws InterruptedException {
         assertTrue("Timed out waiting for condition", awaitCondition(condition, AWAIT_TIMEOUT_MS));
     }
