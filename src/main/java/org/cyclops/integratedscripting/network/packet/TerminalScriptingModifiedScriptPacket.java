@@ -42,7 +42,7 @@ public class TerminalScriptingModifiedScriptPacket extends PacketCodec<TerminalS
         super(ID);
         this.disk = disk;
         this.path = path.toString();
-        this.script = Arrays.stream(script.split("\n")).toList();
+        this.script = Arrays.stream(script.split("\n", -1)).toList();
     }
 
     public String getScript() {
