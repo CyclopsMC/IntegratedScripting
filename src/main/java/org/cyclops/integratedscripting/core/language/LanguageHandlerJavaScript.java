@@ -42,6 +42,7 @@ public class LanguageHandlerJavaScript implements ILanguageHandler {
     public static final Style SYMBOL = Style.EMPTY.withColor(TextColor.fromRgb(Helpers.RGBToInt(99, 163, 92))); // Green
     public static final Style CONSTANT = Style.EMPTY.withColor(TextColor.fromRgb(Helpers.RGBToInt(0, 134, 179))); // Blue
     public static final Style KEYWORD = Style.EMPTY.withColor(TextColor.fromRgb(Helpers.RGBToInt(167, 29, 93))); // Red-purple
+    public static final Style STRING = Style.EMPTY.withColor(TextColor.fromRgb(Helpers.RGBToInt(24, 54, 145))); // Dark blue
 
     public final Map<String, Style> tokenStyles;
     private final IScriptFactory scriptFactory;
@@ -49,14 +50,17 @@ public class LanguageHandlerJavaScript implements ILanguageHandler {
     public LanguageHandlerJavaScript() {
         this.tokenStyles = Maps.newHashMap();
 
-        this.tokenStyles.put("const", KEYWORD);
-        this.tokenStyles.put("delete", KEYWORD);
-        this.tokenStyles.put("let", KEYWORD);
-        this.tokenStyles.put("var", KEYWORD);
-        this.tokenStyles.put("function", KEYWORD);
-        this.tokenStyles.put("return", KEYWORD);
-        this.tokenStyles.put("true", KEYWORD);
-        this.tokenStyles.put("false", KEYWORD);
+        for (String keyword : new String[]{
+                "const", "delete", "let", "var", "function", "return", "if", "else", "for", "while", "do", "break",
+                "continue", "switch", "case", "default", "new", "this", "typeof", "instanceof", "in", "of", "class",
+                "extends", "super", "import", "export", "from", "try", "catch", "finally", "throw", "async", "await",
+                "yield", "void"
+        }) {
+            this.tokenStyles.put(keyword, KEYWORD);
+        }
+        for (String constant : new String[]{"true", "false", "null", "undefined"}) {
+            this.tokenStyles.put(constant, CONSTANT);
+        }
 
         this.tokenStyles.put("{", SYMBOL);
         this.tokenStyles.put("}", SYMBOL);
@@ -88,34 +92,66 @@ public class LanguageHandlerJavaScript implements ILanguageHandler {
 
     @Override
     public List<Pair<Style, String>> markupLine(String line) {
-        // TODO: in the future, write/use JS lexer/tokenizer
+        return this.markupScript(line);
+    }
 
+    @Override
+    public List<Pair<Style, String>> markupScript(String script) {
         List<Pair<Style, String>> segments = Lists.newArrayList();
-        segments.add(Pair.of(Style.EMPTY, line));
-
-        // Split up string by tokens
-        for (Map.Entry<String, Style> entry : this.tokenStyles.entrySet()) {
-            String token = entry.getKey();
-            Style tokenStyle = entry.getValue();
-            List<Pair<Style, String>> segmentsNew = Lists.newArrayList();
-
-            for (Pair<Style, String> segment : segments) {
-                Style styleOriginal = segment.getLeft();
-                String hayStack = segment.getRight();
-                int pos;
-                while ((pos = hayStack.indexOf(token)) >= 0) {
-                    segmentsNew.add(Pair.of(styleOriginal, hayStack.substring(0, pos)));
-                    segmentsNew.add(Pair.of(tokenStyle, hayStack.substring(pos, pos + token.length())));
-                    hayStack = hayStack.substring(pos + token.length());
+        int length = script.length();
+        int i = 0;
+        while (i < length) {
+            char c = script.charAt(i);
+            int end;
+            Style style;
+            if (c == '/' && i + 1 < length && script.charAt(i + 1) == '/') {
+                end = script.indexOf('\n', i);
+                end = end < 0 ? length : end;
+                style = COMMENT;
+            } else if (c == '/' && i + 1 < length && script.charAt(i + 1) == '*') {
+                end = script.indexOf("*/", i + 2);
+                end = end < 0 ? length : end + 2;
+                style = COMMENT;
+            } else if (c == '"' || c == '\'' || c == '`') {
+                end = i + 1;
+                while (end < length && script.charAt(end) != c && (c == '`' || script.charAt(end) != '\n')) {
+                    end += script.charAt(end) == '\\' ? 2 : 1;
                 }
-
-                segmentsNew.add(Pair.of(styleOriginal, hayStack));
+                if (end < length && script.charAt(end) == c) {
+                    end++;
+                }
+                end = Math.min(length, end);
+                style = STRING;
+            } else if (Character.isDigit(c)) {
+                end = i + 1;
+                while (end < length && (Character.isLetterOrDigit(script.charAt(end)) || script.charAt(end) == '.' || script.charAt(end) == '_')) {
+                    end++;
+                }
+                style = CONSTANT;
+            } else if (Character.isJavaIdentifierStart(c)) {
+                end = i + 1;
+                while (end < length && Character.isJavaIdentifierPart(script.charAt(end))) {
+                    end++;
+                }
+                style = this.tokenStyles.getOrDefault(script.substring(i, end), Style.EMPTY);
+            } else {
+                end = i + 1;
+                style = this.tokenStyles.getOrDefault(String.valueOf(c), Style.EMPTY);
             }
-
-            segments = segmentsNew;
+            addSegment(segments, style, script.substring(i, end));
+            i = end;
         }
-
         return segments;
+    }
+
+    private static void addSegment(List<Pair<Style, String>> segments, Style style, String text) {
+        // Merge with the previous segment if it has the same style
+        if (!segments.isEmpty() && segments.get(segments.size() - 1).getLeft().equals(style)) {
+            Pair<Style, String> last = segments.remove(segments.size() - 1);
+            segments.add(Pair.of(style, last.getRight() + text));
+        } else {
+            segments.add(Pair.of(style, text));
+        }
     }
 
     @Override
