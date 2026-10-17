@@ -171,6 +171,35 @@ public class ScriptingDataTest {
         }
     }
 
+    @Test
+    public void testFlushDoesNotExposePartialContents() throws IOException, InterruptedException {
+        Path rootPath = Files.createTempDirectory("integratedscripting-test");
+        ScriptingData scriptingData = new ScriptingData(rootPath);
+        try {
+            scriptingData.initialize();
+            Path scriptPath = Path.of("main.js");
+            String body = "x".repeat(1_000_000);
+
+            // The file watcher reloads the disk after each flush, which must never see a partially written file
+            for (int i = 0; i < 20; i++) {
+                scriptingData.setScript(789, scriptPath, body + i + "//end", IScriptingData.ChangeLocation.MEMORY);
+                scriptingData.tick();
+                long deadline = System.currentTimeMillis() + 100;
+                while (System.currentTimeMillis() < deadline) {
+                    String script = scriptingData.getScripts(789).get(scriptPath);
+                    assertTrue("Observed partial script contents", script != null && script.endsWith("//end"));
+                }
+            }
+
+            try (var files = Files.list(rootPath)) {
+                assertTrue("Temporary files were left behind", files.noneMatch(f -> f.toString().endsWith(".tmp")));
+            }
+        } finally {
+            scriptingData.close();
+            FileUtils.deleteDirectory(rootPath.toFile());
+        }
+    }
+
     private static void awaitCondition(Condition condition) throws InterruptedException {
         assertTrue("Timed out waiting for condition", awaitCondition(condition, AWAIT_TIMEOUT_MS));
     }
