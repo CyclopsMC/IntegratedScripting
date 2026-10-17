@@ -378,10 +378,10 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                     this.keyUp();
                     return true;
                 case 266:
-//                    this.backButton.onPress();
+                    this.keyPage(-1);
                     return true;
                 case 267:
-//                    this.forwardButton.onPress();
+                    this.keyPage(1);
                     return true;
                 case 268:
                     this.keyHome();
@@ -408,6 +408,12 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         DisplayCache displayCache = this.getDisplayCache();
         int j = displayCache.changeLine(cursorPos, p_98098_);
         this.textFieldHelper.setCursorPos(j, Screen.hasShiftDown());
+    }
+
+    private void keyPage(int direction) {
+        int rows = this.scrollBar != null ? this.scrollBar.getVisibleRows() : this.getHeight() / ROW_HEIGHT;
+        this.changeLine(direction * rows);
+        this.setFirstRow(this.firstRow + direction * rows, true);
     }
 
     /**
@@ -730,17 +736,10 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
         public int changeLine(int p_98211_, int p_98212_) {
             int i = WidgetTextArea.findLineFromPos(this.lineStarts, p_98211_);
-            int j = i + p_98212_;
-            int k;
-            if (0 <= j && j < this.lineStarts.length) {
-                int l = p_98211_ - this.lineStarts[i];
-                int i1 = this.linesAll[j].contents.length();
-                k = this.lineStarts[j] + Math.min(l, i1);
-            } else {
-                k = p_98211_;
-            }
-
-            return k;
+            int j = Math.max(0, Math.min(this.lineStarts.length - 1, i + p_98212_));
+            int l = p_98211_ - this.lineStarts[i];
+            int i1 = this.linesAll[j].contents.length();
+            return this.lineStarts[j] + Math.min(l, i1);
         }
 
         public int findLineStart(int p_98209_) {
