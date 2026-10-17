@@ -28,6 +28,8 @@ import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -399,6 +401,10 @@ public class ScriptingData implements IScriptingData {
     protected void writeAtomically(Path path, String contents) throws IOException {
         Path tempFile = Files.createTempFile(rootPath, "flush", ".tmp");
         try {
+            // Temporary files are only accessible by their owner, so use the permissions of a regular file instead
+            if (Files.getFileStore(tempFile).supportsFileAttributeView(PosixFileAttributeView.class)) {
+                Files.setPosixFilePermissions(tempFile, Files.exists(path) ? Files.getPosixFilePermissions(path) : PosixFilePermissions.fromString("rw-r--r--"));
+            }
             Files.writeString(tempFile, contents, StandardCharsets.UTF_8);
             try {
                 Files.move(tempFile, path, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
