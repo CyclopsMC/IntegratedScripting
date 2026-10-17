@@ -956,10 +956,13 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                 }
             }
 
+            // Mark up the full text at once, so that constructs such as block comments can span multiple lines
+            Markup markup = new Markup(this.markup(s));
             List<LineInfo> linesAll = Lists.newArrayList();
             for (int k3 = 0; k3 < linesRaw.size(); k3++) {
                 Pos2i bookeditscreen$pos2i1 = this.convertLocalToScreen(new Pos2i(0, (k3 - this.firstRow) * 9)); // Offset firstRow!
-                linesAll.add(new LineInfo(this.markupLine(linesRaw.get(k3).getRight(), linesRaw.get(k3).getLeft()), bookeditscreen$pos2i1.x, bookeditscreen$pos2i1.y, lineNumbers.getInt(k3), linesHasCursor.get(k3)));
+                int lineStartPos = linePositionsOld.getInt(k3);
+                linesAll.add(new LineInfo(markup.slice(s, lineStartPos, lineStartPos + linesRaw.get(k3).getLeft().length()), bookeditscreen$pos2i1.x, bookeditscreen$pos2i1.y, lineNumbers.getInt(k3), linesHasCursor.get(k3)));
             }
 
             // --- Changed ---
@@ -1018,11 +1021,52 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         }
     }
 
-    private List<Pair<Style, String>> markupLine(Style style, String line) {
+    private List<Pair<Style, String>> markup(String text) {
         if (this.markupProvider != null) {
-            return this.markupProvider.markupLine(style, line);
+            List<Pair<Style, String>> segments = this.markupProvider.markup(text);
+            // Ignore markup that doesn't match the text
+            if (segments.stream().mapToInt(segment -> segment.getRight().length()).sum() == text.length()) {
+                return segments;
+            }
         }
-        return Stream.of(Pair.of(style, line)).collect(Collectors.toList());
+        return Stream.of(Pair.of(Style.EMPTY, text)).collect(Collectors.toList());
+    }
+
+    /**
+     * Styled segments of a text, which can be sliced by position.
+     */
+    static class Markup {
+        private final int[] starts;
+        private final Style[] styles;
+
+        Markup(List<Pair<Style, String>> segments) {
+            this.starts = new int[segments.size()];
+            this.styles = new Style[segments.size()];
+            int pos = 0;
+            for (int i = 0; i < segments.size(); i++) {
+                this.starts[i] = pos;
+                this.styles[i] = segments.get(i).getLeft();
+                pos += segments.get(i).getRight().length();
+            }
+        }
+
+        List<Pair<Style, String>> slice(String text, int from, int to) {
+            List<Pair<Style, String>> result = Lists.newArrayList();
+            if (from >= to) {
+                return result;
+            }
+            int i = Math.max(0, findLineFromPos(this.starts, from));
+            while (i < this.starts.length && this.starts[i] < to) {
+                int segmentEnd = i + 1 < this.starts.length ? this.starts[i + 1] : text.length();
+                int start = Math.max(from, this.starts[i]);
+                int end = Math.min(to, segmentEnd);
+                if (start < end) {
+                    result.add(Pair.of(this.styles[i], text.substring(start, end)));
+                }
+                i++;
+            }
+            return result;
+        }
     }
 
     static int findLineFromPos(int[] p_98150_, int p_98151_) {
@@ -1142,7 +1186,11 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     }
 
     public static interface IMarkupProvider {
-        public List<Pair<Style, String>> markupLine(Style style, String line);
+        /**
+         * @param text The full text.
+         * @return Styled segments that together form the full text.
+         */
+        public List<Pair<Style, String>> markup(String text);
     }
 
     public static interface ShortcutListener {
