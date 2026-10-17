@@ -367,6 +367,17 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         }
     }
 
+    /**
+     * Replace the value as an undoable edit, keeping the cursor position where possible.
+     * @param value The new value.
+     */
+    public void replaceValue(String value) {
+        TextHistory.State before = this.getState();
+        this.setState(new TextHistory.State(value, before.cursorPos(), before.selectionPos()));
+        this.recordHistory(before, false);
+        this.clearDisplayCache();
+    }
+
     // Modifiers are read from the key event instead of the global keyboard state
     private static boolean hasControlDown(int modifiers) {
         return (modifiers & (Minecraft.ON_OSX ? GLFW.GLFW_MOD_SUPER : GLFW.GLFW_MOD_CONTROL)) != 0;
