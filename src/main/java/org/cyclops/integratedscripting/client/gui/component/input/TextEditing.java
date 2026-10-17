@@ -185,4 +185,70 @@ public class TextEditing {
         return -1;
     }
 
+    /**
+     * Find the next case-insensitive occurrence of a query, wrapping around at the end.
+     * @return The start position of the occurrence, or -1 if there is none.
+     */
+    public static int findNext(String value, String query, int from) {
+        if (query.isEmpty()) {
+            return -1;
+        }
+        String haystack = value.toLowerCase(java.util.Locale.ROOT);
+        String needle = query.toLowerCase(java.util.Locale.ROOT);
+        int i = haystack.indexOf(needle, Math.max(0, Math.min(from, haystack.length())));
+        return i >= 0 ? i : haystack.indexOf(needle);
+    }
+
+    /**
+     * Find all non-overlapping case-insensitive occurrences of a query.
+     * @return The start positions of all occurrences.
+     */
+    public static int[] findAll(String value, String query) {
+        if (query.isEmpty()) {
+            return new int[0];
+        }
+        String haystack = value.toLowerCase(java.util.Locale.ROOT);
+        String needle = query.toLowerCase(java.util.Locale.ROOT);
+        it.unimi.dsi.fastutil.ints.IntList positions = new it.unimi.dsi.fastutil.ints.IntArrayList();
+        int i = haystack.indexOf(needle);
+        while (i >= 0) {
+            positions.add(i);
+            i = haystack.indexOf(needle, i + needle.length());
+        }
+        return positions.toIntArray();
+    }
+
+    /**
+     * Find the last case-insensitive occurrence of a query that starts before a position, wrapping around at the start.
+     * @return The start position of the occurrence, or -1 if there is none.
+     */
+    public static int findPrevious(String value, String query, int before) {
+        int[] positions = findAll(value, query);
+        if (positions.length == 0) {
+            return -1;
+        }
+        for (int i = positions.length - 1; i >= 0; i--) {
+            if (positions[i] < before) {
+                return positions[i];
+            }
+        }
+        return positions[positions.length - 1];
+    }
+
+    /**
+     * @param line A 1-based line number, which is clamped to the existing lines.
+     * @return The position of the start of the line.
+     */
+    public static int lineOffset(String value, int line) {
+        int pos = 0;
+        for (int i = 1; i < line; i++) {
+            int next = value.indexOf('\n', pos);
+            if (next < 0) {
+                break;
+            }
+            pos = next + 1;
+        }
+        return pos;
+    }
+
 }

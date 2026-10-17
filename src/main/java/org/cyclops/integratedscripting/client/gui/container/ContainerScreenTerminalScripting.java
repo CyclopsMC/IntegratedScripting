@@ -30,8 +30,10 @@ import org.cyclops.integratedscripting.GeneralConfig;
 import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.Reference;
 import org.cyclops.integratedscripting.api.language.ILanguageHandler;
+import org.cyclops.integratedscripting.client.gui.component.input.TextEditing;
 import org.cyclops.integratedscripting.client.gui.component.input.TextHistory;
 import org.cyclops.integratedscripting.client.gui.component.input.WidgetDialog;
+import org.cyclops.integratedscripting.client.gui.component.input.WidgetSearchBar;
 import org.cyclops.integratedscripting.client.gui.component.input.WidgetTextArea;
 import org.cyclops.integratedscripting.client.gui.image.ScriptImages;
 import org.cyclops.integratedscripting.core.language.LanguageHandlers;
@@ -76,6 +78,8 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     private WidgetTextArea textArea;
     private ButtonText buttonCreateFile;
     private WidgetDialog pendingScriptRemovalDialog;
+    @Nullable
+    private WidgetSearchBar searchBar;
     private int lastClientSyncTick;
     private final DisplayErrorsComponent displayErrors = new DisplayErrorsComponent();
 
@@ -102,6 +106,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             this.saveCursorPos();
         }
         pendingScriptRemovalDialog = null;
+        searchBar = null;
 
         super.init();
 
@@ -127,6 +132,13 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
         textArea = new WidgetTextArea(Minecraft.getInstance().font, this.leftPos + SCRIPT_X + 1, this.topPos + SCRIPT_Y + 1, SCRIPT_WIDTH, SCRIPT_HEIGHT, Component.translatable("gui.integratedscripting.script"), true, true);
         textArea.setListener(this::onActiveScriptModified);
+        textArea.setShortcutListener(key -> {
+            if (key == GLFW.GLFW_KEY_F || key == GLFW.GLFW_KEY_G) {
+                openNavigate(key == GLFW.GLFW_KEY_G);
+                return true;
+            }
+            return false;
+        });
         getMenu().setRemoteScriptChangeListener(this::onRemoteScriptChanged);
         textArea.setListenerSelection(this::onSelectionModified);
         textArea.setListenerCursor(this::onSelectionModified);
@@ -153,6 +165,8 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     protected void containerTick() {
         super.containerTick();
         textArea.tick();
+        // The matches change when the script is edited while searching
+        this.updateSearchStatus();
 
         if (this.lastClientSyncTick == 0) {
             // Send modified scripts from client to server
@@ -577,6 +591,15 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             return false;
         }
 
+        if (this.searchBar != null && this.searchBar.isFocused()) {
+            return this.searchBar.keyPressed(typedChar, keyCode, modifiers);
+        }
+        // Close the search bar before closing the screen
+        if (this.searchBar != null && typedChar == GLFW.GLFW_KEY_ESCAPE) {
+            closeNavigate();
+            return true;
+        }
+
         if (textArea.isFocused()) {
             boolean ret = textArea.keyPressed(typedChar, keyCode, modifiers);
             if (typedChar != GLFW.GLFW_KEY_ESCAPE) {
@@ -586,11 +609,118 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         return super.keyPressed(typedChar, keyCode, modifiers);
     }
 
+    /**
+     * Show a bar below the editor to find text, or to go to a line number.
+     */
+    private void openNavigate(boolean toLine) {
+        String selected = this.textArea.getSelected();
+        String initialValue = !toLine && !selected.isEmpty() && selected.indexOf('\n') < 0 ? selected : "";
+        if (this.searchBar != null && this.searchBar.isLineMode() == toLine) {
+            this.searchBar.focusAndSelect(initialValue);
+        } else {
+            closeNavigate();
+            // The editor gives up the space for the bar
+            this.textArea.setHeight(this.textArea.getHeight() - WidgetSearchBar.HEIGHT);
+            this.searchBar = new WidgetSearchBar(font, this.textArea.getX(), this.textArea.getY() + this.textArea.getHeight(), this.textArea.getWidth(),
+                    toLine, initialValue, this::onSearchChanged, this::navigate, this::closeNavigate);
+            addRenderableWidget(this.searchBar);
+        }
+        this.textArea.setFocused(false);
+        this.setFocused(this.searchBar);
+        this.onSearchChanged(this.searchBar.getValue());
+    }
+
+    private void closeNavigate() {
+        if (this.searchBar != null) {
+            removeWidget(this.searchBar);
+            this.searchBar = null;
+            this.textArea.setHeight(this.textArea.getHeight() + WidgetSearchBar.HEIGHT);
+            this.textArea.setSearchQuery(null);
+            this.setFocused(this.textArea);
+            this.textArea.setFocused(true);
+        }
+    }
+
+    private void onSearchChanged(String query) {
+        if (this.searchBar.isLineMode()) {
+            this.searchBar.setStatus("", !query.isBlank() && parseLine(query) < 0);
+            return;
+        }
+        this.textArea.setSearchQuery(query);
+        if (!query.isEmpty()) {
+            // Stay on the current match while typing, or move to the next one
+            int pos = TextEditing.findNext(this.textArea.getValue(), query, Math.min(this.textArea.getCursorPos(), this.textArea.getSelectionPos()));
+            if (pos >= 0) {
+                this.textArea.selectRange(pos, pos + query.length());
+            }
+        }
+        this.updateSearchStatus();
+    }
+
+    private void updateSearchStatus() {
+        if (this.searchBar == null || this.searchBar.isLineMode()) {
+            return;
+        }
+        String query = this.searchBar.getValue();
+        if (query.isEmpty()) {
+            this.searchBar.setStatus("", false);
+            return;
+        }
+        int[] matches = this.textArea.getSearchMatches();
+        int start = Math.min(this.textArea.getCursorPos(), this.textArea.getSelectionPos());
+        int end = Math.max(this.textArea.getCursorPos(), this.textArea.getSelectionPos());
+        int current = 0;
+        for (int i = 0; i < matches.length; i++) {
+            if (matches[i] == start && end - start == query.length()) {
+                current = i + 1;
+            }
+        }
+        this.searchBar.setStatus(current + "/" + matches.length, matches.length == 0);
+    }
+
+    private static int parseLine(String value) {
+        try {
+            int line = Integer.parseInt(value.trim());
+            return line > 0 ? line : -1;
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
+    /**
+     * @param direction 1 for the next match, -1 for the previous match.
+     */
+    private void navigate(int direction) {
+        String query = this.searchBar.getValue();
+        String value = this.textArea.getValue();
+        if (this.searchBar.isLineMode()) {
+            int line = parseLine(query);
+            if (line < 0) {
+                this.searchBar.setStatus("", true);
+                return;
+            }
+            int pos = TextEditing.lineOffset(value, line);
+            closeNavigate();
+            this.textArea.selectRange(pos, pos);
+            return;
+        }
+        int pos = direction > 0
+                ? TextEditing.findNext(value, query, Math.max(this.textArea.getCursorPos(), this.textArea.getSelectionPos()))
+                : TextEditing.findPrevious(value, query, Math.min(this.textArea.getCursorPos(), this.textArea.getSelectionPos()));
+        if (pos >= 0) {
+            this.textArea.selectRange(pos, pos + query.length());
+        }
+        this.updateSearchStatus();
+    }
+
     @Override
     public boolean charTyped(char p_94683_, int p_94684_) {
         // Make active dialog consume all input
         if (pendingScriptRemovalDialog != null) {
             return false;
+        }
+        if (this.searchBar != null && this.searchBar.isFocused()) {
+            return this.searchBar.charTyped(p_94683_, p_94684_);
         }
         return super.charTyped(p_94683_, p_94684_);
     }

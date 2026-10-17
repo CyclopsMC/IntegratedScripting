@@ -116,4 +116,49 @@ public class TextEditingTest {
         assertThat(TextEditing.findMatchingBrackets("abc", 1), nullValue());
     }
 
+    @Test
+    public void testFindNext() {
+        assertThat(TextEditing.findNext("abc abc", "abc", 1), equalTo(4));
+    }
+
+    @Test
+    public void testFindNextWraps() {
+        assertThat(TextEditing.findNext("abc abc", "abc", 5), equalTo(0));
+    }
+
+    @Test
+    public void testFindNextCaseInsensitive() {
+        assertThat(TextEditing.findNext("const Foo", "foo", 0), equalTo(6));
+    }
+
+    @Test
+    public void testFindNextMissing() {
+        assertThat(TextEditing.findNext("abc", "x", 0), equalTo(-1));
+        assertThat(TextEditing.findNext("abc", "", 0), equalTo(-1));
+    }
+
+    @Test
+    public void testLineOffset() {
+        assertThat(TextEditing.lineOffset("a\nbc\nd", 1), equalTo(0));
+        assertThat(TextEditing.lineOffset("a\nbc\nd", 3), equalTo(5));
+        assertThat(TextEditing.lineOffset("a\nbc\nd", 10), equalTo(5));
+        assertThat(TextEditing.lineOffset("a\nbc\nd", 0), equalTo(0));
+    }
+
+    @Test
+    public void testFindAll() {
+        assertThat(TextEditing.findAll("Item item ITEM", "item"), equalTo(new int[]{0, 5, 10}));
+        assertThat(TextEditing.findAll("aaaa", "aa"), equalTo(new int[]{0, 2}));
+        assertThat(TextEditing.findAll("abc", "x"), equalTo(new int[0]));
+        assertThat(TextEditing.findAll("abc", ""), equalTo(new int[0]));
+    }
+
+    @Test
+    public void testFindPrevious() {
+        assertThat(TextEditing.findPrevious("abc abc abc", "abc", 8), equalTo(4));
+        assertThat(TextEditing.findPrevious("abc abc abc", "abc", 4), equalTo(0));
+        assertThat(TextEditing.findPrevious("abc abc abc", "abc", 0), equalTo(8));
+        assertThat(TextEditing.findPrevious("abc", "x", 2), equalTo(-1));
+    }
+
 }
