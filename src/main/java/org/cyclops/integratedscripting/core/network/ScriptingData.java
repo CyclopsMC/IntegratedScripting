@@ -49,7 +49,8 @@ public class ScriptingData implements IScriptingData {
 
     private final Int2ObjectMap<Map<Path, String>> diskScripts = new Int2ObjectAVLTreeMap<>();
     private final Path rootPath;
-    private final Set<Pair<Integer, Path>> dirtyPaths = Sets.newHashSet();
+    // Accessed by both the server thread and the file watcher thread
+    private final Set<Pair<Integer, Path>> dirtyPaths = Sets.newConcurrentHashSet();
     private final Int2ObjectMap<List<IDiskScriptsChangeListener>> scriptChangeListeners = new Int2ObjectAVLTreeMap<>();
     private final Map<Path, WatchKey> pathWatchers = Maps.newHashMap();
     private final Map<WatchKey, Path> pathWatchersReverse = Maps.newHashMap();
@@ -155,6 +156,20 @@ public class ScriptingData implements IScriptingData {
                 }
             }
         }
+
+        // Keep changes that were not flushed to disk yet, as the disk contents are outdated for these
+        Map<Path, String> scriptsMemory = diskScripts.get(diskId);
+        for (Pair<Integer, Path> dirtyPath : dirtyPaths) {
+            if (dirtyPath.getLeft() == diskId) {
+                String scriptMemory = scriptsMemory == null ? null : scriptsMemory.get(dirtyPath.getRight());
+                if (scriptMemory == null) {
+                    scripts.remove(dirtyPath.getRight());
+                } else {
+                    scripts.put(dirtyPath.getRight(), scriptMemory);
+                }
+            }
+        }
+
         this.setScripts(diskId, scripts, ChangeLocation.DISK);
     }
 
