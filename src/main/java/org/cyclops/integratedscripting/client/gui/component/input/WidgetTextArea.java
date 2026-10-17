@@ -420,6 +420,9 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                 case 335:
                     this.textFieldHelper.insertText("\n");
                     return true;
+                case GLFW.GLFW_KEY_TAB:
+                    this.setState((p_98155_ & GLFW.GLFW_MOD_SHIFT) != 0 ? TextEditing.unindent(this.getState()) : TextEditing.indent(this.getState()));
+                    return true;
                 case 259:
                     this.textFieldHelper.removeFromCursor(-1, cursorStep);
                     return true;
