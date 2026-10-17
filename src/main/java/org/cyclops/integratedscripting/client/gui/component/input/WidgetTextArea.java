@@ -155,6 +155,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     }
 
     public void setValue(String value) {
+        this.firstRow = 0;
         this.setValuePassive(value);
 
         textFieldHelper.setCursorToStart();
@@ -165,7 +166,6 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     }
 
     public void setValuePassive(String value) {
-        this.firstRow = 0;
         this.value = value;
         this.clearDisplayCache();
 
@@ -552,25 +552,39 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             int cursorPos = this.textFieldHelper.getCursorPos();
             int selectionPos = this.textFieldHelper.getSelectionPos();
             IntList linePositionsOld = new IntArrayList();
-            List<LineInfo> linesAll = Lists.newArrayList();
-            MutableInt mutableint = new MutableInt();
+            List<Pair<String, Style>> linesRaw = Lists.newArrayList();
+            IntList lineNumbers = new IntArrayList();
+            List<Boolean> linesHasCursor = Lists.newArrayList();
             MutableBoolean mutableboolean = new MutableBoolean();
             StringSplitter stringsplitter = this.font.getSplitter();
             MutableInt lineNumber = new MutableInt();
             stringsplitter.splitLines(s, this.getWidth() - getLinesXOffset() /* changed */, Style.EMPTY, true, (style, startPos, endPos) -> {
-                int k3 = mutableint.getAndIncrement();
                 String stringPart = s.substring(startPos, endPos);
                 boolean hasNewLine = stringPart.endsWith("\n");
                 mutableboolean.setValue(hasNewLine);
-                String s3 = StringUtils.stripEnd(stringPart, " \n");
-                int l3 = (k3 - this.firstRow) * 9; // Offset firstRow!
-                Pos2i bookeditscreen$pos2i1 = this.convertLocalToScreen(new Pos2i(0, l3));
                 linePositionsOld.add(startPos);
-                linesAll.add(new LineInfo(this.markupLine(style, s3), bookeditscreen$pos2i1.x, bookeditscreen$pos2i1.y, lineNumber.getValue(), cursorPos >= startPos && cursorPos < (hasNewLine ? endPos : s.indexOf("\n", endPos))));
+                linesRaw.add(Pair.of(StringUtils.stripEnd(stringPart, " \n"), style));
+                lineNumbers.add(lineNumber.intValue());
+                linesHasCursor.add(cursorPos >= startPos && cursorPos < (hasNewLine ? endPos : s.indexOf("\n", endPos)));
                 if (hasNewLine) {
                     lineNumber.increment();
                 }
             });
+
+            // Keep scroll position within bounds, as the text may have shrunk
+            if (this.scrollBar != null) {
+                int maxFirstRow = Math.max(0, linesRaw.size() - this.scrollBar.getVisibleRows());
+                if (this.firstRow > maxFirstRow) {
+                    this.firstRow = maxFirstRow;
+                    this.scrollBar.setFirstRow(this.firstRow, false);
+                }
+            }
+
+            List<LineInfo> linesAll = Lists.newArrayList();
+            for (int k3 = 0; k3 < linesRaw.size(); k3++) {
+                Pos2i bookeditscreen$pos2i1 = this.convertLocalToScreen(new Pos2i(0, (k3 - this.firstRow) * 9)); // Offset firstRow!
+                linesAll.add(new LineInfo(this.markupLine(linesRaw.get(k3).getRight(), linesRaw.get(k3).getLeft()), bookeditscreen$pos2i1.x, bookeditscreen$pos2i1.y, lineNumbers.getInt(k3), linesHasCursor.get(k3)));
+            }
 
             // --- Changed ---
             // Slice lines based on scroll position
