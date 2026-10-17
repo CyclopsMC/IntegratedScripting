@@ -45,6 +45,7 @@ import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.IntPredicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -92,6 +93,8 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     private WidgetScrollBar scrollBar;
     private int firstRow;
     private TextHistory history = new TextHistory();
+    @Nullable
+    private IntPredicate shortcutListener;
 
     public WidgetTextArea(Font font, int x, int y, int width, int height, Component narrationMessage, boolean scrollBar, boolean showLineNumbers) {
         super(font, x, y, width, height, narrationMessage);
@@ -151,6 +154,24 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     public void setListenerCursor(@Nullable IInputListener listenerCursor) {
         this.listenerCursor = listenerCursor;
+    }
+
+    /**
+     * @param shortcutListener Called with the key of ctrl-shortcuts, returns true if it handled the shortcut.
+     */
+    public void setShortcutListener(@Nullable IntPredicate shortcutListener) {
+        this.shortcutListener = shortcutListener;
+    }
+
+    /**
+     * Select a range and scroll to it.
+     * @param start The start position, where the selection is anchored.
+     * @param end The end position, where the cursor is placed.
+     */
+    public void selectRange(int start, int end) {
+        this.textFieldHelper.setSelectionRange(end, start);
+        this.clearDisplayCache();
+        this.ensureCursorVisible();
     }
 
     public void setHistory(TextHistory history) {
@@ -314,6 +335,9 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     @Override
     public boolean keyPressed(int typedChar, int keyCode, int modifiers) {
+        if (hasControlDown(modifiers) && this.shortcutListener != null && this.shortcutListener.test(typedChar)) {
+            return true;
+        }
         TextHistory.State before = this.getState();
         boolean history = this.historyKeyPressed(typedChar, modifiers);
         boolean flag = history || this.textFieldKeyPressed(typedChar, keyCode, modifiers);

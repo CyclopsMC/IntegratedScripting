@@ -8,6 +8,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -30,6 +31,7 @@ import org.cyclops.integratedscripting.GeneralConfig;
 import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.Reference;
 import org.cyclops.integratedscripting.api.language.ILanguageHandler;
+import org.cyclops.integratedscripting.client.gui.component.input.TextEditing;
 import org.cyclops.integratedscripting.client.gui.component.input.TextHistory;
 import org.cyclops.integratedscripting.client.gui.component.input.WidgetDialog;
 import org.cyclops.integratedscripting.client.gui.component.input.WidgetTextArea;
@@ -75,6 +77,9 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     private WidgetTextArea textArea;
     private ButtonText buttonCreateFile;
     private WidgetDialog pendingScriptRemovalDialog;
+    @Nullable
+    private EditBox fieldNavigate;
+    private boolean navigateToLine;
     private int lastClientSyncTick;
     private final DisplayErrorsComponent displayErrors = new DisplayErrorsComponent();
 
@@ -122,6 +127,13 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
         textArea = new WidgetTextArea(Minecraft.getInstance().font, this.leftPos + SCRIPT_X + 1, this.topPos + SCRIPT_Y + 1, SCRIPT_WIDTH, SCRIPT_HEIGHT, Component.translatable("gui.integratedscripting.script"), true, true);
         textArea.setListener(this::onActiveScriptModified);
+        textArea.setShortcutListener(key -> {
+            if (key == GLFW.GLFW_KEY_F || key == GLFW.GLFW_KEY_G) {
+                openNavigate(key == GLFW.GLFW_KEY_G);
+                return true;
+            }
+            return false;
+        });
         getMenu().setRemoteScriptChangeListener(this::onRemoteScriptChanged);
         textArea.setListenerSelection(this::onSelectionModified);
         textArea.setListenerCursor(this::onSelectionModified);
@@ -528,6 +540,18 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             return false;
         }
 
+        if (this.fieldNavigate != null && this.fieldNavigate.isFocused()) {
+            if (typedChar == GLFW.GLFW_KEY_ESCAPE) {
+                closeNavigate();
+            } else if (typedChar == GLFW.GLFW_KEY_ENTER || typedChar == GLFW.GLFW_KEY_KP_ENTER) {
+                navigate();
+            } else {
+                this.fieldNavigate.keyPressed(typedChar, keyCode, modifiers);
+            }
+            // Don't let typing trigger screen actions, such as closing the screen
+            return true;
+        }
+
         if (textArea.isFocused()) {
             boolean ret = textArea.keyPressed(typedChar, keyCode, modifiers);
             if (typedChar != GLFW.GLFW_KEY_ESCAPE) {
@@ -537,11 +561,60 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         return super.keyPressed(typedChar, keyCode, modifiers);
     }
 
+    /**
+     * Show a field to find text, or to go to a line number.
+     */
+    private void openNavigate(boolean toLine) {
+        closeNavigate();
+        this.navigateToLine = toLine;
+        this.fieldNavigate = new EditBox(font, this.leftPos + SCRIPT_X + SCRIPT_WIDTH - 82, this.topPos + SCRIPT_Y + 2, 66, 10,
+                Component.translatable(toLine ? "gui.integratedscripting.goto_line" : "gui.integratedscripting.find"));
+        this.fieldNavigate.setHint(Component.translatable(toLine ? "gui.integratedscripting.goto_line" : "gui.integratedscripting.find"));
+        String selected = this.textArea.getSelected();
+        if (!toLine && !selected.isEmpty() && selected.indexOf('\n') < 0) {
+            this.fieldNavigate.setValue(selected);
+        }
+        addRenderableWidget(this.fieldNavigate);
+        this.textArea.setFocused(false);
+        this.setFocused(this.fieldNavigate);
+    }
+
+    private void closeNavigate() {
+        if (this.fieldNavigate != null) {
+            removeWidget(this.fieldNavigate);
+            this.fieldNavigate = null;
+            this.setFocused(this.textArea);
+            this.textArea.setFocused(true);
+        }
+    }
+
+    private void navigate() {
+        String query = this.fieldNavigate.getValue();
+        String value = this.textArea.getValue();
+        if (this.navigateToLine) {
+            try {
+                int pos = TextEditing.lineOffset(value, Integer.parseInt(query.trim()));
+                closeNavigate();
+                this.textArea.selectRange(pos, pos);
+            } catch (NumberFormatException e) {
+                // Keep the field open so the number can be fixed
+            }
+        } else {
+            int pos = TextEditing.findNext(value, query, Math.max(this.textArea.getCursorPos(), this.textArea.getSelectionPos()));
+            if (pos >= 0) {
+                this.textArea.selectRange(pos, pos + query.length());
+            }
+        }
+    }
+
     @Override
     public boolean charTyped(char p_94683_, int p_94684_) {
         // Make active dialog consume all input
         if (pendingScriptRemovalDialog != null) {
             return false;
+        }
+        if (this.fieldNavigate != null && this.fieldNavigate.isFocused()) {
+            return this.fieldNavigate.charTyped(p_94683_, p_94684_);
         }
         return super.charTyped(p_94683_, p_94684_);
     }
