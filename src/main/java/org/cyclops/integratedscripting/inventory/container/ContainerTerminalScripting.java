@@ -250,6 +250,9 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
     }
 
     public void setServerScript(int disk, Path path, @Nullable String script) {
+        // The client already has this version, so don't send it back in broadcastChanges.
+        // Otherwise, this echo could overwrite newer client changes that were not synced yet.
+        setLastScript(disk, path, script);
         ScriptingNetworkHelpers.getScriptingData().setScript(disk, path, script, IScriptingData.ChangeLocation.MEMORY);
     }
 
