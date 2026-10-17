@@ -27,8 +27,9 @@ public class TextFieldHelperExtended extends TextFieldHelper {
 
     public String getSelected() {
         String value = this.getMessageFn.get();
-        int i = Math.min(this.getCursorPos(), this.getSelectionPos());
-        int j = Math.max(this.getCursorPos(), this.getSelectionPos());
+        // Positions may still refer to a previous, longer value
+        int i = Math.min(Math.min(this.getCursorPos(), this.getSelectionPos()), value.length());
+        int j = Math.min(Math.max(this.getCursorPos(), this.getSelectionPos()), value.length());
         return value.substring(i, j);
     }
 
