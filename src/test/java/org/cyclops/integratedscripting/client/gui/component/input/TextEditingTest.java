@@ -60,4 +60,34 @@ public class TextEditingTest {
         assertThat(TextEditing.unindent(s("    a\n  b\nc", 0, 11)), equalTo(s("a\nb\nc", 0, 5)));
     }
 
+    @Test
+    public void testNewlineKeepsIndent() {
+        assertThat(TextEditing.newline(s("    a;", 6)), equalTo(s("    a;\n    ", 11)));
+    }
+
+    @Test
+    public void testNewlineIndentsAfterOpeningBracket() {
+        assertThat(TextEditing.newline(s("  if (a) {", 10)), equalTo(s("  if (a) {\n      ", 17)));
+    }
+
+    @Test
+    public void testNewlineIndentsAfterOpeningBracketWithTrailingSpace() {
+        assertThat(TextEditing.newline(s("f(", 2)), equalTo(s("f(\n    ", 7)));
+    }
+
+    @Test
+    public void testNewlineSplitsBracketPair() {
+        assertThat(TextEditing.newline(s("  {}", 3)), equalTo(s("  {\n      \n  }", 10)));
+    }
+
+    @Test
+    public void testNewlineReplacesSelection() {
+        assertThat(TextEditing.newline(s("abc", 1, 2)), equalTo(s("a\nc", 2)));
+    }
+
+    @Test
+    public void testNewlineInMiddleOfIndent() {
+        assertThat(TextEditing.newline(s("    a", 2)), equalTo(s("  \n    a", 5)));
+    }
+
 }
