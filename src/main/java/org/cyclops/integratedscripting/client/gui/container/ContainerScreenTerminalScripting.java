@@ -293,8 +293,12 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
                     Font.DisplayMode.NORMAL
             );
 
-            // If hovering, render removal button
+            // If hovering, show the full path, as it may be truncated, and render removal button
             if (hovering) {
+                // Don't draw over an open dialog
+                if (pendingScriptRemovalDialog == null) {
+                    this.setTooltipForNextRenderPass(Component.literal(path.toString()));
+                }
                 guiGraphics.pose().pushPose();
                 float scale = 0.4F;
                 int size = (int) (Images.ERROR.getWidth() * scale);
