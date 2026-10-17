@@ -142,4 +142,47 @@ public class TextEditing {
         };
     }
 
+    private static char opening(char close) {
+        return switch (close) {
+            case '}' -> '{';
+            case ')' -> '(';
+            case ']' -> '[';
+            default -> 0;
+        };
+    }
+
+    /**
+     * Find the bracket matching the one right after or right before the cursor.
+     * @return A pair of bracket positions, or null if there is no matching bracket.
+     */
+    public static int[] findMatchingBrackets(String value, int cursorPos) {
+        for (int pos : new int[]{cursorPos, cursorPos - 1}) {
+            if (pos < 0 || pos >= value.length()) {
+                continue;
+            }
+            char c = value.charAt(pos);
+            if (closing(c) != 0) {
+                int match = scan(value, pos, c, closing(c), 1);
+                return match < 0 ? null : new int[]{pos, match};
+            } else if (opening(c) != 0) {
+                int match = scan(value, pos, c, opening(c), -1);
+                return match < 0 ? null : new int[]{match, pos};
+            }
+        }
+        return null;
+    }
+
+    private static int scan(String value, int from, char self, char other, int step) {
+        int depth = 0;
+        for (int i = from; i >= 0 && i < value.length(); i += step) {
+            char c = value.charAt(i);
+            if (c == self) {
+                depth++;
+            } else if (c == other && --depth == 0) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
 }
