@@ -122,6 +122,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
         textArea = new WidgetTextArea(Minecraft.getInstance().font, this.leftPos + SCRIPT_X + 1, this.topPos + SCRIPT_Y + 1, SCRIPT_WIDTH, SCRIPT_HEIGHT, Component.translatable("gui.integratedscripting.script"), true, true);
         textArea.setListener(this::onActiveScriptModified);
+        getMenu().setRemoteScriptChangeListener(this::onRemoteScriptChanged);
         textArea.setListenerSelection(this::onSelectionModified);
         textArea.setListenerCursor(this::onSelectionModified);
         textArea.setMarkupProvider((style, line) -> {
@@ -454,6 +455,16 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         this.textArea.setValue(script == null ? "" : script);
         Path path = getMenu().getActiveScriptPath();
         this.textArea.setHistory(path == null ? new TextHistory() : scriptHistories.computeIfAbsent(Pair.of(getMenu().getActiveDisk(), path), k -> new TextHistory()));
+    }
+
+    private void onRemoteScriptChanged(int disk, Path path) {
+        // Show changes from outside this editor, such as external file edits, instead of overwriting them on the next edit
+        if (disk == getMenu().getActiveDisk() && path.equals(getMenu().getActiveScriptPath())) {
+            String script = getMenu().getActiveScript();
+            if (script != null && !script.equals(this.textArea.getValue())) {
+                this.textArea.replaceValue(script);
+            }
+        }
     }
 
     private void onActiveScriptModified() {

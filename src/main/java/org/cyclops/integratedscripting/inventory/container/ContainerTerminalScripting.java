@@ -46,6 +46,7 @@ import org.cyclops.integratedscripting.part.PartTypeTerminalScripting;
 import javax.annotation.Nullable;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 
 /**
@@ -70,6 +71,8 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
     private final int activeDiskId;
     private final int activeScriptPathId;
     private final int selectionId;
+    @Nullable
+    private BiConsumer<Integer, Path> remoteScriptChangeListener;
 
     public ContainerTerminalScripting(int id, Inventory playerInventory, RegistryFriendlyByteBuf packetBuffer) {
         this(id, playerInventory, PartHelpers.readPartTarget(packetBuffer), Optional.empty(),
@@ -238,6 +241,21 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
         // Cleanup if we have no scripts anymore for a certain disk
         if (lastScriptsDisk.isEmpty()) {
             lastScripts.remove(disk);
+        }
+    }
+
+    public void setRemoteScriptChangeListener(@Nullable BiConsumer<Integer, Path> remoteScriptChangeListener) {
+        this.remoteScriptChangeListener = remoteScriptChangeListener;
+    }
+
+    /**
+     * Called on the client when a script was changed by the server.
+     * @param disk The disk id.
+     * @param path The script path.
+     */
+    public void onRemoteScriptChange(int disk, Path path) {
+        if (this.remoteScriptChangeListener != null) {
+            this.remoteScriptChangeListener.accept(disk, path);
         }
     }
 

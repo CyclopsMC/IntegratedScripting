@@ -59,6 +59,7 @@ public class TerminalScriptingModifiedScriptPacket extends PacketCodec<TerminalS
     public void actionClient(Level world, Player player) {
         if(player.containerMenu instanceof ContainerTerminalScripting container) {
             container.setLastScript(disk, Path.of(path), getScript());
+            container.onRemoteScriptChange(disk, Path.of(path));
         }
     }
 
