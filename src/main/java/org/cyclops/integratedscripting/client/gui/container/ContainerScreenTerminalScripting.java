@@ -82,6 +82,8 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     private int firstRow;
     private WidgetTextArea textArea;
     private ButtonText buttonCreateFile;
+    // The disk a script is being created on, so the new script can be opened once the server sends it
+    private int createdScriptDisk = -1;
     private final List<ButtonIcon> toolbarEditButtons = Lists.newArrayList();
     private ButtonIcon buttonUndo;
     private ButtonIcon buttonRedo;
@@ -161,7 +163,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         addRenderableWidget(textArea);
 
         buttonCreateFile = new ButtonText(this.leftPos + 19, this.topPos + 222, 56, 10, Component.translatable("gui.integratedscripting.create_file"), Component.literal("+"),
-                (button) -> getMenu().createNewFile(), true);
+                (button) -> this.createNewFile(), true);
         addRenderableWidget(buttonCreateFile);
 
         this.addToolbar(this.leftPos + SCRIPT_X + SCRIPT_WIDTH, this.topPos + 5);
@@ -582,7 +584,22 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         this.textArea.setHistory(path == null ? new TextHistory() : scriptHistories.computeIfAbsent(Pair.of(getMenu().getActiveDisk(), path), k -> new TextHistory()));
     }
 
-    private void onRemoteScriptChanged(int disk, Path path) {
+    private void createNewFile() {
+        this.createdScriptDisk = getMenu().getActiveDisk();
+        getMenu().createNewFile();
+    }
+
+    private void onRemoteScriptChanged(int disk, Path path, boolean created) {
+        // Open a newly created script
+        if (created && disk == this.createdScriptDisk && disk == getMenu().getActiveDisk()) {
+            this.createdScriptDisk = -1;
+            this.saveCursorPos();
+            getMenu().setActiveScriptPath(path);
+            this.onActiveScriptSelected();
+            this.setFocused(this.textArea);
+            return;
+        }
+
         // Show changes from outside this editor, such as external file edits, instead of overwriting them on the next edit
         if (disk == getMenu().getActiveDisk() && path.equals(getMenu().getActiveScriptPath())) {
             String script = getMenu().getActiveScript();

@@ -50,7 +50,6 @@ import org.cyclops.integratedscripting.part.PartTypeTerminalScripting;
 import javax.annotation.Nullable;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 
 /**
@@ -76,7 +75,7 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
     private final int activeScriptPathId;
     private final int selectionId;
     @Nullable
-    private BiConsumer<Integer, Path> remoteScriptChangeListener;
+    private IRemoteScriptChangeListener remoteScriptChangeListener;
 
     public ContainerTerminalScripting(int id, Inventory playerInventory, RegistryFriendlyByteBuf packetBuffer) {
         this(id, playerInventory, PartHelpers.readPartTarget(packetBuffer), Optional.empty(),
@@ -248,7 +247,7 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
         }
     }
 
-    public void setRemoteScriptChangeListener(@Nullable BiConsumer<Integer, Path> remoteScriptChangeListener) {
+    public void setRemoteScriptChangeListener(@Nullable IRemoteScriptChangeListener remoteScriptChangeListener) {
         this.remoteScriptChangeListener = remoteScriptChangeListener;
     }
 
@@ -256,11 +255,16 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
      * Called on the client when a script was changed by the server.
      * @param disk The disk id.
      * @param path The script path.
+     * @param created If the script did not exist before.
      */
-    public void onRemoteScriptChange(int disk, Path path) {
+    public void onRemoteScriptChange(int disk, Path path, boolean created) {
         if (this.remoteScriptChangeListener != null) {
-            this.remoteScriptChangeListener.accept(disk, path);
+            this.remoteScriptChangeListener.onChange(disk, path, created);
         }
+    }
+
+    public static interface IRemoteScriptChangeListener {
+        public void onChange(int disk, Path path, boolean created);
     }
 
     public Int2ObjectMap<Map<Path, String>> getLastScripts() {
