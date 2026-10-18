@@ -1,13 +1,16 @@
 package org.cyclops.integratedscripting.client.gui.container;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mojang.blaze3d.systems.RenderSystem;
 import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -30,10 +33,14 @@ import org.cyclops.integratedscripting.GeneralConfig;
 import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.Reference;
 import org.cyclops.integratedscripting.api.language.ILanguageHandler;
+import org.cyclops.integratedscripting.client.gui.component.button.ButtonIcon;
+import org.cyclops.integratedscripting.client.gui.component.input.TextEditing;
 import org.cyclops.integratedscripting.client.gui.component.input.TextHistory;
 import org.cyclops.integratedscripting.client.gui.component.input.WidgetDialog;
+import org.cyclops.integratedscripting.client.gui.component.input.WidgetSearchBar;
 import org.cyclops.integratedscripting.client.gui.component.input.WidgetTextArea;
 import org.cyclops.integratedscripting.client.gui.image.ScriptImages;
+import org.cyclops.integratedscripting.client.key.Keys;
 import org.cyclops.integratedscripting.core.language.LanguageHandlers;
 import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScripting;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingDeleteScriptPacket;
@@ -75,7 +82,13 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     private int firstRow;
     private WidgetTextArea textArea;
     private ButtonText buttonCreateFile;
+    private final List<ButtonIcon> toolbarEditButtons = Lists.newArrayList();
+    private ButtonIcon buttonUndo;
+    private ButtonIcon buttonRedo;
+    private int toolbarLeft;
     private WidgetDialog pendingScriptRemovalDialog;
+    @Nullable
+    private WidgetSearchBar searchBar;
     private int lastClientSyncTick;
     private final DisplayErrorsComponent displayErrors = new DisplayErrorsComponent();
 
@@ -102,6 +115,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             this.saveCursorPos();
         }
         pendingScriptRemovalDialog = null;
+        searchBar = null;
 
         super.init();
 
@@ -126,7 +140,16 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         };
 
         textArea = new WidgetTextArea(Minecraft.getInstance().font, this.leftPos + SCRIPT_X + 1, this.topPos + SCRIPT_Y + 1, SCRIPT_WIDTH, SCRIPT_HEIGHT, Component.translatable("gui.integratedscripting.script"), true, true);
+        textArea.setIndent(" ".repeat(GeneralConfig.terminalScriptingIndentSize));
         textArea.setListener(this::onActiveScriptModified);
+        textArea.setShortcutListener((key, scanCode, modifiers) -> {
+            boolean find = Keys.matches(Keys.FIND, key, scanCode, modifiers);
+            if (find || Keys.matches(Keys.GOTO_LINE, key, scanCode, modifiers)) {
+                openNavigate(!find);
+                return true;
+            }
+            return false;
+        });
         getMenu().setRemoteScriptChangeListener(this::onRemoteScriptChanged);
         textArea.setListenerSelection(this::onSelectionModified);
         textArea.setListenerCursor(this::onSelectionModified);
@@ -141,6 +164,8 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
                 (button) -> getMenu().createNewFile(), true);
         addRenderableWidget(buttonCreateFile);
 
+        this.addToolbar(this.leftPos + SCRIPT_X + SCRIPT_WIDTH, this.topPos + 5);
+
         // Restore the open script in the new editor
         if (getMenu().getActiveScriptPath() != null) {
             this.onActiveScriptSelected();
@@ -149,10 +174,55 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         }
     }
 
+    /**
+     * Add buttons for editor actions, which also show their keyboard shortcut in their tooltip.
+     * @param right The right side of the toolbar.
+     * @param y The top of the toolbar.
+     */
+    private void addToolbar(int right, int y) {
+        this.toolbarLeft = right - 50;
+        this.toolbarEditButtons.clear();
+        this.buttonUndo = this.addToolbarButton(right - 50, y, ScriptImages.ACTION_UNDO, Keys.UNDO, () -> this.textArea.undo());
+        this.buttonRedo = this.addToolbarButton(right - 40, y, ScriptImages.ACTION_REDO, Keys.REDO, () -> this.textArea.redo());
+        this.addToolbarButton(right - 30, y, ScriptImages.ACTION_FIND, Keys.FIND, () -> this.openNavigate(false));
+        this.addToolbarButton(right - 20, y, ScriptImages.ACTION_GOTO_LINE, Keys.GOTO_LINE, () -> this.openNavigate(true));
+        this.addToolbarButton(right - 10, y, ScriptImages.ACTION_COMMENT, Keys.COMMENT, () -> this.textArea.toggleComment());
+        this.updateToolbar();
+    }
+
+    private ButtonIcon addToolbarButton(int x, int y, IImage image, KeyMapping keyMapping, Runnable action) {
+        Component tooltip = Keys.getTooltip(keyMapping);
+        ButtonIcon button = new ButtonIcon(x, y, 10, 10, tooltip, (b) -> {
+            // Run after the click is handled, as that focuses the button
+            Minecraft.getInstance().tell(() -> {
+                // Give focus back to the editor, unless the action focuses something else
+                this.setFocused(this.textArea);
+                this.textArea.setFocused(true);
+                action.run();
+            });
+        }, image);
+        button.setTooltip(Tooltip.create(tooltip));
+        this.toolbarEditButtons.add(button);
+        addRenderableWidget(button);
+        return button;
+    }
+
+    private void updateToolbar() {
+        boolean scriptOpen = getMenu().getActiveScript() != null;
+        for (ButtonIcon button : this.toolbarEditButtons) {
+            button.active = scriptOpen;
+        }
+        this.buttonUndo.active = scriptOpen && this.textArea.canUndo();
+        this.buttonRedo.active = scriptOpen && this.textArea.canRedo();
+    }
+
     @Override
     protected void containerTick() {
         super.containerTick();
         textArea.tick();
+        this.updateToolbar();
+        // The matches change when the script is edited while searching
+        this.updateSearchStatus();
 
         if (this.lastClientSyncTick == 0) {
             // Send modified scripts from client to server
@@ -321,8 +391,14 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
+        // Shorten the title if it would overlap with the toolbar, as translations can be long
+        Component title = this.title;
+        int maxTitleWidth = this.toolbarLeft - this.leftPos - this.titleLabelX - 2;
+        if (this.font.width(title) > maxTitleWidth) {
+            title = Component.literal(this.font.plainSubstrByWidth(title.getString(), maxTitleWidth - this.font.width("\u2026")) + "\u2026");
+        }
         // The inventory label is left out, so its row can show the card binding
-        guiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 4210752, false);
+        guiGraphics.drawString(this.font, title, this.titleLabelX, this.titleLabelY, 4210752, false);
 
         // Draw disk label, scaled to the space before the disk field, which fits the English label at normal size
         String diskLabel = L10NHelpers.localize("gui.integratedscripting.disk") + ":";
@@ -571,10 +647,26 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     }
 
     @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int mouseButton) {
+        // Always let the editor know, as a drag selection can be released anywhere
+        textArea.mouseReleased(mouseX, mouseY, mouseButton);
+        return super.mouseReleased(mouseX, mouseY, mouseButton);
+    }
+
+    @Override
     public boolean keyPressed(int typedChar, int keyCode, int modifiers) {
         // Make active dialog consume all input
         if (typedChar != GLFW.GLFW_KEY_ESCAPE && pendingScriptRemovalDialog != null) {
             return false;
+        }
+
+        if (this.searchBar != null && this.searchBar.isFocused()) {
+            return this.searchBar.keyPressed(typedChar, keyCode, modifiers);
+        }
+        // Close the search bar before closing the screen
+        if (this.searchBar != null && typedChar == GLFW.GLFW_KEY_ESCAPE) {
+            closeNavigate();
+            return true;
         }
 
         if (textArea.isFocused()) {
@@ -586,11 +678,118 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         return super.keyPressed(typedChar, keyCode, modifiers);
     }
 
+    /**
+     * Show a bar below the editor to find text, or to go to a line number.
+     */
+    private void openNavigate(boolean toLine) {
+        String selected = this.textArea.getSelected();
+        String initialValue = !toLine && !selected.isEmpty() && selected.indexOf('\n') < 0 ? selected : "";
+        if (this.searchBar != null && this.searchBar.isLineMode() == toLine) {
+            this.searchBar.focusAndSelect(initialValue);
+        } else {
+            closeNavigate();
+            // The editor gives up the space for the bar
+            this.textArea.setHeight(this.textArea.getHeight() - WidgetSearchBar.HEIGHT);
+            this.searchBar = new WidgetSearchBar(font, this.textArea.getX(), this.textArea.getY() + this.textArea.getHeight(), this.textArea.getWidth(),
+                    toLine, initialValue, this::onSearchChanged, this::navigate, this::closeNavigate);
+            addRenderableWidget(this.searchBar);
+        }
+        this.textArea.setFocused(false);
+        this.setFocused(this.searchBar);
+        this.onSearchChanged(this.searchBar.getValue());
+    }
+
+    private void closeNavigate() {
+        if (this.searchBar != null) {
+            removeWidget(this.searchBar);
+            this.searchBar = null;
+            this.textArea.setHeight(this.textArea.getHeight() + WidgetSearchBar.HEIGHT);
+            this.textArea.setSearchQuery(null);
+            this.setFocused(this.textArea);
+            this.textArea.setFocused(true);
+        }
+    }
+
+    private void onSearchChanged(String query) {
+        if (this.searchBar.isLineMode()) {
+            this.searchBar.setStatus("", !query.isBlank() && parseLine(query) < 0);
+            return;
+        }
+        this.textArea.setSearchQuery(query);
+        if (!query.isEmpty()) {
+            // Stay on the current match while typing, or move to the next one
+            int pos = TextEditing.findNext(this.textArea.getValue(), query, Math.min(this.textArea.getCursorPos(), this.textArea.getSelectionPos()));
+            if (pos >= 0) {
+                this.textArea.selectRange(pos, pos + query.length());
+            }
+        }
+        this.updateSearchStatus();
+    }
+
+    private void updateSearchStatus() {
+        if (this.searchBar == null || this.searchBar.isLineMode()) {
+            return;
+        }
+        String query = this.searchBar.getValue();
+        if (query.isEmpty()) {
+            this.searchBar.setStatus("", false);
+            return;
+        }
+        int[] matches = this.textArea.getSearchMatches();
+        int start = Math.min(this.textArea.getCursorPos(), this.textArea.getSelectionPos());
+        int end = Math.max(this.textArea.getCursorPos(), this.textArea.getSelectionPos());
+        int current = 0;
+        for (int i = 0; i < matches.length; i++) {
+            if (matches[i] == start && end - start == query.length()) {
+                current = i + 1;
+            }
+        }
+        this.searchBar.setStatus(current + "/" + matches.length, matches.length == 0);
+    }
+
+    private static int parseLine(String value) {
+        try {
+            int line = Integer.parseInt(value.trim());
+            return line > 0 ? line : -1;
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
+    /**
+     * @param direction 1 for the next match, -1 for the previous match.
+     */
+    private void navigate(int direction) {
+        String query = this.searchBar.getValue();
+        String value = this.textArea.getValue();
+        if (this.searchBar.isLineMode()) {
+            int line = parseLine(query);
+            if (line < 0) {
+                this.searchBar.setStatus("", true);
+                return;
+            }
+            int pos = TextEditing.lineOffset(value, line);
+            closeNavigate();
+            this.textArea.selectRange(pos, pos);
+            return;
+        }
+        int pos = direction > 0
+                ? TextEditing.findNext(value, query, Math.max(this.textArea.getCursorPos(), this.textArea.getSelectionPos()))
+                : TextEditing.findPrevious(value, query, Math.min(this.textArea.getCursorPos(), this.textArea.getSelectionPos()));
+        if (pos >= 0) {
+            this.textArea.selectRange(pos, pos + query.length());
+        }
+        this.updateSearchStatus();
+    }
+
     @Override
     public boolean charTyped(char p_94683_, int p_94684_) {
         // Make active dialog consume all input
         if (pendingScriptRemovalDialog != null) {
             return false;
+        }
+        if (this.searchBar != null && this.searchBar.isFocused()) {
+            return this.searchBar.charTyped(p_94683_, p_94684_);
         }
         return super.charTyped(p_94683_, p_94684_);
     }

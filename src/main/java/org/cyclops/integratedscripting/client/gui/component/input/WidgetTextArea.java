@@ -39,6 +39,7 @@ import org.cyclops.cyclopscore.client.gui.component.WidgetScrollBar;
 import org.cyclops.cyclopscore.client.gui.component.input.IInputListener;
 import org.cyclops.cyclopscore.helper.Helpers;
 import org.cyclops.cyclopscore.helper.RenderHelpers;
+import org.cyclops.integratedscripting.client.key.Keys;
 import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.Nullable;
@@ -92,6 +93,20 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     private WidgetScrollBar scrollBar;
     private int firstRow;
     private TextHistory history = new TextHistory();
+    private boolean draggingSelection;
+    private double dragMouseX;
+    private double dragMouseY;
+    private float dragScrollProgress;
+    @Nullable
+    private String searchQuery;
+    @Nullable
+    private String searchMatchesValue;
+    @Nullable
+    private String searchMatchesQuery;
+    private int[] searchMatches = new int[0];
+    private String indent = "  ";
+    @Nullable
+    private ShortcutListener shortcutListener;
 
     public WidgetTextArea(Font font, int x, int y, int width, int height, Component narrationMessage, boolean scrollBar, boolean showLineNumbers) {
         super(font, x, y, width, height, narrationMessage);
@@ -99,22 +114,44 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         this.showLineNumbers = showLineNumbers;
         this.textFieldHelper = new TextFieldHelperExtended(this::getValue, this::setValuePassive, this::getClipboard, this::setClipboard, s -> true, this::setSelected, this::onCursorPosChanged);
         if (scrollBar) {
-            this.scrollBar = new WidgetScrollBar(x + width - SCROLLBAR_WIDTH, y, height,
-                    Component.translatable("gui.cyclopscore.scrollbar"), firstRow -> setFirstRow(firstRow, false), height / ROW_HEIGHT) {
-                @Override
-                public int getTotalRows() {
-                    return getDisplayCache().linesTotal;
-                }
-
-                @Override
-                public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-                    // Only show scrollbar if needed
-                    if (this.needsScrollBars()) {
-                        super.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
-                    }
-                }
-            };
+            this.scrollBar = this.createScrollBar();
         }
+    }
+
+    private WidgetScrollBar createScrollBar() {
+        int x = this.getX();
+        int y = this.getY();
+        int width = this.getWidth();
+        int height = this.getHeight();
+        return new WidgetScrollBar(x + width - SCROLLBAR_WIDTH, y, height,
+                Component.translatable("gui.cyclopscore.scrollbar"), firstRow -> setFirstRow(firstRow, false), height / ROW_HEIGHT) {
+            @Override
+            public int getTotalRows() {
+                return getDisplayCache().linesTotal;
+            }
+
+            @Override
+            public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+                // Only show scrollbar if needed
+                if (this.needsScrollBars()) {
+                    super.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
+                }
+            }
+        };
+    }
+
+    /**
+     * Change the height, for example to make room for other widgets, while keeping the scroll and cursor position.
+     */
+    @Override
+    public void setHeight(int height) {
+        super.setHeight(height);
+        if (this.scrollBar != null) {
+            this.scrollBar = this.createScrollBar();
+            this.setFirstRow(this.firstRow, true);
+        }
+        this.clearDisplayCache();
+        this.ensureCursorVisible();
     }
 
     private DisplayCache createEmptyDisplayCache() {
@@ -151,6 +188,54 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     public void setListenerCursor(@Nullable IInputListener listenerCursor) {
         this.listenerCursor = listenerCursor;
+    }
+
+    /**
+     * @param shortcutListener Called with each key press before the editor handles it, returns true if it handled the key.
+     */
+    public void setShortcutListener(@Nullable ShortcutListener shortcutListener) {
+        this.shortcutListener = shortcutListener;
+    }
+
+    /**
+     * Select a range and scroll to it.
+     * @param start The start position, where the selection is anchored.
+     * @param end The end position, where the cursor is placed.
+     */
+    public void selectRange(int start, int end) {
+        this.textFieldHelper.setSelectionRange(end, start);
+        this.clearDisplayCache();
+        this.ensureCursorVisible();
+    }
+
+    /**
+     * @param indent The string that is inserted for one indentation level.
+     */
+    public void setIndent(String indent) {
+        this.indent = indent;
+    }
+
+    /**
+     * @param searchQuery A query of which all occurrences are highlighted, or null.
+     */
+    public void setSearchQuery(@Nullable String searchQuery) {
+        this.searchQuery = searchQuery == null || searchQuery.isEmpty() ? null : searchQuery;
+    }
+
+    /**
+     * @return The start positions of all occurrences of the search query.
+     */
+    public int[] getSearchMatches() {
+        if (this.searchQuery == null) {
+            return new int[0];
+        }
+        String value = this.getValue();
+        if (!value.equals(this.searchMatchesValue) || !this.searchQuery.equals(this.searchMatchesQuery)) {
+            this.searchMatches = TextEditing.findAll(value, this.searchQuery);
+            this.searchMatchesValue = value;
+            this.searchMatchesQuery = this.searchQuery;
+        }
+        return this.searchMatches;
     }
 
     public void setHistory(TextHistory history) {
@@ -235,6 +320,21 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     public void tick() {
         ++this.frameTick;
+
+        // Keep scrolling while a selection is dragged above or below the editor, faster when further away
+        if (this.draggingSelection) {
+            double distance = this.dragMouseY < this.getY() ? this.getY() - this.dragMouseY
+                    : this.dragMouseY - this.clampToVisibleRows(this.dragMouseY);
+            if (distance > 0) {
+                this.dragScrollProgress += (float) Math.min(2.5, 0.15 + distance / 24);
+                int rows = (int) this.dragScrollProgress;
+                this.dragScrollProgress -= rows;
+                if (rows > 0) {
+                    this.setFirstRow(this.firstRow + (this.dragMouseY < this.getY() ? -rows : rows), true);
+                    this.updateDragSelection();
+                }
+            }
+        }
     }
 
     @Override
@@ -245,8 +345,13 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             this.setFocused(true);
             return true;
         } else {
+            this.draggingSelection = false;
             if (mouseButton == 0 && mouseX >= this.getX() && mouseX < this.getX() + this.width
                     && mouseY >= this.getY() && mouseY < this.getY() + this.height) {
+                this.draggingSelection = this.scrollBar == null || mouseX < this.getX() + this.width - SCROLLBAR_WIDTH;
+                this.dragMouseX = mouseX;
+                this.dragMouseY = mouseY;
+                this.dragScrollProgress = 0;
                 this.setFocused(true);
                 long i = Util.getMillis();
                 DisplayCache displayCache = this.getDisplayCache();
@@ -296,18 +401,16 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     @Override
     public boolean mouseDragged(double mouseX, double mouseY, int mouseButton, double offsetX, double offsetY) {
-        if (this.scrollBar != null && mouseX >= this.getX() + this.width - 12 && mouseX < this.getX() + this.width
+        if (!this.draggingSelection && this.scrollBar != null && mouseX >= this.getX() + this.width - 12 && mouseX < this.getX() + this.width
                 && mouseY >= this.getY() && mouseY < this.getY() + this.height) {
             return this.scrollBar.mouseDragged(mouseX, mouseY, mouseButton, offsetX, offsetY);
         }
 
-        if (mouseButton == 0 && mouseX >= this.getX() && mouseX < this.getX() + this.width
-                && mouseY >= this.getY() && mouseY < this.getY() + this.height) {
-            DisplayCache bookeditscreen$displaycache = this.getDisplayCache();
-            int i = bookeditscreen$displaycache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i((int)mouseX, this.clampToVisibleRows(mouseY))));
-            this.textFieldHelper.setCursorPos(i, true);
-            this.clearDisplayCache();
-            this.setFocused(true);
+        if (mouseButton == 0 && this.draggingSelection) {
+            // Scrolling beyond the top or bottom happens in tick, so it continues while the mouse is held still
+            this.dragMouseX = mouseX;
+            this.dragMouseY = mouseY;
+            this.updateDragSelection();
             return true;
         }
         // Let other drags through, such as spreading items over inventory slots
@@ -315,9 +418,31 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     }
 
     @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int mouseButton) {
+        if (mouseButton == 0) {
+            this.draggingSelection = false;
+            this.dragScrollProgress = 0;
+        }
+        return super.mouseReleased(mouseX, mouseY, mouseButton);
+    }
+
+    private void updateDragSelection() {
+        int x = (int) Math.max(this.getX(), Math.min(this.getX() + this.width - 1, this.dragMouseX));
+        int y = this.clampToVisibleRows(Math.max(this.getY(), this.dragMouseY));
+        DisplayCache bookeditscreen$displaycache = this.getDisplayCache();
+        int i = bookeditscreen$displaycache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i(x, y)));
+        this.textFieldHelper.setCursorPos(i, true);
+        this.clearDisplayCache();
+        this.setFocused(true);
+    }
+
+    @Override
     public boolean keyPressed(int typedChar, int keyCode, int modifiers) {
+        if (this.shortcutListener != null && this.shortcutListener.keyPressed(typedChar, keyCode, modifiers)) {
+            return true;
+        }
         TextHistory.State before = this.getState();
-        boolean history = this.historyKeyPressed(typedChar, modifiers);
+        boolean history = this.historyKeyPressed(typedChar, keyCode, modifiers);
         boolean flag = history || this.textFieldKeyPressed(typedChar, keyCode, modifiers);
         if (flag) {
             if (!history) {
@@ -383,15 +508,50 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         return (modifiers & (Minecraft.ON_OSX ? GLFW.GLFW_MOD_SUPER : GLFW.GLFW_MOD_CONTROL)) != 0;
     }
 
-    private boolean historyKeyPressed(int key, int modifiers) {
-        if (!hasControlDown(modifiers)) {
-            return false;
+    public boolean canUndo() {
+        return this.history.canUndo();
+    }
+
+    public boolean canRedo() {
+        return this.history.canRedo();
+    }
+
+    public void undo() {
+        this.applyEdit(this.history.undo(this.getState()));
+    }
+
+    public void redo() {
+        this.applyEdit(this.history.redo(this.getState()));
+    }
+
+    /**
+     * Toggle line comments on the lines touched by the cursor or selection, as an undoable edit.
+     */
+    public void toggleComment() {
+        TextHistory.State before = this.getState();
+        this.setState(TextEditing.toggleComment(before));
+        this.recordHistory(before, false);
+        this.clearDisplayCache();
+    }
+
+    private void applyEdit(@Nullable TextHistory.State state) {
+        if (state != null) {
+            this.setState(state);
+            this.clearDisplayCache();
+            this.ensureCursorVisible();
         }
-        boolean shift = (modifiers & GLFW.GLFW_MOD_SHIFT) != 0;
+    }
+
+    // Ctrl+Shift+Z, which needs two modifiers, so it can not be a key mapping
+    private static boolean isRedoAlternative(int key, int modifiers) {
+        return key == GLFW.GLFW_KEY_Z && hasControlDown(modifiers) && (modifiers & GLFW.GLFW_MOD_SHIFT) != 0 && (modifiers & GLFW.GLFW_MOD_ALT) == 0;
+    }
+
+    private boolean historyKeyPressed(int key, int scanCode, int modifiers) {
         TextHistory.State state;
-        if (key == GLFW.GLFW_KEY_Z && !shift) {
+        if (Keys.matches(Keys.UNDO, key, scanCode, modifiers)) {
             state = this.history.undo(this.getState());
-        } else if (key == GLFW.GLFW_KEY_Y || (key == GLFW.GLFW_KEY_Z && shift)) {
+        } else if (Keys.matches(Keys.REDO, key, scanCode, modifiers) || isRedoAlternative(key, modifiers)) {
             state = this.history.redo(this.getState());
         } else {
             return false;
@@ -403,7 +563,16 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     }
 
     private boolean textFieldKeyPressed(int p_98153_, int p_98154_, int p_98155_) {
-        if (Screen.isSelectAll(p_98153_)) {
+        if (Keys.matches(Keys.COMMENT, p_98153_, p_98154_, p_98155_)) {
+            this.setState(TextEditing.toggleComment(this.getState()));
+            return true;
+        } else if (Keys.matches(Keys.MOVE_LINES_UP, p_98153_, p_98154_, p_98155_)) {
+            this.setState(TextEditing.moveLines(this.getState(), -1));
+            return true;
+        } else if (Keys.matches(Keys.MOVE_LINES_DOWN, p_98153_, p_98154_, p_98155_)) {
+            this.setState(TextEditing.moveLines(this.getState(), 1));
+            return true;
+        } else if (Screen.isSelectAll(p_98153_)) {
             this.textFieldHelper.selectAll();
             return true;
         } else if (Screen.isCopy(p_98153_)) {
@@ -421,7 +590,10 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             switch (p_98153_) {
                 case 257:
                 case 335:
-                    this.textFieldHelper.insertText("\n");
+                    this.setState(TextEditing.newline(this.getState(), this.indent));
+                    return true;
+                case GLFW.GLFW_KEY_TAB:
+                    this.setState((p_98155_ & GLFW.GLFW_MOD_SHIFT) != 0 ? TextEditing.unindent(this.getState(), this.indent) : TextEditing.indent(this.getState(), this.indent));
                     return true;
                 case 259:
                     this.textFieldHelper.removeFromCursor(-1, cursorStep);
@@ -548,6 +720,33 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         List<LineInfo> lines = Arrays.asList(displayCache.lines);
         int offsetY = 0;
 
+        // Highlight all visible search matches
+        if (this.searchQuery != null) {
+            String value = this.getValue();
+            int visibleStart = displayCache.lineStarts[Math.min(this.firstRow, displayCache.lineStarts.length - 1)];
+            int visibleEnd = this.firstRow + this.getHeight() / ROW_HEIGHT < displayCache.lineStarts.length ? displayCache.lineStarts[this.firstRow + this.getHeight() / ROW_HEIGHT] : value.length();
+            for (int match : this.getSearchMatches()) {
+                if (match > visibleEnd) {
+                    break;
+                }
+                for (int pos = Math.max(match, visibleStart); pos < Math.min(match + this.searchQuery.length(), visibleEnd); pos++) {
+                    if (value.charAt(pos) != '\n') {
+                        this.renderCharBackground(guiGraphics, displayCache, pos, Helpers.RGBAToInt(255, 225, 120, 255));
+                    }
+                }
+            }
+        }
+
+        // Highlight the bracket pair around the cursor
+        if (this.isFocused()) {
+            int[] brackets = TextEditing.findMatchingBrackets(this.getValue(), this.textFieldHelper.getCursorPos());
+            if (brackets != null) {
+                for (int bracket : brackets) {
+                    this.renderCharBackground(guiGraphics, displayCache, bracket, Helpers.RGBAToInt(160, 200, 255, 255));
+                }
+            }
+        }
+
         // Draw lines
         int lastLineNumber = -1;
         for(LineInfo line : lines) {
@@ -579,6 +778,19 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         if (this.scrollBar != null) {
             this.scrollBar.render(guiGraphics, getX(), getY(), partialTicks);
         }
+    }
+
+    private void renderCharBackground(GuiGraphics guiGraphics, DisplayCache displayCache, int pos, int color) {
+        int line = findLineFromPos(displayCache.lineStarts, pos);
+        int row = line - this.firstRow;
+        if (row < 0 || row >= this.getHeight() / ROW_HEIGHT) {
+            return;
+        }
+        String value = this.getValue();
+        int x = this.font.width(value.substring(displayCache.lineStarts[line], pos));
+        int width = this.font.width(value.substring(pos, pos + 1));
+        Pos2i screenPos = this.convertLocalToScreen(new Pos2i(x, row * ROW_HEIGHT));
+        guiGraphics.fill(screenPos.x, screenPos.y - 1, screenPos.x + width, screenPos.y + ROW_HEIGHT - 1, color);
     }
 
     private void renderCursor(GuiGraphics guiGraphics, Pos2i pos, boolean cursorAtEnd) {
@@ -881,4 +1093,9 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     public static interface IMarkupProvider {
         public List<Pair<Style, String>> markupLine(Style style, String line);
     }
+
+    public static interface ShortcutListener {
+        public boolean keyPressed(int keyCode, int scanCode, int modifiers);
+    }
+
 }

@@ -70,6 +70,14 @@ public class TextHistory {
         return this.redoStack.pop();
     }
 
+    public boolean canUndo() {
+        return !this.undoStack.isEmpty();
+    }
+
+    public boolean canRedo() {
+        return !this.redoStack.isEmpty();
+    }
+
     public static record State(String value, int cursorPos, int selectionPos) {}
 
 }
