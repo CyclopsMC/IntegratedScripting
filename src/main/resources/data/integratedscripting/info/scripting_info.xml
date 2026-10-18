@@ -124,7 +124,7 @@ const isOdd = (value) => value % 2 !== 0;</appendix>
             <paragraph>info_book.integratedscripting.writing.globals.text3</paragraph>
             <paragraph>info_book.integratedscripting.writing.globals.text4</paragraph>
             <appendix type="textfield" scale="0.8">function filterItem(item) {
-  return idContext.ops.itemstackStackable(item) &amp;&amp; idContext.ops.itemstackStacksize(item) >= 16;
+  return idContext.ops.itemstackIsStackable(item) &amp;&amp; idContext.ops.itemstackSize(item) >= 16;
 }</appendix>
             <appendix type="textfield" scale="0.8">const isStackable = idContext.ops.itemstackIsStackable;
 const size = idContext.ops.itemstackSize;
