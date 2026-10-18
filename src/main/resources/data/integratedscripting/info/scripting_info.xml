@@ -179,6 +179,7 @@ function getRunningAvg(value) {
             <paragraph>info_book.integratedscripting.advanced.external_editing.text2</paragraph>
             <paragraph>info_book.integratedscripting.advanced.external_editing.text3</paragraph>
             <paragraph>info_book.integratedscripting.advanced.external_editing.text4</paragraph>
+            <paragraph>info_book.integratedscripting.advanced.external_editing.text5</paragraph>
         </section>
 
         <section name="info_book.integratedscripting.advanced.logging">
