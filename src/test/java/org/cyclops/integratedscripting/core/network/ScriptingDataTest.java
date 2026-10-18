@@ -1,5 +1,6 @@
 package org.cyclops.integratedscripting.core.network;
 
+import com.google.common.collect.Sets;
 import org.apache.commons.io.FileUtils;
 import org.cyclops.integratedscripting.api.network.IScriptingData;
 import org.junit.Test;
@@ -296,6 +297,65 @@ public class ScriptingDataTest {
 
             assertThat(scriptingData.getScripts(778).get(Path.of("a.js")), equalTo("a2"));
             assertThat(scriptingData.getScripts(778).get(Path.of("b.js")), nullValue());
+        } finally {
+            scriptingData.close();
+            FileUtils.deleteDirectory(rootPath.toFile());
+        }
+    }
+
+    @Test
+    public void testExternalFilesCreatedAfterDeletionsSynced() throws IOException, InterruptedException {
+        Path rootPath = Files.createTempDirectory("integratedscripting-test");
+        ScriptingData scriptingData = new ScriptingData(rootPath);
+        try {
+            Path diskPath = rootPath.resolve("scripting-disks").resolve("901");
+            Files.createDirectories(diskPath);
+            for (int i = 0; i < 4; i++) {
+                Files.writeString(diskPath.resolve("old" + i + ".js"), "old");
+            }
+            scriptingData.initialize();
+
+            // Delete and create files in quick succession, as a file manager or script would
+            for (int i = 0; i < 4; i++) {
+                Files.delete(diskPath.resolve("old" + i + ".js"));
+            }
+            for (int i = 0; i < 4; i++) {
+                Files.writeString(diskPath.resolve("new" + i + ".js"), "new");
+            }
+
+            awaitCondition(() -> scriptingData.getScripts(901).keySet().equals(Sets.newHashSet(
+                    Path.of("new0.js"), Path.of("new1.js"), Path.of("new2.js"), Path.of("new3.js"))));
+        } finally {
+            scriptingData.close();
+            FileUtils.deleteDirectory(rootPath.toFile());
+        }
+    }
+
+    @Test
+    public void testExternalFilesInNewSubdirectoriesSynced() throws IOException, InterruptedException {
+        Path rootPath = Files.createTempDirectory("integratedscripting-test");
+        ScriptingData scriptingData = new ScriptingData(rootPath);
+        try {
+            Path diskPath = rootPath.resolve("scripting-disks").resolve("902");
+            Files.createDirectories(diskPath);
+            Files.writeString(diskPath.resolve("main.js"), "main");
+            scriptingData.initialize();
+
+            // A file in a new nested directory
+            Files.createDirectories(diskPath.resolve("lib").resolve("helpers"));
+            Files.writeString(diskPath.resolve("lib").resolve("helpers").resolve("a.js"), "a");
+            awaitCondition(() -> "a".equals(scriptingData.getScripts(902).get(Path.of("lib/helpers/a.js"))));
+
+            // A file in the intermediate directory, which contains no scripts yet
+            Files.writeString(diskPath.resolve("lib").resolve("b.js"), "b");
+            awaitCondition(() -> "b".equals(scriptingData.getScripts(902).get(Path.of("lib/b.js"))));
+
+            // A file in an empty directory that already existed
+            Files.createDirectories(diskPath.resolve("empty"));
+            Files.writeString(diskPath.resolve("main.js"), "main2");
+            awaitCondition(() -> "main2".equals(scriptingData.getScripts(902).get(Path.of("main.js"))));
+            Files.writeString(diskPath.resolve("empty").resolve("c.js"), "c");
+            awaitCondition(() -> "c".equals(scriptingData.getScripts(902).get(Path.of("empty/c.js"))));
         } finally {
             scriptingData.close();
             FileUtils.deleteDirectory(rootPath.toFile());
