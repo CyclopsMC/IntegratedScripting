@@ -1,13 +1,16 @@
 package org.cyclops.integratedscripting.client.gui.container;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.mojang.blaze3d.systems.RenderSystem;
 import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
@@ -31,6 +34,7 @@ import org.cyclops.integratedscripting.GeneralConfig;
 import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.Reference;
 import org.cyclops.integratedscripting.api.language.ILanguageHandler;
+import org.cyclops.integratedscripting.client.gui.component.button.ButtonIcon;
 import org.cyclops.integratedscripting.client.gui.component.input.TextEditing;
 import org.cyclops.integratedscripting.client.gui.component.input.TextHistory;
 import org.cyclops.integratedscripting.client.gui.component.input.WidgetDialog;
@@ -77,6 +81,9 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     private int firstRow;
     private WidgetTextArea textArea;
     private ButtonText buttonCreateFile;
+    private final List<ButtonIcon> toolbarEditButtons = Lists.newArrayList();
+    private ButtonIcon buttonUndo;
+    private ButtonIcon buttonRedo;
     private WidgetDialog pendingScriptRemovalDialog;
     @Nullable
     private WidgetSearchBar searchBar;
@@ -161,6 +168,8 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
                 (button) -> getMenu().createNewFile(), true);
         addRenderableWidget(buttonCreateFile);
 
+        this.addToolbar(this.leftPos + SCRIPT_X + SCRIPT_WIDTH, this.topPos + 5);
+
         // Restore the open script in the new editor
         if (getMenu().getActiveScriptPath() != null) {
             this.onActiveScriptSelected();
@@ -169,10 +178,59 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         }
     }
 
+    /**
+     * Add buttons for editor actions, which also show their keyboard shortcut in their tooltip.
+     * @param right The right side of the toolbar.
+     * @param y The top of the toolbar.
+     */
+    private void addToolbar(int right, int y) {
+        String modifier = Minecraft.ON_OSX ? "Cmd" : "Ctrl";
+        this.toolbarEditButtons.clear();
+        this.buttonUndo = this.addToolbarButton(right - 60, y, ScriptImages.ACTION_UNDO, Component.translatable("gui.integratedscripting.action.undo", modifier), () -> this.textArea.undo());
+        this.buttonRedo = this.addToolbarButton(right - 50, y, ScriptImages.ACTION_REDO, Component.translatable("gui.integratedscripting.action.redo", modifier), () -> this.textArea.redo());
+        this.addToolbarButton(right - 40, y, ScriptImages.ACTION_FIND, Component.translatable("gui.integratedscripting.action.find", modifier), () -> this.openNavigate(false));
+        this.addToolbarButton(right - 30, y, ScriptImages.ACTION_GOTO_LINE, Component.translatable("gui.integratedscripting.action.goto_line", modifier), () -> this.openNavigate(true));
+        this.addToolbarButton(right - 20, y, ScriptImages.ACTION_COMMENT, Component.translatable("gui.integratedscripting.action.comment", modifier), () -> this.textArea.toggleComment());
+
+        // Only shows the shortcuts in its tooltip
+        ButtonIcon buttonHelp = new ButtonIcon(right - 10, y, 10, 10, Component.translatable("gui.integratedscripting.action.help"), (button) -> {}, ScriptImages.ACTION_HELP);
+        buttonHelp.setTooltip(Tooltip.create(Component.translatable("gui.integratedscripting.action.help").withStyle(ChatFormatting.YELLOW)
+                .append(Component.literal("\n"))
+                .append(Component.translatable("gui.integratedscripting.shortcuts", modifier).withStyle(ChatFormatting.GRAY))));
+        addRenderableWidget(buttonHelp);
+        this.updateToolbar();
+    }
+
+    private ButtonIcon addToolbarButton(int x, int y, IImage image, Component tooltip, Runnable action) {
+        ButtonIcon button = new ButtonIcon(x, y, 10, 10, tooltip, (b) -> {
+            // Run after the click is handled, as that focuses the button
+            Minecraft.getInstance().tell(() -> {
+                // Give focus back to the editor, unless the action focuses something else
+                this.setFocused(this.textArea);
+                this.textArea.setFocused(true);
+                action.run();
+            });
+        }, image);
+        button.setTooltip(Tooltip.create(tooltip));
+        this.toolbarEditButtons.add(button);
+        addRenderableWidget(button);
+        return button;
+    }
+
+    private void updateToolbar() {
+        boolean scriptOpen = getMenu().getActiveScript() != null;
+        for (ButtonIcon button : this.toolbarEditButtons) {
+            button.active = scriptOpen;
+        }
+        this.buttonUndo.active = scriptOpen && this.textArea.canUndo();
+        this.buttonRedo.active = scriptOpen && this.textArea.canRedo();
+    }
+
     @Override
     protected void containerTick() {
         super.containerTick();
         textArea.tick();
+        this.updateToolbar();
         // The matches change when the script is edited while searching
         this.updateSearchStatus();
 
