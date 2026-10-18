@@ -396,7 +396,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         Component title = this.title;
         int maxTitleWidth = this.toolbarLeft - this.leftPos - this.titleLabelX - 2;
         if (this.font.width(title) > maxTitleWidth) {
-            title = Component.literal(this.font.plainSubstrByWidth(title.getString(), maxTitleWidth - this.font.width("...")) + "...");
+            title = Component.literal(this.font.plainSubstrByWidth(title.getString(), maxTitleWidth - this.font.width("\u2026")) + "\u2026");
         }
         guiGraphics.drawString(this.font, title, this.titleLabelX, this.titleLabelY, 4210752, false);
         guiGraphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, 4210752, false);
