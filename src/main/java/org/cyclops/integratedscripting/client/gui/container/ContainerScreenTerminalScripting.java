@@ -61,6 +61,7 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -758,6 +759,15 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
                     startPos = value.length() - matcherToStart.end() + 1;
                 }
                 selected = value.substring(startPos, endPos);
+
+                // Only bind to declarations, so moving through function bodies doesn't rebind the card
+                Path path = getMenu().getActiveScriptPath();
+                ILanguageHandler languageHandler = path != null ? LanguageHandlers.REGISTRY.getProvider(path) : null;
+                Set<String> members = languageHandler != null ? languageHandler.getTopLevelMembers(value) : null;
+                if (members != null && !members.contains(selected)) {
+                    String previous = getMenu().getSelectedMember();
+                    selected = members.contains(previous) ? previous : "";
+                }
             }
         }
 
