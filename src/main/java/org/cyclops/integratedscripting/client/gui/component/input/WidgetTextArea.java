@@ -39,6 +39,7 @@ import org.cyclops.cyclopscore.client.gui.component.WidgetScrollBar;
 import org.cyclops.cyclopscore.client.gui.component.input.IInputListener;
 import org.cyclops.cyclopscore.helper.Helpers;
 import org.cyclops.cyclopscore.helper.RenderHelpers;
+import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
@@ -65,6 +66,7 @@ import java.util.stream.Stream;
 public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     public static final int ROW_HEIGHT = 9;
+    public static final int SCROLLBAR_WIDTH = 14;
 
     private final TextFieldHelperExtended textFieldHelper;
     private final Font font;
@@ -96,7 +98,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         this.showLineNumbers = showLineNumbers;
         this.textFieldHelper = new TextFieldHelperExtended(this::getValue, this::setValuePassive, this::getClipboard, this::setClipboard, s -> true, this::setSelected, this::onCursorPosChanged);
         if (scrollBar) {
-            this.scrollBar = new WidgetScrollBar(x + width - 14, y, height,
+            this.scrollBar = new WidgetScrollBar(x + width - SCROLLBAR_WIDTH, y, height,
                     Component.translatable("gui.cyclopscore.scrollbar"), firstRow -> setFirstRow(firstRow, false), height / ROW_HEIGHT) {
                 @Override
                 public int getTotalRows() {
@@ -155,6 +157,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     }
 
     public void setValue(String value) {
+        this.firstRow = 0;
         this.setValuePassive(value);
 
         textFieldHelper.setCursorToStart();
@@ -165,7 +168,6 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     }
 
     public void setValuePassive(String value) {
-        this.firstRow = 0;
         this.value = value;
         this.clearDisplayCache();
 
@@ -244,7 +246,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                 this.setFocused(true);
                 long i = Util.getMillis();
                 DisplayCache displayCache = this.getDisplayCache();
-                int j = displayCache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i((int)mouseX, (int)mouseY)));
+                int j = displayCache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i((int)mouseX, this.clampToVisibleRows(mouseY))));
                 if (j >= 0) {
                     if (j == this.lastIndex && i - this.lastClickTime < 250L) {
                         if (!this.textFieldHelper.isSelecting()) {
@@ -298,12 +300,14 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         if (mouseButton == 0 && mouseX >= this.getX() && mouseX < this.getX() + this.width
                 && mouseY >= this.getY() && mouseY < this.getY() + this.height) {
             DisplayCache bookeditscreen$displaycache = this.getDisplayCache();
-            int i = bookeditscreen$displaycache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i((int)mouseX, (int)mouseY)));
+            int i = bookeditscreen$displaycache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i((int)mouseX, this.clampToVisibleRows(mouseY))));
             this.textFieldHelper.setCursorPos(i, true);
             this.clearDisplayCache();
             this.setFocused(true);
+            return true;
         }
-        return true;
+        // Let other drags through, such as spreading items over inventory slots
+        return false;
     }
 
     @Override
@@ -312,25 +316,27 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         if (flag) {
             this.clearDisplayCache();
             this.setFocused(true);
+            this.ensureCursorVisible();
             return true;
-        } else {
+        } else if (typedChar == GLFW.GLFW_KEY_ESCAPE) {
             this.setFocused(false);
             return false;
+        } else {
+            // Consume all other keys, so they don't trigger screen actions (such as closing the screen) while typing
+            return true;
         }
     }
 
     @Override
     public boolean charTyped(char typedChar, int keyCode) {
-        if (super.charTyped(typedChar, keyCode)) {
-            this.setFocused(true);
-            return true;
-        } else if (StringUtil.isAllowedChatCharacter(typedChar)) {
+        // Don't delegate to EditBox, as that would consume the character into its own (unused) value
+        if (StringUtil.isAllowedChatCharacter(typedChar)) {
             this.textFieldHelper.insertText(Character.toString(typedChar));
             this.clearDisplayCache();
             this.setFocused(true);
+            this.ensureCursorVisible();
             return true;
         } else {
-            this.setFocused(false);
             return false;
         }
     }
@@ -349,7 +355,8 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             this.textFieldHelper.cut();
             return true;
         } else {
-            TextFieldHelper.CursorStep cursorStep = Screen.hasControlDown() ? TextFieldHelper.CursorStep.WORD : TextFieldHelper.CursorStep.CHARACTER;
+            TextFieldHelper.CursorStep cursorStep = EditorKeys.isWordModifier(p_98155_, Minecraft.ON_OSX) ? TextFieldHelper.CursorStep.WORD : TextFieldHelper.CursorStep.CHARACTER;
+            boolean lineModifier = EditorKeys.isLineModifier(p_98155_, Minecraft.ON_OSX);
             switch (p_98153_) {
                 case 257:
                 case 335:
@@ -362,28 +369,44 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                     this.textFieldHelper.removeFromCursor(1, cursorStep);
                     return true;
                 case 262:
-                    this.textFieldHelper.moveBy(1, Screen.hasShiftDown(), cursorStep);
+                    if (lineModifier) {
+                        this.keyEnd(false);
+                    } else {
+                        this.textFieldHelper.moveBy(1, Screen.hasShiftDown(), cursorStep);
+                    }
                     return true;
                 case 263:
-                    this.textFieldHelper.moveBy(-1, Screen.hasShiftDown(), cursorStep);
+                    if (lineModifier) {
+                        this.keyHome(false);
+                    } else {
+                        this.textFieldHelper.moveBy(-1, Screen.hasShiftDown(), cursorStep);
+                    }
                     return true;
                 case 264:
-                    this.keyDown();
+                    if (lineModifier) {
+                        this.keyEnd(true);
+                    } else {
+                        this.keyDown();
+                    }
                     return true;
                 case 265:
-                    this.keyUp();
+                    if (lineModifier) {
+                        this.keyHome(true);
+                    } else {
+                        this.keyUp();
+                    }
                     return true;
                 case 266:
-//                    this.backButton.onPress();
+                    this.keyPage(-1);
                     return true;
                 case 267:
-//                    this.forwardButton.onPress();
+                    this.keyPage(1);
                     return true;
                 case 268:
-                    this.keyHome();
+                    this.keyHome(Screen.hasControlDown());
                     return true;
                 case 269:
-                    this.keyEnd();
+                    this.keyEnd(Screen.hasControlDown());
                     return true;
                 default:
                     return false;
@@ -404,22 +427,39 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         DisplayCache displayCache = this.getDisplayCache();
         int j = displayCache.changeLine(cursorPos, p_98098_);
         this.textFieldHelper.setCursorPos(j, Screen.hasShiftDown());
+    }
 
-        // Modify scroll position when cursor goes out of screen
+    /**
+     * @return The y position, moved up to the last fully visible row if it is below it.
+     */
+    private int clampToVisibleRows(double mouseY) {
+        int rows = this.scrollBar != null ? this.scrollBar.getVisibleRows() : this.getHeight() / ROW_HEIGHT;
+        return (int) Math.min(mouseY, this.getY() + rows * ROW_HEIGHT - 1);
+    }
+
+    private void keyPage(int direction) {
+        int rows = this.scrollBar != null ? this.scrollBar.getVisibleRows() : this.getHeight() / ROW_HEIGHT;
+        this.changeLine(direction * rows);
+        this.setFirstRow(this.firstRow + direction * rows, true);
+    }
+
+    /**
+     * Scroll the viewport so that the cursor is visible.
+     */
+    public void ensureCursorVisible() {
         if (this.scrollBar != null) {
-            int cursorLine = findLineFromPos(Arrays.stream(displayCache.lineStarts).toArray(), cursorPos);
-            if (cursorLine < this.firstRow + 2) {
-                // Cursor is above viewport
-                this.setFirstRow(cursorLine - 2, true);
-            } else if (cursorLine > this.firstRow + this.scrollBar.getVisibleRows() - 3) {
-                // Cursor is below viewport
-                this.setFirstRow(cursorLine - (this.scrollBar.getVisibleRows() - 3), true);
+            int cursorLine = findLineFromPos(this.getDisplayCache().lineStarts, this.textFieldHelper.getCursorPos());
+            int visibleRows = this.scrollBar.getVisibleRows();
+            if (cursorLine < this.firstRow) {
+                this.setFirstRow(cursorLine, true);
+            } else if (cursorLine >= this.firstRow + visibleRows) {
+                this.setFirstRow(cursorLine - visibleRows + 1, true);
             }
         }
     }
 
-    private void keyHome() {
-        if (Screen.hasControlDown()) {
+    private void keyHome(boolean document) {
+        if (document) {
             this.textFieldHelper.setCursorToStart(Screen.hasShiftDown());
         } else {
             int i = this.textFieldHelper.getCursorPos();
@@ -429,8 +469,8 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     }
 
-    private void keyEnd() {
-        if (Screen.hasControlDown()) {
+    private void keyEnd(boolean document) {
+        if (document) {
             this.textFieldHelper.setCursorToEnd(Screen.hasShiftDown());
         } else {
             DisplayCache displayCache = this.getDisplayCache();
@@ -456,7 +496,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                 RenderHelpers.drawScaledString(
                         guiGraphics,
                         font,
-                        String.valueOf(line.lineNumber),
+                        String.valueOf(line.lineNumber + 1), // Line numbers start at 1, like in error messages
                         this.getX(),
                         line.y - offsetY + 2,
                         0.5f,
@@ -520,6 +560,11 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         RenderSystem.setShaderColor(1, 1, 1, 1);
     }
 
+    private int getTextWidth() {
+        // Don't render text below the scrollbar
+        return this.getWidth() - getLinesXOffset() - (this.scrollBar != null ? SCROLLBAR_WIDTH : 0);
+    }
+
     private int getLinesXOffset() {
         return this.showLineNumbers ? 14 : 0;
     }
@@ -552,25 +597,46 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             int cursorPos = this.textFieldHelper.getCursorPos();
             int selectionPos = this.textFieldHelper.getSelectionPos();
             IntList linePositionsOld = new IntArrayList();
-            List<LineInfo> linesAll = Lists.newArrayList();
-            MutableInt mutableint = new MutableInt();
+            List<Pair<String, Style>> linesRaw = Lists.newArrayList();
+            IntList lineNumbers = new IntArrayList();
+            List<Boolean> linesHasCursor = Lists.newArrayList();
             MutableBoolean mutableboolean = new MutableBoolean();
             StringSplitter stringsplitter = this.font.getSplitter();
             MutableInt lineNumber = new MutableInt();
-            stringsplitter.splitLines(s, this.getWidth() - getLinesXOffset() /* changed */, Style.EMPTY, true, (style, startPos, endPos) -> {
-                int k3 = mutableint.getAndIncrement();
+            stringsplitter.splitLines(s, getTextWidth() /* changed */, Style.EMPTY, true, (style, startPos, endPos) -> {
                 String stringPart = s.substring(startPos, endPos);
                 boolean hasNewLine = stringPart.endsWith("\n");
                 mutableboolean.setValue(hasNewLine);
-                String s3 = StringUtils.stripEnd(stringPart, " \n");
-                int l3 = (k3 - this.firstRow) * 9; // Offset firstRow!
-                Pos2i bookeditscreen$pos2i1 = this.convertLocalToScreen(new Pos2i(0, l3));
                 linePositionsOld.add(startPos);
-                linesAll.add(new LineInfo(this.markupLine(style, s3), bookeditscreen$pos2i1.x, bookeditscreen$pos2i1.y, lineNumber.getValue(), cursorPos >= startPos && cursorPos < (hasNewLine ? endPos : s.indexOf("\n", endPos))));
+                linesRaw.add(Pair.of(StringUtils.stripEnd(stringPart, " \n"), style));
+                lineNumbers.add(lineNumber.intValue());
+                linesHasCursor.add(cursorPos >= startPos && cursorPos < (hasNewLine ? endPos : s.indexOf("\n", endPos)));
                 if (hasNewLine) {
                     lineNumber.increment();
                 }
             });
+            // Add an empty line after a trailing newline, so the cursor can be placed and scrolled there
+            if (mutableboolean.isTrue()) {
+                linePositionsOld.add(s.length());
+                linesRaw.add(Pair.of("", Style.EMPTY));
+                lineNumbers.add(lineNumber.intValue());
+                linesHasCursor.add(cursorPos == s.length());
+            }
+
+            // Keep scroll position within bounds, as the text may have shrunk
+            if (this.scrollBar != null) {
+                int maxFirstRow = Math.max(0, linesRaw.size() - this.scrollBar.getVisibleRows());
+                if (this.firstRow > maxFirstRow) {
+                    this.firstRow = maxFirstRow;
+                    this.scrollBar.setFirstRow(this.firstRow, false);
+                }
+            }
+
+            List<LineInfo> linesAll = Lists.newArrayList();
+            for (int k3 = 0; k3 < linesRaw.size(); k3++) {
+                Pos2i bookeditscreen$pos2i1 = this.convertLocalToScreen(new Pos2i(0, (k3 - this.firstRow) * 9)); // Offset firstRow!
+                linesAll.add(new LineInfo(this.markupLine(linesRaw.get(k3).getRight(), linesRaw.get(k3).getLeft()), bookeditscreen$pos2i1.x, bookeditscreen$pos2i1.y, lineNumbers.getInt(k3), linesHasCursor.get(k3)));
+            }
 
             // --- Changed ---
             // Slice lines based on scroll position
@@ -583,16 +649,11 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
             int[] lineStartsArr = lineStarts.toIntArray();
             boolean flag = cursorPos == s.length();
-            Pos2i cursor;
-            if (flag && mutableboolean.isTrue()) {
-                cursor = new Pos2i(0, lines.size() * 9);
-            } else {
-                int cursorLine = findLineFromPos(lineStartsArr, cursorPos);
-                int cursorX = this.font.width(s.substring(lineStartsArr[cursorLine], cursorPos));
-                cursor = new Pos2i(cursorX, (cursorLine - this.firstRow) * 9); // We have to offset the firstRow here!
-            }
-            // Hide cursor if out of view
-            if (cursor.y < 0 || cursor.y > getHeight()) {
+            int cursorLine = findLineFromPos(lineStartsArr, cursorPos);
+            int cursorX = this.font.width(s.substring(lineStartsArr[cursorLine], cursorPos));
+            Pos2i cursor = new Pos2i(cursorX, (cursorLine - this.firstRow) * 9); // We have to offset the firstRow here!
+            // Hide cursor if out of view, including the partially visible row below the last line
+            if (cursor.y < 0 || cursor.y + ROW_HEIGHT > getHeight()) {
                 cursor = null;
             }
 
@@ -620,11 +681,11 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                     selection.add(this.createPartialLineSelection(s, stringsplitter, lineStartsArr[lineEnd], i1, lineEnd * 9, lineStartsArr[lineEnd]));
                 }
             }
-            // Hide out-of-view selections and offset them
+            // Hide out-of-view selections and offset them, including the partially visible row below the last line
             List<Rect2i> selectionNew = Lists.newArrayList();
             for (Rect2i rect2i : selection) {
                 Rect2i rect2iNew = new Rect2i(rect2i.getX(), rect2i.getY() - this.firstRow * ROW_HEIGHT, rect2i.getWidth(), rect2i.getHeight());
-                if (rect2iNew.getY() - this.getY() >= 0 && rect2iNew.getY() - this.getY() < getHeight()) {
+                if (rect2iNew.getY() - this.getY() >= 0 && rect2iNew.getY() + rect2iNew.getHeight() - this.getY() <= getHeight()) {
                     selectionNew.add(rect2iNew);
                 }
             }
@@ -702,17 +763,10 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
         public int changeLine(int p_98211_, int p_98212_) {
             int i = WidgetTextArea.findLineFromPos(this.lineStarts, p_98211_);
-            int j = i + p_98212_;
-            int k;
-            if (0 <= j && j < this.lineStarts.length) {
-                int l = p_98211_ - this.lineStarts[i];
-                int i1 = this.linesAll[j].contents.length();
-                k = this.lineStarts[j] + Math.min(l, i1);
-            } else {
-                k = p_98211_;
-            }
-
-            return k;
+            int j = Math.max(0, Math.min(this.lineStarts.length - 1, i + p_98212_));
+            int l = p_98211_ - this.lineStarts[i];
+            int i1 = this.linesAll[j].contents.length();
+            return this.lineStarts[j] + Math.min(l, i1);
         }
 
         public int findLineStart(int p_98209_) {

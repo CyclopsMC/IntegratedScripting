@@ -95,6 +95,12 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
     @Override
     public void init() {
+        // This is called again when the screen is resized, which recreates all widgets
+        if (textArea != null) {
+            this.saveCursorPos();
+        }
+        pendingScriptRemovalDialog = null;
+
         super.init();
 
         fieldDisk = new WidgetArrowedListField<>(Minecraft.getInstance().font, leftPos + DISK_X,
@@ -131,6 +137,13 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         buttonCreateFile = new ButtonText(this.leftPos + 19, this.topPos + 222, 56, 10, Component.translatable("gui.integratedscripting.create_file"), Component.literal("+"),
                 (button) -> getMenu().createNewFile(), true);
         addRenderableWidget(buttonCreateFile);
+
+        // Restore the open script in the new editor
+        if (getMenu().getActiveScriptPath() != null) {
+            this.onActiveScriptSelected();
+            this.restoreCursorPos();
+            textArea.ensureCursorVisible();
+        }
     }
 
     @Override
