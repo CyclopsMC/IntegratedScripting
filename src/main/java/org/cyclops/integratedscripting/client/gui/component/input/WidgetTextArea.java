@@ -39,13 +39,13 @@ import org.cyclops.cyclopscore.client.gui.component.WidgetScrollBar;
 import org.cyclops.cyclopscore.client.gui.component.input.IInputListener;
 import org.cyclops.cyclopscore.helper.Helpers;
 import org.cyclops.cyclopscore.helper.RenderHelpers;
+import org.cyclops.integratedscripting.client.key.Keys;
 import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.function.IntPredicate;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -103,7 +103,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     private int[] searchMatches = new int[0];
     private String indent = "  ";
     @Nullable
-    private IntPredicate shortcutListener;
+    private ShortcutListener shortcutListener;
 
     public WidgetTextArea(Font font, int x, int y, int width, int height, Component narrationMessage, boolean scrollBar, boolean showLineNumbers) {
         super(font, x, y, width, height, narrationMessage);
@@ -188,9 +188,9 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     }
 
     /**
-     * @param shortcutListener Called with the key of ctrl-shortcuts, returns true if it handled the shortcut.
+     * @param shortcutListener Called with each key press before the editor handles it, returns true if it handled the key.
      */
-    public void setShortcutListener(@Nullable IntPredicate shortcutListener) {
+    public void setShortcutListener(@Nullable ShortcutListener shortcutListener) {
         this.shortcutListener = shortcutListener;
     }
 
@@ -405,11 +405,11 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     @Override
     public boolean keyPressed(int typedChar, int keyCode, int modifiers) {
-        if (hasControlDown(modifiers) && this.shortcutListener != null && this.shortcutListener.test(typedChar)) {
+        if (this.shortcutListener != null && this.shortcutListener.keyPressed(typedChar, keyCode, modifiers)) {
             return true;
         }
         TextHistory.State before = this.getState();
-        boolean history = this.historyKeyPressed(typedChar, modifiers);
+        boolean history = this.historyKeyPressed(typedChar, keyCode, modifiers);
         boolean flag = history || this.textFieldKeyPressed(typedChar, keyCode, modifiers);
         if (flag) {
             if (!history) {
@@ -509,15 +509,16 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         }
     }
 
-    private boolean historyKeyPressed(int key, int modifiers) {
-        if (!hasControlDown(modifiers)) {
-            return false;
-        }
-        boolean shift = (modifiers & GLFW.GLFW_MOD_SHIFT) != 0;
+    // Ctrl+Shift+Z, which needs two modifiers, so it can not be a key mapping
+    private static boolean isRedoAlternative(int key, int modifiers) {
+        return key == GLFW.GLFW_KEY_Z && hasControlDown(modifiers) && (modifiers & GLFW.GLFW_MOD_SHIFT) != 0 && (modifiers & GLFW.GLFW_MOD_ALT) == 0;
+    }
+
+    private boolean historyKeyPressed(int key, int scanCode, int modifiers) {
         TextHistory.State state;
-        if (key == GLFW.GLFW_KEY_Z && !shift) {
+        if (Keys.matches(Keys.UNDO, key, scanCode, modifiers)) {
             state = this.history.undo(this.getState());
-        } else if (key == GLFW.GLFW_KEY_Y || (key == GLFW.GLFW_KEY_Z && shift)) {
+        } else if (Keys.matches(Keys.REDO, key, scanCode, modifiers) || isRedoAlternative(key, modifiers)) {
             state = this.history.redo(this.getState());
         } else {
             return false;
@@ -529,11 +530,14 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     }
 
     private boolean textFieldKeyPressed(int p_98153_, int p_98154_, int p_98155_) {
-        if (hasControlDown(p_98155_) && p_98153_ == GLFW.GLFW_KEY_SLASH) {
+        if (Keys.matches(Keys.COMMENT, p_98153_, p_98154_, p_98155_)) {
             this.setState(TextEditing.toggleComment(this.getState()));
             return true;
-        } else if ((p_98155_ & GLFW.GLFW_MOD_ALT) != 0 && (p_98153_ == GLFW.GLFW_KEY_UP || p_98153_ == GLFW.GLFW_KEY_DOWN)) {
-            this.setState(TextEditing.moveLines(this.getState(), p_98153_ == GLFW.GLFW_KEY_UP ? -1 : 1));
+        } else if (Keys.matches(Keys.MOVE_LINES_UP, p_98153_, p_98154_, p_98155_)) {
+            this.setState(TextEditing.moveLines(this.getState(), -1));
+            return true;
+        } else if (Keys.matches(Keys.MOVE_LINES_DOWN, p_98153_, p_98154_, p_98155_)) {
+            this.setState(TextEditing.moveLines(this.getState(), 1));
             return true;
         } else if (Screen.isSelectAll(p_98153_)) {
             this.textFieldHelper.selectAll();
@@ -1031,4 +1035,9 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     public static interface IMarkupProvider {
         public List<Pair<Style, String>> markupLine(Style style, String line);
     }
+
+    public static interface ShortcutListener {
+        public boolean keyPressed(int keyCode, int scanCode, int modifiers);
+    }
+
 }
