@@ -23,6 +23,8 @@ import org.cyclops.cyclopscore.inventory.SimpleInventory;
 import org.cyclops.cyclopscore.inventory.container.InventoryContainer;
 import org.cyclops.cyclopscore.persist.IDirtyMarkListener;
 import org.cyclops.integrateddynamics.IntegratedDynamics;
+import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
+import org.cyclops.integrateddynamics.api.item.IVariableFacade;
 import org.cyclops.integrateddynamics.api.item.IVariableFacadeHandlerRegistry;
 import org.cyclops.integrateddynamics.api.network.INetwork;
 import org.cyclops.integrateddynamics.api.part.IPartContainer;
@@ -33,10 +35,12 @@ import org.cyclops.integrateddynamics.core.inventory.container.slot.SlotVariable
 import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.RegistryEntries;
 import org.cyclops.integratedscripting.api.item.IScriptVariableFacade;
+import org.cyclops.integratedscripting.api.language.ILanguageHandler;
 import org.cyclops.integratedscripting.api.network.IScriptingData;
 import org.cyclops.integratedscripting.api.network.IScriptingNetwork;
 import org.cyclops.integratedscripting.core.evaluate.ScriptVariableFacadeHandler;
 import org.cyclops.integratedscripting.core.item.ScriptVariableFacade;
+import org.cyclops.integratedscripting.core.language.LanguageHandlers;
 import org.cyclops.integratedscripting.core.network.ScriptingNetworkHelpers;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingCreateNewScriptPacket;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingDeleteScriptPacket;
@@ -291,7 +295,31 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
     }
 
     public boolean isMemberSelected() {
-        return VALID_MEMBER_NAME.matcher(getSelectedMember()).matches();
+        String member = getSelectedMember();
+        return VALID_MEMBER_NAME.matcher(member).matches() && !isReservedWord(member);
+    }
+
+    /**
+     * @return If the given word is reserved in the language of the active script, such as a keyword.
+     */
+    public boolean isReservedWord(String word) {
+        Path path = getActiveScriptPath();
+        ILanguageHandler languageHandler = path == null ? null : LanguageHandlers.REGISTRY.getProvider(path);
+        return languageHandler != null && languageHandler.getReservedWords().contains(word);
+    }
+
+    /**
+     * @return The member the variable card in the slot is bound to, or null if there is no bound card.
+     */
+    @Nullable
+    public String getCardMember() {
+        ItemStack itemStack = getContainerInventory().getItem(0);
+        if (itemStack.isEmpty()) {
+            return null;
+        }
+        IVariableFacadeHandlerRegistry registry = IntegratedDynamics._instance.getRegistryManager().getRegistry(IVariableFacadeHandlerRegistry.class);
+        IVariableFacade variableFacade = registry.handle(ValueDeseralizationContext.of(getLevel()), itemStack);
+        return variableFacade instanceof IScriptVariableFacade scriptVariableFacade ? scriptVariableFacade.getMember() : null;
     }
 
     @Nullable
@@ -332,8 +360,12 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
         List<MutableComponent> list = Lists.newArrayList();
         if (canWriteScriptToVariable()) {
             if (!isMemberSelected()) {
-                list.add(Component.translatable("gui.integratedscripting.error.invalid_member"));
-                list.add(Component.translatable("gui.integratedscripting.error.invalid_member.current", getSelectedMember()));
+                if (isReservedWord(getSelectedMember())) {
+                    list.add(Component.translatable("gui.integratedscripting.error.reserved_member", getSelectedMember()));
+                } else {
+                    list.add(Component.translatable("gui.integratedscripting.error.invalid_member"));
+                    list.add(Component.translatable("gui.integratedscripting.error.invalid_member.current", getSelectedMember()));
+                }
             }
         }
         return list;
