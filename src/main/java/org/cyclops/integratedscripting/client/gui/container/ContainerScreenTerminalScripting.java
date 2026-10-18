@@ -60,6 +60,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     public static int PATHS_HEIGHT = 214;
     public static int PATHS_ROW_HEIGHT = 8;
     public static int PATHS_MAX_ROWS = PATHS_HEIGHT / PATHS_ROW_HEIGHT;
+    public static int DISK_X = 30;
     public static int SCRIPT_X = 80;
     public static int SCRIPT_X_INNER = 94;
     public static int SCRIPT_Y = 18;
@@ -98,7 +99,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     public void init() {
         super.init();
 
-        fieldDisk = new WidgetArrowedListField<>(Minecraft.getInstance().font, leftPos + 30,
+        fieldDisk = new WidgetArrowedListField<>(Minecraft.getInstance().font, leftPos + DISK_X,
                 topPos + 4, 42, 15, true,
                 Component.translatable("gui.integratedscripting.disk"), true,
                 getMenu().getAvailableDisks());
@@ -308,8 +309,13 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         super.renderLabels(guiGraphics, mouseX, mouseY);
 
-        // Draw disk label
-        guiGraphics.drawString(font, L10NHelpers.localize("gui.integratedscripting.disk") + ":", 8, 6, 16777215);
+        // Draw disk label, truncated if it would overlap the disk field
+        String diskLabel = L10NHelpers.localize("gui.integratedscripting.disk") + ":";
+        int maxDiskLabelWidth = DISK_X - 8 - 1;
+        if (font.width(diskLabel) > maxDiskLabelWidth) {
+            diskLabel = font.plainSubstrByWidth(diskLabel, maxDiskLabelWidth - font.width("\u2026")) + "\u2026";
+        }
+        guiGraphics.drawString(font, diskLabel, 8, 6, 16777215);
 
         displayErrors.drawForeground(guiGraphics.pose(), getMenu().getReadErrors(), getErrorX(), getErrorY(), mouseX, mouseY, this, this.leftPos, this.topPos);
     }
