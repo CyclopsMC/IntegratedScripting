@@ -473,7 +473,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         // Shorten the title if it would overlap with the toolbar, as translations can be long
         Component title = this.title;
-        int maxTitleWidth = this.toolbarLeft - this.leftPos - this.titleLabelX - 2;
+        int maxTitleWidth = this.toolbarLeft - this.leftPos - this.titleLabelX - 1;
         if (this.font.width(title) > maxTitleWidth) {
             title = Component.literal(this.font.plainSubstrByWidth(title.getString(), maxTitleWidth - this.font.width("...")) + "...");
         }
