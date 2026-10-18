@@ -353,7 +353,8 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             this.textFieldHelper.cut();
             return true;
         } else {
-            TextFieldHelper.CursorStep cursorStep = Screen.hasControlDown() ? TextFieldHelper.CursorStep.WORD : TextFieldHelper.CursorStep.CHARACTER;
+            TextFieldHelper.CursorStep cursorStep = EditorKeys.isWordModifier(p_98155_, Minecraft.ON_OSX) ? TextFieldHelper.CursorStep.WORD : TextFieldHelper.CursorStep.CHARACTER;
+            boolean lineModifier = EditorKeys.isLineModifier(p_98155_, Minecraft.ON_OSX);
             switch (p_98153_) {
                 case 257:
                 case 335:
@@ -366,16 +367,32 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                     this.textFieldHelper.removeFromCursor(1, cursorStep);
                     return true;
                 case 262:
-                    this.textFieldHelper.moveBy(1, Screen.hasShiftDown(), cursorStep);
+                    if (lineModifier) {
+                        this.keyEnd(false);
+                    } else {
+                        this.textFieldHelper.moveBy(1, Screen.hasShiftDown(), cursorStep);
+                    }
                     return true;
                 case 263:
-                    this.textFieldHelper.moveBy(-1, Screen.hasShiftDown(), cursorStep);
+                    if (lineModifier) {
+                        this.keyHome(false);
+                    } else {
+                        this.textFieldHelper.moveBy(-1, Screen.hasShiftDown(), cursorStep);
+                    }
                     return true;
                 case 264:
-                    this.keyDown();
+                    if (lineModifier) {
+                        this.keyEnd(true);
+                    } else {
+                        this.keyDown();
+                    }
                     return true;
                 case 265:
-                    this.keyUp();
+                    if (lineModifier) {
+                        this.keyHome(true);
+                    } else {
+                        this.keyUp();
+                    }
                     return true;
                 case 266:
                     this.keyPage(-1);
@@ -384,10 +401,10 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                     this.keyPage(1);
                     return true;
                 case 268:
-                    this.keyHome();
+                    this.keyHome(Screen.hasControlDown());
                     return true;
                 case 269:
-                    this.keyEnd();
+                    this.keyEnd(Screen.hasControlDown());
                     return true;
                 default:
                     return false;
@@ -431,8 +448,8 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         }
     }
 
-    private void keyHome() {
-        if (Screen.hasControlDown()) {
+    private void keyHome(boolean document) {
+        if (document) {
             this.textFieldHelper.setCursorToStart(Screen.hasShiftDown());
         } else {
             int i = this.textFieldHelper.getCursorPos();
@@ -442,8 +459,8 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     }
 
-    private void keyEnd() {
-        if (Screen.hasControlDown()) {
+    private void keyEnd(boolean document) {
+        if (document) {
             this.textFieldHelper.setCursorToEnd(Screen.hasShiftDown());
         } else {
             DisplayCache displayCache = this.getDisplayCache();
