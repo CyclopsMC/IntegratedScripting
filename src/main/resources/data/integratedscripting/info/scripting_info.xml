@@ -55,6 +55,19 @@
         <appendix type="minecraft:crafting">integratedscripting:crafting/part_terminal_scripting</appendix>
     </section>
 
+    <section name="info_book.integratedscripting.terminal_shortcuts">
+        <paragraph>info_book.integratedscripting.terminal_shortcuts.text1</paragraph>
+        <paragraph>info_book.integratedscripting.terminal_shortcuts.text2</paragraph>
+        <paragraph>info_book.integratedscripting.terminal_shortcuts.text3</paragraph>
+        <appendix type="keybinding">key.integratedscripting.undo</appendix>
+        <appendix type="keybinding">key.integratedscripting.redo</appendix>
+        <appendix type="keybinding">key.integratedscripting.find</appendix>
+        <appendix type="keybinding">key.integratedscripting.goto_line</appendix>
+        <appendix type="keybinding">key.integratedscripting.comment</appendix>
+        <appendix type="keybinding">key.integratedscripting.move_lines_up</appendix>
+        <appendix type="keybinding">key.integratedscripting.move_lines_down</appendix>
+    </section>
+
     <section name="info_book.integratedscripting.writing">
         <section name="info_book.integratedscripting.writing.js">
             <paragraph>info_book.integratedscripting.writing.js.text1</paragraph>
