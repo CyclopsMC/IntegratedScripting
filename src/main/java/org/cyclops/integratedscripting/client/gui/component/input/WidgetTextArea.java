@@ -658,6 +658,15 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             }
         }
 
+        // Mark the gutter of the line with a syntax error
+        if (this.syntaxError != null && this.showLineNumbers) {
+            for (LineInfo line : lines) {
+                if (line.lineNumber + 1 == this.syntaxError.line()) {
+                    guiGraphics.fill(this.getX(), line.y - 1, this.getX() + getLinesXOffset() - 1, line.y + ROW_HEIGHT - 1, Helpers.RGBAToInt(255, 160, 160, 255));
+                }
+            }
+        }
+
         // Draw lines
         int lastLineNumber = -1;
         for(LineInfo line : lines) {
@@ -671,7 +680,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                         this.getX(),
                         line.y - offsetY + 2,
                         0.5f,
-                        this.syntaxError != null && this.syntaxError.line() == line.lineNumber + 1 ? Helpers.RGBToInt(220, 0, 0) : (line.hasCursor ? 0 : Helpers.RGBToInt(120, 120, 120)),
+                        this.syntaxError != null && this.syntaxError.line() == line.lineNumber + 1 ? Helpers.RGBToInt(170, 0, 0) : (line.hasCursor ? 0 : Helpers.RGBToInt(120, 120, 120)),
                         false,
                         Font.DisplayMode.NORMAL
                 );
@@ -692,6 +701,14 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         // Render scrollbar
         if (this.scrollBar != null) {
             this.scrollBar.render(guiGraphics, getX(), getY(), partialTicks);
+
+            // Mark the position of the syntax error on the scrollbar, so it can be found when scrolled out of view
+            if (this.syntaxError != null && displayCache.linesTotal > this.scrollBar.getVisibleRows()) {
+                int errorRow = findLineFromPos(displayCache.lineStarts, TextEditing.lineOffset(this.getValue(), this.syntaxError.line()));
+                int y = this.getY() + (int) ((long) errorRow * (this.getHeight() - 2) / displayCache.linesTotal);
+                int x = this.getX() + this.getWidth() - SCROLLBAR_WIDTH + 1;
+                guiGraphics.fill(x, y, x + SCROLLBAR_WIDTH - 2, y + 2, Helpers.RGBAToInt(220, 0, 0, 255));
+            }
         }
     }
 
