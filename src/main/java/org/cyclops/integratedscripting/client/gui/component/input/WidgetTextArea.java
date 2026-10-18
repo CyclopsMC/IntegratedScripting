@@ -246,7 +246,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                 this.setFocused(true);
                 long i = Util.getMillis();
                 DisplayCache displayCache = this.getDisplayCache();
-                int j = displayCache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i((int)mouseX, (int)mouseY)));
+                int j = displayCache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i((int)mouseX, this.clampToVisibleRows(mouseY))));
                 if (j >= 0) {
                     if (j == this.lastIndex && i - this.lastClickTime < 250L) {
                         if (!this.textFieldHelper.isSelecting()) {
@@ -300,7 +300,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         if (mouseButton == 0 && mouseX >= this.getX() && mouseX < this.getX() + this.width
                 && mouseY >= this.getY() && mouseY < this.getY() + this.height) {
             DisplayCache bookeditscreen$displaycache = this.getDisplayCache();
-            int i = bookeditscreen$displaycache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i((int)mouseX, (int)mouseY)));
+            int i = bookeditscreen$displaycache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i((int)mouseX, this.clampToVisibleRows(mouseY))));
             this.textFieldHelper.setCursorPos(i, true);
             this.clearDisplayCache();
             this.setFocused(true);
@@ -427,6 +427,14 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         DisplayCache displayCache = this.getDisplayCache();
         int j = displayCache.changeLine(cursorPos, p_98098_);
         this.textFieldHelper.setCursorPos(j, Screen.hasShiftDown());
+    }
+
+    /**
+     * @return The y position, moved up to the last fully visible row if it is below it.
+     */
+    private int clampToVisibleRows(double mouseY) {
+        int rows = this.scrollBar != null ? this.scrollBar.getVisibleRows() : this.getHeight() / ROW_HEIGHT;
+        return (int) Math.min(mouseY, this.getY() + rows * ROW_HEIGHT - 1);
     }
 
     private void keyPage(int direction) {
@@ -644,8 +652,8 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             int cursorLine = findLineFromPos(lineStartsArr, cursorPos);
             int cursorX = this.font.width(s.substring(lineStartsArr[cursorLine], cursorPos));
             Pos2i cursor = new Pos2i(cursorX, (cursorLine - this.firstRow) * 9); // We have to offset the firstRow here!
-            // Hide cursor if out of view
-            if (cursor.y < 0 || cursor.y > getHeight()) {
+            // Hide cursor if out of view, including the partially visible row below the last line
+            if (cursor.y < 0 || cursor.y + ROW_HEIGHT > getHeight()) {
                 cursor = null;
             }
 
