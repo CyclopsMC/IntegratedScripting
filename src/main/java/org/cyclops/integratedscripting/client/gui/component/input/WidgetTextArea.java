@@ -97,6 +97,9 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     private TextLayout layout;
     private TextHistory history = new TextHistory();
     private boolean draggingSelection;
+    private double dragMouseX;
+    private double dragMouseY;
+    private float dragScrollProgress;
     @Nullable
     private String searchQuery;
     @Nullable
@@ -330,6 +333,21 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     public void tick() {
         ++this.frameTick;
+
+        // Keep scrolling while a selection is dragged above or below the editor, faster when further away
+        if (this.draggingSelection) {
+            double distance = this.dragMouseY < this.getY() ? this.getY() - this.dragMouseY
+                    : this.dragMouseY - this.clampToVisibleRows(this.dragMouseY);
+            if (distance > 0) {
+                this.dragScrollProgress += (float) Math.min(2.5, 0.15 + distance / 24);
+                int rows = (int) this.dragScrollProgress;
+                this.dragScrollProgress -= rows;
+                if (rows > 0) {
+                    this.setFirstRow(this.firstRow + (this.dragMouseY < this.getY() ? -rows : rows), true);
+                    this.updateDragSelection();
+                }
+            }
+        }
     }
 
     @Override
@@ -344,10 +362,13 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             if (mouseButton == 0 && mouseX >= this.getX() && mouseX < this.getX() + this.width
                     && mouseY >= this.getY() && mouseY < this.getY() + this.height) {
                 this.draggingSelection = this.scrollBar == null || mouseX < this.getX() + this.width - SCROLLBAR_WIDTH;
+                this.dragMouseX = mouseX;
+                this.dragMouseY = mouseY;
+                this.dragScrollProgress = 0;
                 this.setFocused(true);
                 long i = Util.getMillis();
                 DisplayCache displayCache = this.getDisplayCache();
-                int j = displayCache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i((int)mouseX, (int)mouseY)));
+                int j = displayCache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i((int)mouseX, this.clampToVisibleRows(mouseY))));
                 if (j >= 0) {
                     if (j == this.lastIndex && i - this.lastClickTime < 250L) {
                         if (!this.textFieldHelper.isSelecting()) {
@@ -399,21 +420,33 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         }
 
         if (mouseButton == 0 && this.draggingSelection) {
-            // Scroll when dragging a selection beyond the top or bottom
-            if (mouseY < this.getY()) {
-                this.setFirstRow(this.firstRow - 1, true);
-            } else if (mouseY >= this.getY() + this.height) {
-                this.setFirstRow(this.firstRow + 1, true);
-            }
-            int x = (int) Math.max(this.getX(), Math.min(this.getX() + this.width - 1, mouseX));
-            int y = (int) Math.max(this.getY(), Math.min(this.getY() + this.height - 1, mouseY));
-            DisplayCache bookeditscreen$displaycache = this.getDisplayCache();
-            int i = bookeditscreen$displaycache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i(x, y)));
-            this.textFieldHelper.setCursorPos(i, true);
-            this.clearDisplayCache();
-            this.setFocused(true);
+            // Scrolling beyond the top or bottom happens in tick, so it continues while the mouse is held still
+            this.dragMouseX = mouseX;
+            this.dragMouseY = mouseY;
+            this.updateDragSelection();
+            return true;
         }
-        return true;
+        // Let other drags through, such as spreading items over inventory slots
+        return false;
+    }
+
+    @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int mouseButton) {
+        if (mouseButton == 0) {
+            this.draggingSelection = false;
+            this.dragScrollProgress = 0;
+        }
+        return super.mouseReleased(mouseX, mouseY, mouseButton);
+    }
+
+    private void updateDragSelection() {
+        int x = (int) Math.max(this.getX(), Math.min(this.getX() + this.width - 1, this.dragMouseX));
+        int y = this.clampToVisibleRows(Math.max(this.getY(), this.dragMouseY));
+        DisplayCache bookeditscreen$displaycache = this.getDisplayCache();
+        int i = bookeditscreen$displaycache.getIndexAtPosition(this.font, this.convertScreenToLocal(new Pos2i(x, y)));
+        this.textFieldHelper.setCursorPos(i, true);
+        this.clearDisplayCache();
+        this.setFocused(true);
     }
 
     @Override
@@ -565,7 +598,8 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             this.textFieldHelper.cut();
             return true;
         } else {
-            TextFieldHelper.CursorStep cursorStep = Screen.hasControlDown() ? TextFieldHelper.CursorStep.WORD : TextFieldHelper.CursorStep.CHARACTER;
+            TextFieldHelper.CursorStep cursorStep = EditorKeys.isWordModifier(p_98155_, Minecraft.ON_OSX) ? TextFieldHelper.CursorStep.WORD : TextFieldHelper.CursorStep.CHARACTER;
+            boolean lineModifier = EditorKeys.isLineModifier(p_98155_, Minecraft.ON_OSX);
             switch (p_98153_) {
                 case 257:
                 case 335:
@@ -581,16 +615,32 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                     this.textFieldHelper.removeFromCursor(1, cursorStep);
                     return true;
                 case 262:
-                    this.textFieldHelper.moveBy(1, Screen.hasShiftDown(), cursorStep);
+                    if (lineModifier) {
+                        this.keyEnd(false);
+                    } else {
+                        this.textFieldHelper.moveBy(1, Screen.hasShiftDown(), cursorStep);
+                    }
                     return true;
                 case 263:
-                    this.textFieldHelper.moveBy(-1, Screen.hasShiftDown(), cursorStep);
+                    if (lineModifier) {
+                        this.keyHome(false);
+                    } else {
+                        this.textFieldHelper.moveBy(-1, Screen.hasShiftDown(), cursorStep);
+                    }
                     return true;
                 case 264:
-                    this.keyDown();
+                    if (lineModifier) {
+                        this.keyEnd(true);
+                    } else {
+                        this.keyDown();
+                    }
                     return true;
                 case 265:
-                    this.keyUp();
+                    if (lineModifier) {
+                        this.keyHome(true);
+                    } else {
+                        this.keyUp();
+                    }
                     return true;
                 case 266:
                     this.keyPage(-1);
@@ -599,10 +649,10 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                     this.keyPage(1);
                     return true;
                 case 268:
-                    this.keyHome();
+                    this.keyHome(Screen.hasControlDown());
                     return true;
                 case 269:
-                    this.keyEnd();
+                    this.keyEnd(Screen.hasControlDown());
                     return true;
                 default:
                     return false;
@@ -623,6 +673,14 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         DisplayCache displayCache = this.getDisplayCache();
         int j = displayCache.changeLine(cursorPos, p_98098_);
         this.textFieldHelper.setCursorPos(j, Screen.hasShiftDown());
+    }
+
+    /**
+     * @return The y position, moved up to the last fully visible row if it is below it.
+     */
+    private int clampToVisibleRows(double mouseY) {
+        int rows = this.scrollBar != null ? this.scrollBar.getVisibleRows() : this.getHeight() / ROW_HEIGHT;
+        return (int) Math.min(mouseY, this.getY() + rows * ROW_HEIGHT - 1);
     }
 
     private void keyPage(int direction) {
@@ -646,8 +704,8 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         }
     }
 
-    private void keyHome() {
-        if (Screen.hasControlDown()) {
+    private void keyHome(boolean document) {
+        if (document) {
             this.textFieldHelper.setCursorToStart(Screen.hasShiftDown());
         } else {
             int i = this.textFieldHelper.getCursorPos();
@@ -657,8 +715,8 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     }
 
-    private void keyEnd() {
-        if (Screen.hasControlDown()) {
+    private void keyEnd(boolean document) {
+        if (document) {
             this.textFieldHelper.setCursorToEnd(Screen.hasShiftDown());
         } else {
             DisplayCache displayCache = this.getDisplayCache();
@@ -902,8 +960,8 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             int cursorLine = findLineFromPos(lineStartsArr, cursorPos);
             int cursorX = this.font.width(s.substring(lineStartsArr[cursorLine], cursorPos));
             Pos2i cursor = new Pos2i(cursorX, (cursorLine - this.firstRow) * 9); // We have to offset the firstRow here!
-            // Hide cursor if out of view
-            if (cursor.y < 0 || cursor.y > getHeight()) {
+            // Hide cursor if out of view, including the partially visible row below the last line
+            if (cursor.y < 0 || cursor.y + ROW_HEIGHT > getHeight()) {
                 cursor = null;
             }
 
@@ -931,11 +989,11 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                     selection.add(this.createPartialLineSelection(s, stringsplitter, lineStartsArr[lineEnd], i1, lineEnd * 9, lineStartsArr[lineEnd]));
                 }
             }
-            // Hide out-of-view selections and offset them
+            // Hide out-of-view selections and offset them, including the partially visible row below the last line
             List<Rect2i> selectionNew = Lists.newArrayList();
             for (Rect2i rect2i : selection) {
                 Rect2i rect2iNew = new Rect2i(rect2i.getX(), rect2i.getY() - this.firstRow * ROW_HEIGHT, rect2i.getWidth(), rect2i.getHeight());
-                if (rect2iNew.getY() - this.getY() >= 0 && rect2iNew.getY() - this.getY() < getHeight()) {
+                if (rect2iNew.getY() - this.getY() >= 0 && rect2iNew.getY() + rect2iNew.getHeight() - this.getY() <= getHeight()) {
                     selectionNew.add(rect2iNew);
                 }
             }
