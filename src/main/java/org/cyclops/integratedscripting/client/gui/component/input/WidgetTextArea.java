@@ -104,6 +104,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     @Nullable
     private String searchMatchesQuery;
     private int[] searchMatches = new int[0];
+    private String indent = "  ";
     @Nullable
     private IntPredicate shortcutListener;
 
@@ -205,6 +206,13 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         this.textFieldHelper.setSelectionRange(end, start);
         this.clearDisplayCache();
         this.ensureCursorVisible();
+    }
+
+    /**
+     * @param indent The string that is inserted for one indentation level.
+     */
+    public void setIndent(String indent) {
+        this.indent = indent;
     }
 
     /**
@@ -544,10 +552,10 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             switch (p_98153_) {
                 case 257:
                 case 335:
-                    this.setState(TextEditing.newline(this.getState()));
+                    this.setState(TextEditing.newline(this.getState(), this.indent));
                     return true;
                 case GLFW.GLFW_KEY_TAB:
-                    this.setState((p_98155_ & GLFW.GLFW_MOD_SHIFT) != 0 ? TextEditing.unindent(this.getState()) : TextEditing.indent(this.getState()));
+                    this.setState((p_98155_ & GLFW.GLFW_MOD_SHIFT) != 0 ? TextEditing.unindent(this.getState(), this.indent) : TextEditing.indent(this.getState(), this.indent));
                     return true;
                 case 259:
                     this.textFieldHelper.removeFromCursor(-1, cursorStep);

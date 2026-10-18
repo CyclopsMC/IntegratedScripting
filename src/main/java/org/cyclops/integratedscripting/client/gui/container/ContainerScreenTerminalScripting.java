@@ -131,6 +131,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         };
 
         textArea = new WidgetTextArea(Minecraft.getInstance().font, this.leftPos + SCRIPT_X + 1, this.topPos + SCRIPT_Y + 1, SCRIPT_WIDTH, SCRIPT_HEIGHT, Component.translatable("gui.integratedscripting.script"), true, true);
+        textArea.setIndent(" ".repeat(GeneralConfig.terminalScriptingIndentSize));
         textArea.setListener(this::onActiveScriptModified);
         textArea.setShortcutListener(key -> {
             if (key == GLFW.GLFW_KEY_F || key == GLFW.GLFW_KEY_G) {

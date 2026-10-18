@@ -6,7 +6,6 @@ package org.cyclops.integratedscripting.client.gui.component.input;
  */
 public class TextEditing {
 
-    public static final String INDENT = "    ";
 
     private static int start(TextHistory.State state) {
         return Math.min(state.cursorPos(), state.selectionPos());
@@ -47,24 +46,26 @@ public class TextEditing {
 
     /**
      * Indent the selected lines, or insert an indent at the cursor if no lines are selected.
+     * @param indent The string of one indentation level.
      */
-    public static TextHistory.State indent(TextHistory.State state) {
+    public static TextHistory.State indent(TextHistory.State state, String indent) {
         String value = state.value();
         if (!isMultiLineSelection(state)) {
             int start = start(state);
-            String newValue = value.substring(0, start) + INDENT + value.substring(end(state));
-            return new TextHistory.State(newValue, start + INDENT.length(), start + INDENT.length());
+            String newValue = value.substring(0, start) + indent + value.substring(end(state));
+            return new TextHistory.State(newValue, start + indent.length(), start + indent.length());
         }
-        return mapLines(state, line -> INDENT + line);
+        return mapLines(state, line -> indent + line);
     }
 
     /**
      * Remove one indent from the start of the lines touched by the cursor or selection.
+     * @param indent The string of one indentation level.
      */
-    public static TextHistory.State unindent(TextHistory.State state) {
+    public static TextHistory.State unindent(TextHistory.State state, String indent) {
         return mapLines(state, line -> {
             int remove = 0;
-            while (remove < INDENT.length() && remove < line.length() && line.charAt(remove) == ' ') {
+            while (remove < indent.length() && remove < line.length() && line.charAt(remove) == ' ') {
                 remove++;
             }
             if (remove == 0 && !line.isEmpty() && line.charAt(0) == '\t') {
@@ -118,8 +119,9 @@ public class TextEditing {
     /**
      * Insert a newline that keeps the indentation of the current line,
      * and indents one more level after an opening bracket.
+     * @param indentUnit The string of one indentation level.
      */
-    public static TextHistory.State newline(TextHistory.State state) {
+    public static TextHistory.State newline(TextHistory.State state, String indentUnit) {
         String value = state.value();
         int start = start(state);
         int end = end(state);
@@ -129,7 +131,7 @@ public class TextEditing {
         String before = value.substring(lineStart, start).stripTrailing();
         char open = before.isEmpty() ? 0 : before.charAt(before.length() - 1);
         boolean opens = open == '{' || open == '(' || open == '[';
-        String insert = "\n" + indent + (opens ? INDENT : "");
+        String insert = "\n" + indent + (opens ? indentUnit : "");
         int cursor = start + insert.length();
         // Put a directly following closing bracket on its own line
         if (opens && end < value.length() && value.charAt(end) == closing(open)) {
