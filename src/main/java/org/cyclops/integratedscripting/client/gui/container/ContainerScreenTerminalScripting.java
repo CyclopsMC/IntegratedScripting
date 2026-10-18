@@ -311,11 +311,11 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         // Draw disk label
         guiGraphics.drawString(font, L10NHelpers.localize("gui.integratedscripting.disk") + ":", 8, 6, 16777215);
 
-        // Draw the member the card is bound to, or will be bound to
+        // Draw the member the card is bound to, or will be bound to, right-aligned next to the card slot
         Component bindingLabel = getBindingLabel();
         if (bindingLabel != null) {
-            String label = font.plainSubstrByWidth(bindingLabel.getString(), getErrorX() - 2 - SCRIPT_X_INNER + 6);
-            guiGraphics.drawString(font, label, SCRIPT_X_INNER - 6, SCRIPT_Y + SCRIPT_HEIGHT + 3, 4210752, false);
+            int right = getErrorX() - 2;
+            guiGraphics.drawString(font, bindingLabel, right - font.width(bindingLabel), SCRIPT_Y + SCRIPT_HEIGHT + 3, 4210752, false);
         }
 
         displayErrors.drawForeground(guiGraphics.pose(), getMenu().getReadErrors(), getErrorX(), getErrorY(), mouseX, mouseY, this, this.leftPos, this.topPos);
@@ -328,12 +328,23 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         }
         String cardMember = getMenu().getCardMember();
         if (cardMember != null) {
-            return Component.translatable("gui.integratedscripting.binding.card", cardMember);
+            return Component.translatable("gui.integratedscripting.binding.card", formatBindingMember(cardMember, "gui.integratedscripting.binding.card"));
         }
         if (getMenu().isMemberSelected()) {
-            return Component.translatable("gui.integratedscripting.binding.next", getMenu().getSelectedMember());
+            // Not bound yet, so shown less prominently
+            return Component.translatable("gui.integratedscripting.binding.next", formatBindingMember(getMenu().getSelectedMember(), "gui.integratedscripting.binding.next"))
+                    .withStyle(style -> style.withItalic(true).withColor(0x707070));
         }
         return null;
+    }
+
+    protected Component formatBindingMember(String member, String translationKey) {
+        // Truncate the member so the label fits between the editor's left border and the status icon
+        int maxWidth = getErrorX() - 2 - (SCRIPT_X_INNER - 6) - font.width(L10NHelpers.localize(translationKey, ""));
+        if (font.width(member) > maxWidth) {
+            member = font.plainSubstrByWidth(member, maxWidth - font.width("\u2026")) + "\u2026";
+        }
+        return Component.literal(member).withStyle(style -> style.withColor(0x1D4F91));
     }
 
     @Override
