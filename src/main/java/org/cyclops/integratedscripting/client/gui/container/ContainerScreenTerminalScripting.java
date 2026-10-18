@@ -618,6 +618,13 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     }
 
     @Override
+    public boolean mouseReleased(double mouseX, double mouseY, int mouseButton) {
+        // Always let the editor know, as a drag selection can be released anywhere
+        textArea.mouseReleased(mouseX, mouseY, mouseButton);
+        return super.mouseReleased(mouseX, mouseY, mouseButton);
+    }
+
+    @Override
     public boolean keyPressed(int typedChar, int keyCode, int modifiers) {
         // Make active dialog consume all input
         if (typedChar != GLFW.GLFW_KEY_ESCAPE && pendingScriptRemovalDialog != null) {
