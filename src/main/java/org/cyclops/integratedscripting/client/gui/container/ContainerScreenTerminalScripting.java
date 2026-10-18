@@ -89,6 +89,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     private final List<ButtonIcon> toolbarEditButtons = Lists.newArrayList();
     private ButtonIcon buttonUndo;
     private ButtonIcon buttonRedo;
+    private int toolbarLeft;
     private ButtonIcon buttonFocus;
     private boolean focusMode;
     private WidgetDialog pendingDialog;
@@ -210,6 +211,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         addRenderableWidget(buttonFocus);
         right -= 10;
 
+        this.toolbarLeft = right - 60;
         String modifier = Minecraft.ON_OSX ? "Cmd" : "Ctrl";
         this.toolbarEditButtons.clear();
         this.buttonUndo = this.addToolbarButton(right - 60, y, ScriptImages.ACTION_UNDO, Component.translatable("gui.integratedscripting.action.undo", modifier), () -> this.textArea.undo());
@@ -469,7 +471,14 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        super.renderLabels(guiGraphics, mouseX, mouseY);
+        // Shorten the title if it would overlap with the toolbar, as translations can be long
+        Component title = this.title;
+        int maxTitleWidth = this.toolbarLeft - this.leftPos - this.titleLabelX - 2;
+        if (this.font.width(title) > maxTitleWidth) {
+            title = Component.literal(this.font.plainSubstrByWidth(title.getString(), maxTitleWidth - this.font.width("...")) + "...");
+        }
+        guiGraphics.drawString(this.font, title, this.titleLabelX, this.titleLabelY, 4210752, false);
+        guiGraphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, 4210752, false);
 
         // Draw disk label
         guiGraphics.drawString(font, L10NHelpers.localize("gui.integratedscripting.disk") + ":", 8, 6, 16777215);
