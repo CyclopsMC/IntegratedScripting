@@ -311,7 +311,29 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         // Draw disk label
         guiGraphics.drawString(font, L10NHelpers.localize("gui.integratedscripting.disk") + ":", 8, 6, 16777215);
 
+        // Draw the member the card is bound to, or will be bound to
+        Component bindingLabel = getBindingLabel();
+        if (bindingLabel != null) {
+            String label = font.plainSubstrByWidth(bindingLabel.getString(), getErrorX() - 2 - SCRIPT_X_INNER + 6);
+            guiGraphics.drawString(font, label, SCRIPT_X_INNER - 6, SCRIPT_Y + SCRIPT_HEIGHT + 3, 4210752, false);
+        }
+
         displayErrors.drawForeground(guiGraphics.pose(), getMenu().getReadErrors(), getErrorX(), getErrorY(), mouseX, mouseY, this, this.leftPos, this.topPos);
+    }
+
+    @Nullable
+    protected Component getBindingLabel() {
+        if (getMenu().getActiveScriptPath() == null) {
+            return null;
+        }
+        String cardMember = getMenu().getCardMember();
+        if (cardMember != null) {
+            return Component.translatable("gui.integratedscripting.binding.card", cardMember);
+        }
+        if (getMenu().isMemberSelected()) {
+            return Component.translatable("gui.integratedscripting.binding.next", getMenu().getSelectedMember());
+        }
+        return null;
     }
 
     @Override
