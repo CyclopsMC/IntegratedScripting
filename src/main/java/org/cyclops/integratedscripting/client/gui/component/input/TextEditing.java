@@ -1,5 +1,10 @@
 package org.cyclops.integratedscripting.client.gui.component.input;
 
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
+
+import java.util.function.IntToDoubleFunction;
+
 /**
  * Code editing operations on the state of a text area.
  * @author rubensworks
@@ -303,6 +308,68 @@ public class TextEditing {
             int shift = other.length() + 1;
             return new TextHistory.State(newValue, state.cursorPos() + shift, state.selectionPos() + shift);
         }
+    }
+
+
+    private static final String BREAK_AFTER = ",;([{";
+    private static final String OPERATORS = "+-*/%=&|<>!?:";
+
+    private static boolean canBreakBefore(String value, int pos) {
+        char prev = value.charAt(pos - 1);
+        char cur = value.charAt(pos);
+        if (cur == ' ') {
+            return false;
+        }
+        if (prev == ' ' || BREAK_AFTER.indexOf(prev) >= 0) {
+            return true;
+        }
+        // Don't split multi-character operators such as && and >=
+        if ((OPERATORS.indexOf(prev) >= 0) != (OPERATORS.indexOf(cur) >= 0)) {
+            return true;
+        }
+        // Keep member access chains readable, but don't split numbers
+        return cur == '.' && !Character.isDigit(prev);
+    }
+
+    /**
+     * Wrap lines to the given width, preferably at spaces and punctuation, so identifiers are not split.
+     * Trailing spaces may exceed the width.
+     * @param value A text.
+     * @param maxWidth The maximum line width.
+     * @param charWidth The width of a character.
+     * @return The start positions of all wrapped lines.
+     */
+    public static int[] wrapLines(String value, float maxWidth, IntToDoubleFunction charWidth) {
+        IntList starts = new IntArrayList();
+        int start = 0;
+        while (true) {
+            starts.add(start);
+            int end = value.indexOf('\n', start);
+            if (end < 0) {
+                end = value.length();
+            }
+            float width = 0;
+            int lastBreak = -1;
+            for (int i = start; i < end; i++) {
+                if (i > start && canBreakBefore(value, i)) {
+                    lastBreak = i;
+                }
+                char c = value.charAt(i);
+                width += (float) charWidth.applyAsDouble(c);
+                if (width > maxWidth && i > start && c != ' ') {
+                    start = lastBreak > start ? lastBreak : i;
+                    starts.add(start);
+                    width = 0;
+                    lastBreak = -1;
+                    i = start - 1;
+                }
+            }
+            if (end >= value.length() - 1) {
+                break;
+            }
+            start = end + 1;
+        }
+        return starts.toIntArray();
     }
 
 }

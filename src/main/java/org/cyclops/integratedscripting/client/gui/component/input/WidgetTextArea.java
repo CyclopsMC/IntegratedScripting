@@ -787,6 +787,10 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                         false,
                         Font.DisplayMode.NORMAL
                 );
+            } else if (this.showLineNumbers) {
+                // Mark wrapped continuation lines
+                RenderHelpers.drawScaledString(guiGraphics, font, "\u21B3", this.getX() + 4, line.y - offsetY + 2, 0.5f,
+                        Helpers.RGBToInt(160, 160, 160), false, Font.DisplayMode.NORMAL);
             }
             lastLineNumber = line.lineNumber;
         }
@@ -1012,17 +1016,19 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             IntList lineNumbers = new IntArrayList();
             MutableBoolean trailingNewline = new MutableBoolean();
             MutableInt lineNumber = new MutableInt();
-            this.font.getSplitter().splitLines(s, getTextWidth() /* changed */, Style.EMPTY, true, (style, startPos, endPos) -> {
-                String stringPart = s.substring(startPos, endPos);
+            StringSplitter splitter = this.font.getSplitter();
+            int[] starts = TextEditing.wrapLines(s, getTextWidth(), c -> splitter.stringWidth(String.valueOf((char) c)));
+            for (int i = 0; i < starts.length; i++) {
+                String stringPart = s.substring(starts[i], i + 1 < starts.length ? starts[i + 1] : s.length());
                 boolean hasNewLine = stringPart.endsWith("\n");
                 trailingNewline.setValue(hasNewLine);
-                lineStarts.add(startPos);
+                lineStarts.add(starts[i]);
                 contents.add(StringUtils.stripEnd(stringPart, " \n"));
                 lineNumbers.add(lineNumber.intValue());
                 if (hasNewLine) {
                     lineNumber.increment();
                 }
-            });
+            }
             // Add an empty line after a trailing newline, so the cursor can be placed and scrolled there
             if (trailingNewline.isTrue()) {
                 lineStarts.add(s.length());
