@@ -208,6 +208,42 @@ public class TextEditing {
     }
 
     /**
+     * Find all non-overlapping case-insensitive occurrences of a query.
+     * @return The start positions of all occurrences.
+     */
+    public static int[] findAll(String value, String query) {
+        if (query.isEmpty()) {
+            return new int[0];
+        }
+        String haystack = value.toLowerCase(java.util.Locale.ROOT);
+        String needle = query.toLowerCase(java.util.Locale.ROOT);
+        it.unimi.dsi.fastutil.ints.IntList positions = new it.unimi.dsi.fastutil.ints.IntArrayList();
+        int i = haystack.indexOf(needle);
+        while (i >= 0) {
+            positions.add(i);
+            i = haystack.indexOf(needle, i + needle.length());
+        }
+        return positions.toIntArray();
+    }
+
+    /**
+     * Find the last case-insensitive occurrence of a query that starts before a position, wrapping around at the start.
+     * @return The start position of the occurrence, or -1 if there is none.
+     */
+    public static int findPrevious(String value, String query, int before) {
+        int[] positions = findAll(value, query);
+        if (positions.length == 0) {
+            return -1;
+        }
+        for (int i = positions.length - 1; i >= 0; i--) {
+            if (positions[i] < before) {
+                return positions[i];
+            }
+        }
+        return positions[positions.length - 1];
+    }
+
+    /**
      * @param line A 1-based line number, which is clamped to the existing lines.
      * @return The position of the start of the line.
      */

@@ -204,4 +204,20 @@ public class TextEditingTest {
         assertThat(TextEditing.newline(s("  if (a) {", 10), TWO), equalTo(s("  if (a) {\n    ", 15)));
     }
 
+    @Test
+    public void testFindAll() {
+        assertThat(TextEditing.findAll("Item item ITEM", "item"), equalTo(new int[]{0, 5, 10}));
+        assertThat(TextEditing.findAll("aaaa", "aa"), equalTo(new int[]{0, 2}));
+        assertThat(TextEditing.findAll("abc", "x"), equalTo(new int[0]));
+        assertThat(TextEditing.findAll("abc", ""), equalTo(new int[0]));
+    }
+
+    @Test
+    public void testFindPrevious() {
+        assertThat(TextEditing.findPrevious("abc abc abc", "abc", 8), equalTo(4));
+        assertThat(TextEditing.findPrevious("abc abc abc", "abc", 4), equalTo(0));
+        assertThat(TextEditing.findPrevious("abc abc abc", "abc", 0), equalTo(8));
+        assertThat(TextEditing.findPrevious("abc", "x", 2), equalTo(-1));
+    }
+
 }
