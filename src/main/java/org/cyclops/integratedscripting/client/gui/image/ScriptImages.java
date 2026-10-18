@@ -21,6 +21,5 @@ public class ScriptImages {
     public static final Image ACTION_FIND = new Image(ICONS, 16, 16, 8, 8);
     public static final Image ACTION_GOTO_LINE = new Image(ICONS, 24, 16, 8, 8);
     public static final Image ACTION_COMMENT = new Image(ICONS, 32, 16, 8, 8);
-    public static final Image ACTION_HELP = new Image(ICONS, 40, 16, 8, 8);
 
 }
