@@ -662,7 +662,8 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         if (this.syntaxError != null && this.showLineNumbers) {
             for (LineInfo line : lines) {
                 if (line.lineNumber + 1 == this.syntaxError.line()) {
-                    guiGraphics.fill(this.getX(), line.y - 1, this.getX() + getLinesXOffset() - 1, line.y + ROW_HEIGHT - 1, Helpers.RGBAToInt(255, 160, 160, 255));
+                    // Fill the space between the editor border and the gutter separator
+                    guiGraphics.fill(this.getX() - 1, line.y - 1, this.getX() + getLinesXOffset() - 2, line.y + ROW_HEIGHT - 1, Helpers.RGBAToInt(255, 160, 160, 255));
                 }
             }
         }
