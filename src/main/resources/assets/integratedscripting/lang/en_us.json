@@ -32,6 +32,9 @@
   "gui.integratedscripting.removal_dialog.keep": "Keep",
   "gui.integratedscripting.error.invalid_member": "Select a valid function name or variable name inside the script editor to bind with.",
   "gui.integratedscripting.error.invalid_member.current": "Current selection: \"%s\"",
+  "gui.integratedscripting.error.reserved_member": "\"%s\" is a keyword, so it can not be bound. Select a function name or variable name instead.",
+  "gui.integratedscripting.binding.next": "Binds to: %s",
+  "gui.integratedscripting.binding.card": "Bound to: %s",
 
   "_comment": "Value Type Translation",
   "valuetype.integratedscripting.error.translation.unknown_to_graal": "Could not find a translator from %s values to Graal.",

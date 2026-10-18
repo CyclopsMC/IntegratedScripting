@@ -88,8 +88,6 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         this.imageHeight = 240;
         this.titleLabelX = 88;
         this.titleLabelY = 6;
-        this.inventoryLabelX = 88;
-        this.inventoryLabelY = this.imageHeight - 94;
         this.firstRow = 0;
         this.lastClientSyncTick = 0;
     }
@@ -306,12 +304,46 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        super.renderLabels(guiGraphics, mouseX, mouseY);
+        // The inventory label is left out, so its row can show the card binding
+        guiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 4210752, false);
 
         // Draw disk label
         guiGraphics.drawString(font, L10NHelpers.localize("gui.integratedscripting.disk") + ":", 8, 6, 16777215);
 
+        // Draw the member the card is bound to, or will be bound to, right-aligned next to the card slot
+        Component bindingLabel = getBindingLabel();
+        if (bindingLabel != null) {
+            int right = getErrorX() - 2;
+            guiGraphics.drawString(font, bindingLabel, right - font.width(bindingLabel), getErrorY() + 2, 4210752, false);
+        }
+
         displayErrors.drawForeground(guiGraphics.pose(), getMenu().getReadErrors(), getErrorX(), getErrorY(), mouseX, mouseY, this, this.leftPos, this.topPos);
+    }
+
+    @Nullable
+    protected Component getBindingLabel() {
+        if (getMenu().getActiveScriptPath() == null) {
+            return null;
+        }
+        String cardMember = getMenu().getCardMember();
+        if (cardMember != null) {
+            return Component.translatable("gui.integratedscripting.binding.card", formatBindingMember(cardMember, "gui.integratedscripting.binding.card"));
+        }
+        if (getMenu().isMemberSelected()) {
+            // Not bound yet, so shown less prominently
+            return Component.translatable("gui.integratedscripting.binding.next", formatBindingMember(getMenu().getSelectedMember(), "gui.integratedscripting.binding.next"))
+                    .withStyle(style -> style.withItalic(true).withColor(0x707070));
+        }
+        return null;
+    }
+
+    protected Component formatBindingMember(String member, String translationKey) {
+        // Truncate the member so the label fits between the editor's left border and the status icon
+        int maxWidth = getErrorX() - 2 - (SCRIPT_X_INNER - 6) - font.width(L10NHelpers.localize(translationKey, ""));
+        if (font.width(member) > maxWidth) {
+            member = font.plainSubstrByWidth(member, maxWidth - font.width("\u2026")) + "\u2026";
+        }
+        return Component.literal(member).withStyle(style -> style.withColor(0x1D4F91));
     }
 
     @Override

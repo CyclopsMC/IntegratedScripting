@@ -22,6 +22,7 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author rubensworks
@@ -34,6 +35,14 @@ public class LanguageHandlerJavaScript implements ILanguageHandler {
     public static final Style SYMBOL = Style.EMPTY.withColor(TextColor.fromRgb(Helpers.RGBToInt(99, 163, 92))); // Green
     public static final Style CONSTANT = Style.EMPTY.withColor(TextColor.fromRgb(Helpers.RGBToInt(0, 134, 179))); // Blue
     public static final Style KEYWORD = Style.EMPTY.withColor(TextColor.fromRgb(Helpers.RGBToInt(167, 29, 93))); // Red-purple
+
+    // Keywords and literals, which can never be the name of a member in a (non-strict) script
+    public static final Set<String> RESERVED_WORDS = Set.of(
+            "break", "case", "catch", "class", "const", "continue", "debugger", "default", "delete", "do", "else",
+            "enum", "export", "extends", "false", "finally", "for", "function", "if", "import", "in", "instanceof",
+            "new", "null", "return", "super", "switch", "this", "throw", "true", "try", "typeof", "var", "void",
+            "while", "with"
+    );
 
     public final Map<String, Style> tokenStyles;
     private final IScriptFactory scriptFactory;
@@ -108,6 +117,11 @@ public class LanguageHandlerJavaScript implements ILanguageHandler {
         }
 
         return segments;
+    }
+
+    @Override
+    public Set<String> getReservedWords() {
+        return RESERVED_WORDS;
     }
 
     @Override

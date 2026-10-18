@@ -8,7 +8,9 @@ import org.cyclops.cyclopscore.client.gui.image.IImage;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integratedscripting.api.network.IScriptFactory;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Logic for handling a specific programming language.
@@ -26,6 +28,13 @@ public interface ILanguageHandler {
     public List<Pair<Style, String>> markupLine(String line);
 
     public IScriptFactory getScriptFactory() throws EvaluationException;
+
+    /**
+     * @return Words of the language that can not be the name of a script member, such as keywords.
+     */
+    public default Set<String> getReservedWords() {
+        return Collections.emptySet();
+    }
 
     public void onServerStarted();
 
