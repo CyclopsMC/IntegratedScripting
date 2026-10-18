@@ -60,6 +60,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     public static int PATHS_HEIGHT = 214;
     public static int PATHS_ROW_HEIGHT = 8;
     public static int PATHS_MAX_ROWS = PATHS_HEIGHT / PATHS_ROW_HEIGHT;
+    public static int DISK_X = 30;
     public static int SCRIPT_X = 80;
     public static int SCRIPT_X_INNER = 94;
     public static int SCRIPT_Y = 18;
@@ -96,7 +97,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     public void init() {
         super.init();
 
-        fieldDisk = new WidgetArrowedListField<>(Minecraft.getInstance().font, leftPos + 30,
+        fieldDisk = new WidgetArrowedListField<>(Minecraft.getInstance().font, leftPos + DISK_X,
                 topPos + 4, 42, 15, true,
                 Component.translatable("gui.integratedscripting.disk"), true,
                 getMenu().getAvailableDisks());
@@ -307,8 +308,11 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         // The inventory label is left out, so its row can show the card binding
         guiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 4210752, false);
 
-        // Draw disk label
-        guiGraphics.drawString(font, L10NHelpers.localize("gui.integratedscripting.disk") + ":", 8, 6, 16777215);
+        // Draw disk label, scaled to the space before the disk field, which fits the English label at normal size
+        String diskLabel = L10NHelpers.localize("gui.integratedscripting.disk") + ":";
+        float diskLabelScale = (float) (DISK_X - 8 - 1) / font.width(diskLabel);
+        int diskLabelY = Math.round(6 + font.lineHeight * (1 - diskLabelScale) / 2);
+        RenderHelpers.drawScaledString(guiGraphics, font, diskLabel, 8, diskLabelY, diskLabelScale, 16777215, true, Font.DisplayMode.NORMAL);
 
         // Draw the member the card is bound to, or will be bound to, right-aligned next to the card slot
         Component bindingLabel = getBindingLabel();
