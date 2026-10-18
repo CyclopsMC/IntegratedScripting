@@ -6,7 +6,6 @@ import com.google.common.collect.Maps;
 import com.mojang.blaze3d.systems.RenderSystem;
 import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -179,21 +178,14 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
      * @param y The top of the toolbar.
      */
     private void addToolbar(int right, int y) {
-        this.toolbarLeft = right - 60;
+        this.toolbarLeft = right - 50;
         String modifier = Minecraft.ON_OSX ? "Cmd" : "Ctrl";
         this.toolbarEditButtons.clear();
-        this.buttonUndo = this.addToolbarButton(right - 60, y, ScriptImages.ACTION_UNDO, Component.translatable("gui.integratedscripting.action.undo", modifier), () -> this.textArea.undo());
-        this.buttonRedo = this.addToolbarButton(right - 50, y, ScriptImages.ACTION_REDO, Component.translatable("gui.integratedscripting.action.redo", modifier), () -> this.textArea.redo());
-        this.addToolbarButton(right - 40, y, ScriptImages.ACTION_FIND, Component.translatable("gui.integratedscripting.action.find", modifier), () -> this.openNavigate(false));
-        this.addToolbarButton(right - 30, y, ScriptImages.ACTION_GOTO_LINE, Component.translatable("gui.integratedscripting.action.goto_line", modifier), () -> this.openNavigate(true));
-        this.addToolbarButton(right - 20, y, ScriptImages.ACTION_COMMENT, Component.translatable("gui.integratedscripting.action.comment", modifier), () -> this.textArea.toggleComment());
-
-        // Only shows the shortcuts in its tooltip
-        ButtonIcon buttonHelp = new ButtonIcon(right - 10, y, 10, 10, Component.translatable("gui.integratedscripting.action.help"), (button) -> {}, ScriptImages.ACTION_HELP);
-        buttonHelp.setTooltip(Tooltip.create(Component.translatable("gui.integratedscripting.action.help").withStyle(ChatFormatting.YELLOW)
-                .append(Component.literal("\n"))
-                .append(Component.translatable("gui.integratedscripting.shortcuts", modifier).withStyle(ChatFormatting.GRAY))));
-        addRenderableWidget(buttonHelp);
+        this.buttonUndo = this.addToolbarButton(right - 50, y, ScriptImages.ACTION_UNDO, Component.translatable("gui.integratedscripting.action.undo", modifier), () -> this.textArea.undo());
+        this.buttonRedo = this.addToolbarButton(right - 40, y, ScriptImages.ACTION_REDO, Component.translatable("gui.integratedscripting.action.redo", modifier), () -> this.textArea.redo());
+        this.addToolbarButton(right - 30, y, ScriptImages.ACTION_FIND, Component.translatable("gui.integratedscripting.action.find", modifier), () -> this.openNavigate(false));
+        this.addToolbarButton(right - 20, y, ScriptImages.ACTION_GOTO_LINE, Component.translatable("gui.integratedscripting.action.goto_line", modifier), () -> this.openNavigate(true));
+        this.addToolbarButton(right - 10, y, ScriptImages.ACTION_COMMENT, Component.translatable("gui.integratedscripting.action.comment", modifier), () -> this.textArea.toggleComment());
         this.updateToolbar();
     }
 
