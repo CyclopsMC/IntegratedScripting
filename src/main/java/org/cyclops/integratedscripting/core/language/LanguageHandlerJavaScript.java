@@ -8,10 +8,14 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.cyclops.cyclopscore.client.gui.image.IImage;
 import org.cyclops.cyclopscore.helper.Helpers;
+import org.cyclops.cyclopscore.helper.L10NHelpers;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
+import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
+import org.cyclops.integrateddynamics.core.evaluate.operator.Operators;
 import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.Reference;
 import org.cyclops.integratedscripting.api.language.ILanguageHandler;
+import org.cyclops.integratedscripting.api.language.ScriptCompletions;
 import org.cyclops.integratedscripting.api.language.ScriptSyntaxError;
 import org.cyclops.integratedscripting.api.network.IScriptFactory;
 import org.cyclops.integratedscripting.client.gui.image.ScriptImages;
@@ -31,6 +35,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * @author rubensworks
@@ -55,6 +60,8 @@ public class LanguageHandlerJavaScript implements ILanguageHandler {
 
     public final Map<String, Style> tokenStyles;
     private final IScriptFactory scriptFactory;
+    @Nullable
+    private Map<String, String> operatorSignatures;
 
     public LanguageHandlerJavaScript() {
         this.tokenStyles = Maps.newHashMap();
@@ -172,6 +179,28 @@ public class LanguageHandlerJavaScript implements ILanguageHandler {
     @Override
     public Set<String> getTopLevelMembers(String script) {
         return JavaScriptDeclarations.find(script);
+    }
+
+    @Nullable
+    @Override
+    public ScriptCompletions getCompletions(String script, int cursor) {
+        return JavaScriptCompletions.complete(script, cursor, getOperatorSignatures());
+    }
+
+    protected Map<String, String> getOperatorSignatures() {
+        // Operators are registered once, so this can be cached
+        if (this.operatorSignatures == null) {
+            Map<String, String> signatures = Maps.newHashMap();
+            for (Map.Entry<String, IOperator> entry : Operators.REGISTRY.getGlobalInteractOperators().entrySet()) {
+                IOperator operator = entry.getValue();
+                String inputs = Arrays.stream(operator.getInputTypes())
+                        .map(type -> L10NHelpers.localize(type.getTranslationKey()))
+                        .collect(Collectors.joining(", "));
+                signatures.put(entry.getKey(), "(" + inputs + "): " + L10NHelpers.localize(operator.getOutputType().getTranslationKey()));
+            }
+            this.operatorSignatures = signatures;
+        }
+        return this.operatorSignatures;
     }
 
     @Override

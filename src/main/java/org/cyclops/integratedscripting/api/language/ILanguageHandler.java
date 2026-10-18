@@ -67,6 +67,16 @@ public interface ILanguageHandler {
     }
 
     /**
+     * @param script The script contents.
+     * @param cursor The cursor position.
+     * @return Completion candidates at the cursor, or null if there are none.
+     */
+    @Nullable
+    public default ScriptCompletions getCompletions(String script, int cursor) {
+        return null;
+    }
+
+    /**
      * Check a script for syntax errors, without executing it.
      * @param path The script path.
      * @param script The script contents.
