@@ -146,6 +146,7 @@
   "info_book.integratedscripting.terminal_shortcuts.text1": "The script editor of the &lScripting Terminal&r has the keyboard shortcuts shown below. You can change them in the &oControls&r settings, under &oIntegrated Scripting&r. Most of these actions are also available as buttons above the editor.",
   "info_book.integratedscripting.terminal_shortcuts.text2": "Some keys can not be changed: &oTab&r and &oShift+Tab&r indent and unindent the selected lines, &oPage Up&r and &oPage Down&r move by a page, and &oCtrl+Shift+Z&r (&oCmd+Shift+Z&r on Mac) also redoes.",
   "info_book.integratedscripting.terminal_shortcuts.text3": "While finding text or going to a line, &oEnter&r and &oShift+Enter&r go to the next and previous match, and &oEscape&r closes the search bar.",
+  "info_book.integratedscripting.terminal_shortcuts.text4": "In focus mode, &oEscape&r returns to the normal terminal. To rename a script, right-click it in the script list.",
 
   "info_book.integratedscripting.writing": "Writing Scripts",
 
