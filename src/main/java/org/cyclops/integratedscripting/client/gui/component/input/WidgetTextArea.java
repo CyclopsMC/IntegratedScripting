@@ -475,6 +475,40 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         return (modifiers & (Minecraft.ON_OSX ? GLFW.GLFW_MOD_SUPER : GLFW.GLFW_MOD_CONTROL)) != 0;
     }
 
+    public boolean canUndo() {
+        return this.history.canUndo();
+    }
+
+    public boolean canRedo() {
+        return this.history.canRedo();
+    }
+
+    public void undo() {
+        this.applyEdit(this.history.undo(this.getState()));
+    }
+
+    public void redo() {
+        this.applyEdit(this.history.redo(this.getState()));
+    }
+
+    /**
+     * Toggle line comments on the lines touched by the cursor or selection, as an undoable edit.
+     */
+    public void toggleComment() {
+        TextHistory.State before = this.getState();
+        this.setState(TextEditing.toggleComment(before));
+        this.recordHistory(before, false);
+        this.clearDisplayCache();
+    }
+
+    private void applyEdit(@Nullable TextHistory.State state) {
+        if (state != null) {
+            this.setState(state);
+            this.clearDisplayCache();
+            this.ensureCursorVisible();
+        }
+    }
+
     private boolean historyKeyPressed(int key, int modifiers) {
         if (!hasControlDown(modifiers)) {
             return false;
