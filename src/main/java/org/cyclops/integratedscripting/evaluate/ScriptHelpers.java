@@ -8,6 +8,7 @@ import org.cyclops.integrateddynamics.core.evaluate.operator.Operators;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeOperator;
 import org.cyclops.integratedscripting.GeneralConfig;
 import org.cyclops.integratedscripting.api.evaluate.translation.IEvaluationExceptionFactory;
+import org.cyclops.integratedscripting.core.evaluate.ScriptEvaluationStatuses;
 import org.cyclops.integratedscripting.core.packageddependencies.UnsafeHelper;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
 import org.graalvm.polyglot.*;
@@ -144,9 +145,12 @@ public class ScriptHelpers {
     public static IEvaluationExceptionFactory getEvaluationExceptionFactory(int disk, Path path, String member) {
         EvaluationExceptionResolutionHelpers.expungeStaleEvaluationExceptions();
 
-        return message -> EvaluationExceptionResolutionHelpers.resolveOnScriptChange(
-                new EvaluationException(Component.translatable("script.integratedscripting.error.script_exec", member, path.toString(), disk, message)),
-                disk, path);
+        return message -> {
+            ScriptEvaluationStatuses.recordCallError(disk, path, member, message);
+            return EvaluationExceptionResolutionHelpers.resolveOnScriptChange(
+                    new EvaluationException(Component.translatable("script.integratedscripting.error.script_exec", member, path.toString(), disk, message)),
+                    disk, path);
+        };
     }
 
 }

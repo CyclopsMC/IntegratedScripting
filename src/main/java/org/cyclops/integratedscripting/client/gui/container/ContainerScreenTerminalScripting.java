@@ -16,9 +16,11 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.ChatFormatting;
 import net.minecraft.Util;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -538,7 +540,19 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         Component bindingLabel = getBindingLabel();
         if (bindingLabel != null) {
             int right = getErrorX() - 2;
-            guiGraphics.drawString(font, bindingLabel, right - font.width(bindingLabel), getErrorY() + 2, 4210752, false);
+            int left = right - font.width(bindingLabel);
+            guiGraphics.drawString(font, bindingLabel, left, getErrorY() + 2, 4210752, false);
+
+            // Show the last evaluation of the bound card
+            if (getMenu().getCardMember() != null && pendingDialog == null
+                    && mouseX >= this.leftPos + left && mouseX < this.leftPos + right
+                    && mouseY >= this.topPos + getErrorY() + 1 && mouseY < this.topPos + getErrorY() + 2 + font.lineHeight) {
+                List<FormattedCharSequence> lines = Lists.newArrayList();
+                for (MutableComponent line : getMenu().getCardEvaluation()) {
+                    lines.addAll(font.split(line, 200));
+                }
+                this.setTooltipForNextRenderPass(lines);
+            }
         }
 
         displayErrors.drawForeground(guiGraphics.pose(), getMenu().getReadErrors(), getErrorX(), getErrorY(), mouseX, mouseY, this, this.leftPos, this.topPos);

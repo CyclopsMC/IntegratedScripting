@@ -50,6 +50,10 @@
   "gui.integratedscripting.error.reserved_member": "\"%s\" is a keyword, so it can not be bound. Select a function name or variable name instead.",
   "gui.integratedscripting.binding.next": "Binds to: %s",
   "gui.integratedscripting.binding.card": "Bound to: %s",
+  "gui.integratedscripting.evaluation.none": "Not evaluated by the network since the script last changed",
+  "gui.integratedscripting.evaluation.value": "Last value: %s",
+  "gui.integratedscripting.evaluation.error": "Last error: %s",
+  "gui.integratedscripting.evaluation.call_error": "Last error when called: %s",
 
   "key.categories.integratedscripting": "Integrated Scripting",
   "key.integratedscripting.undo": "Undo",
