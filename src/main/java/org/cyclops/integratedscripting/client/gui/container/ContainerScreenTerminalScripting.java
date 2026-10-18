@@ -6,7 +6,7 @@ import com.google.common.collect.Maps;
 import com.mojang.blaze3d.systems.RenderSystem;
 import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import net.minecraft.ChatFormatting;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
@@ -43,6 +43,7 @@ import org.cyclops.integratedscripting.client.gui.component.input.WidgetDialog;
 import org.cyclops.integratedscripting.client.gui.component.input.WidgetSearchBar;
 import org.cyclops.integratedscripting.client.gui.component.input.WidgetTextArea;
 import org.cyclops.integratedscripting.client.gui.image.ScriptImages;
+import org.cyclops.integratedscripting.client.key.Keys;
 import org.cyclops.integratedscripting.core.language.LanguageHandlers;
 import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScripting;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingDeleteScriptPacket;
@@ -156,9 +157,10 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         }
         textArea.setIndent(" ".repeat(GeneralConfig.terminalScriptingIndentSize));
         textArea.setListener(this::onActiveScriptModified);
-        textArea.setShortcutListener(key -> {
-            if (key == GLFW.GLFW_KEY_F || key == GLFW.GLFW_KEY_G) {
-                openNavigate(key == GLFW.GLFW_KEY_G);
+        textArea.setShortcutListener((key, scanCode, modifiers) -> {
+            boolean find = Keys.matches(Keys.FIND, key, scanCode, modifiers);
+            if (find || Keys.matches(Keys.GOTO_LINE, key, scanCode, modifiers)) {
+                openNavigate(!find);
                 return true;
             }
             return false;
@@ -211,25 +213,18 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         addRenderableWidget(buttonFocus);
         right -= 10;
 
-        this.toolbarLeft = right - 60;
-        String modifier = Minecraft.ON_OSX ? "Cmd" : "Ctrl";
+        this.toolbarLeft = right - 50;
         this.toolbarEditButtons.clear();
-        this.buttonUndo = this.addToolbarButton(right - 60, y, ScriptImages.ACTION_UNDO, Component.translatable("gui.integratedscripting.action.undo", modifier), () -> this.textArea.undo());
-        this.buttonRedo = this.addToolbarButton(right - 50, y, ScriptImages.ACTION_REDO, Component.translatable("gui.integratedscripting.action.redo", modifier), () -> this.textArea.redo());
-        this.addToolbarButton(right - 40, y, ScriptImages.ACTION_FIND, Component.translatable("gui.integratedscripting.action.find", modifier), () -> this.openNavigate(false));
-        this.addToolbarButton(right - 30, y, ScriptImages.ACTION_GOTO_LINE, Component.translatable("gui.integratedscripting.action.goto_line", modifier), () -> this.openNavigate(true));
-        this.addToolbarButton(right - 20, y, ScriptImages.ACTION_COMMENT, Component.translatable("gui.integratedscripting.action.comment", modifier), () -> this.textArea.toggleComment());
-
-        // Only shows the shortcuts in its tooltip
-        ButtonIcon buttonHelp = new ButtonIcon(right - 10, y, 10, 10, Component.translatable("gui.integratedscripting.action.help"), (button) -> {}, ScriptImages.ACTION_HELP);
-        buttonHelp.setTooltip(Tooltip.create(Component.translatable("gui.integratedscripting.action.help").withStyle(ChatFormatting.YELLOW)
-                .append(Component.literal("\n"))
-                .append(Component.translatable("gui.integratedscripting.shortcuts", modifier).withStyle(ChatFormatting.GRAY))));
-        addRenderableWidget(buttonHelp);
+        this.buttonUndo = this.addToolbarButton(right - 50, y, ScriptImages.ACTION_UNDO, Keys.UNDO, () -> this.textArea.undo());
+        this.buttonRedo = this.addToolbarButton(right - 40, y, ScriptImages.ACTION_REDO, Keys.REDO, () -> this.textArea.redo());
+        this.addToolbarButton(right - 30, y, ScriptImages.ACTION_FIND, Keys.FIND, () -> this.openNavigate(false));
+        this.addToolbarButton(right - 20, y, ScriptImages.ACTION_GOTO_LINE, Keys.GOTO_LINE, () -> this.openNavigate(true));
+        this.addToolbarButton(right - 10, y, ScriptImages.ACTION_COMMENT, Keys.COMMENT, () -> this.textArea.toggleComment());
         this.updateToolbar();
     }
 
-    private ButtonIcon addToolbarButton(int x, int y, IImage image, Component tooltip, Runnable action) {
+    private ButtonIcon addToolbarButton(int x, int y, IImage image, KeyMapping keyMapping, Runnable action) {
+        Component tooltip = Keys.getTooltip(keyMapping);
         ButtonIcon button = new ButtonIcon(x, y, 10, 10, tooltip, (b) -> {
             // Run after the click is handled, as that focuses the button
             Minecraft.getInstance().tell(() -> {
@@ -475,7 +470,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         Component title = this.title;
         int maxTitleWidth = this.toolbarLeft - this.leftPos - this.titleLabelX - 1;
         if (this.font.width(title) > maxTitleWidth) {
-            title = Component.literal(this.font.plainSubstrByWidth(title.getString(), maxTitleWidth - this.font.width("...")) + "...");
+            title = Component.literal(this.font.plainSubstrByWidth(title.getString(), maxTitleWidth - this.font.width("\u2026")) + "\u2026");
         }
         guiGraphics.drawString(this.font, title, this.titleLabelX, this.titleLabelY, 4210752, false);
         guiGraphics.drawString(this.font, this.playerInventoryTitle, this.inventoryLabelX, this.inventoryLabelY, 4210752, false);
