@@ -308,8 +308,10 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             this.textFieldHelper.setCursorPos(i, true);
             this.clearDisplayCache();
             this.setFocused(true);
+            return true;
         }
-        return true;
+        // Let other drags through, such as spreading items over inventory slots
+        return false;
     }
 
     @Override
@@ -414,7 +416,8 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             this.textFieldHelper.cut();
             return true;
         } else {
-            TextFieldHelper.CursorStep cursorStep = Screen.hasControlDown() ? TextFieldHelper.CursorStep.WORD : TextFieldHelper.CursorStep.CHARACTER;
+            TextFieldHelper.CursorStep cursorStep = EditorKeys.isWordModifier(p_98155_, Minecraft.ON_OSX) ? TextFieldHelper.CursorStep.WORD : TextFieldHelper.CursorStep.CHARACTER;
+            boolean lineModifier = EditorKeys.isLineModifier(p_98155_, Minecraft.ON_OSX);
             switch (p_98153_) {
                 case 257:
                 case 335:
@@ -427,16 +430,32 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                     this.textFieldHelper.removeFromCursor(1, cursorStep);
                     return true;
                 case 262:
-                    this.textFieldHelper.moveBy(1, Screen.hasShiftDown(), cursorStep);
+                    if (lineModifier) {
+                        this.keyEnd(false);
+                    } else {
+                        this.textFieldHelper.moveBy(1, Screen.hasShiftDown(), cursorStep);
+                    }
                     return true;
                 case 263:
-                    this.textFieldHelper.moveBy(-1, Screen.hasShiftDown(), cursorStep);
+                    if (lineModifier) {
+                        this.keyHome(false);
+                    } else {
+                        this.textFieldHelper.moveBy(-1, Screen.hasShiftDown(), cursorStep);
+                    }
                     return true;
                 case 264:
-                    this.keyDown();
+                    if (lineModifier) {
+                        this.keyEnd(true);
+                    } else {
+                        this.keyDown();
+                    }
                     return true;
                 case 265:
-                    this.keyUp();
+                    if (lineModifier) {
+                        this.keyHome(true);
+                    } else {
+                        this.keyUp();
+                    }
                     return true;
                 case 266:
                     this.keyPage(-1);
@@ -445,10 +464,10 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                     this.keyPage(1);
                     return true;
                 case 268:
-                    this.keyHome();
+                    this.keyHome(Screen.hasControlDown());
                     return true;
                 case 269:
-                    this.keyEnd();
+                    this.keyEnd(Screen.hasControlDown());
                     return true;
                 default:
                     return false;
@@ -492,8 +511,8 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         }
     }
 
-    private void keyHome() {
-        if (Screen.hasControlDown()) {
+    private void keyHome(boolean document) {
+        if (document) {
             this.textFieldHelper.setCursorToStart(Screen.hasShiftDown());
         } else {
             int i = this.textFieldHelper.getCursorPos();
@@ -503,8 +522,8 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     }
 
-    private void keyEnd() {
-        if (Screen.hasControlDown()) {
+    private void keyEnd(boolean document) {
+        if (document) {
             this.textFieldHelper.setCursorToEnd(Screen.hasShiftDown());
         } else {
             DisplayCache displayCache = this.getDisplayCache();
@@ -715,11 +734,11 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                     selection.add(this.createPartialLineSelection(s, stringsplitter, lineStartsArr[lineEnd], i1, lineEnd * 9, lineStartsArr[lineEnd]));
                 }
             }
-            // Hide out-of-view selections and offset them
+            // Hide out-of-view selections and offset them, including the partially visible row below the last line
             List<Rect2i> selectionNew = Lists.newArrayList();
             for (Rect2i rect2i : selection) {
                 Rect2i rect2iNew = new Rect2i(rect2i.getX(), rect2i.getY() - this.firstRow * ROW_HEIGHT, rect2i.getWidth(), rect2i.getHeight());
-                if (rect2iNew.getY() - this.getY() >= 0 && rect2iNew.getY() - this.getY() < getHeight()) {
+                if (rect2iNew.getY() - this.getY() >= 0 && rect2iNew.getY() + rect2iNew.getHeight() - this.getY() <= getHeight()) {
                     selectionNew.add(rect2iNew);
                 }
             }
