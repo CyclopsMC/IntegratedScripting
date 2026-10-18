@@ -60,6 +60,7 @@
         <paragraph>info_book.integratedscripting.terminal_shortcuts.text2</paragraph>
         <paragraph>info_book.integratedscripting.terminal_shortcuts.text3</paragraph>
         <paragraph>info_book.integratedscripting.terminal_shortcuts.text4</paragraph>
+        <paragraph>info_book.integratedscripting.terminal_shortcuts.text5</paragraph>
         <appendix type="keybinding">key.integratedscripting.undo</appendix>
         <appendix type="keybinding">key.integratedscripting.redo</appendix>
         <appendix type="keybinding">key.integratedscripting.find</appendix>
