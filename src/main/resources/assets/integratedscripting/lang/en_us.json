@@ -135,6 +135,10 @@
   "info_book.integratedscripting.terminal.text10": "After that, you can insert a &lVariable Card&r into the slot on the right-hand side of the screen to bind it to this script member.",
   "info_book.integratedscripting.terminal.text11": "This &lVariable Card&r can now be used elsewhere in the network, by for example showing a variable member inside a &lDisplay Panel&r, or by using a function member as an operator in an item list filter.",
   "info_book.integratedscripting.terminal.text12": "The next chapter will provide more details on how to write scripts.",
+  "info_book.integratedscripting.terminal_shortcuts": "Editor Shortcuts",
+  "info_book.integratedscripting.terminal_shortcuts.text1": "The script editor of the &lScripting Terminal&r has the keyboard shortcuts shown below. You can change them in the &oControls&r settings, under &oIntegrated Scripting&r. Most of these actions are also available as buttons above the editor.",
+  "info_book.integratedscripting.terminal_shortcuts.text2": "Some keys can not be changed: &oTab&r and &oShift+Tab&r indent and unindent the selected lines, &oPage Up&r and &oPage Down&r move by a page, and &oCtrl+Shift+Z&r (&oCmd+Shift+Z&r on Mac) also redoes.",
+  "info_book.integratedscripting.terminal_shortcuts.text3": "While finding text or going to a line, &oEnter&r and &oShift+Enter&r go to the next and previous match, and &oEscape&r closes the search bar.",
 
   "info_book.integratedscripting.writing": "Writing Scripts",
 
