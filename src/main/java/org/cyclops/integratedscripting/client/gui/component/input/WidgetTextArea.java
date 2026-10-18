@@ -671,11 +671,11 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                     selection.add(this.createPartialLineSelection(s, stringsplitter, lineStartsArr[lineEnd], i1, lineEnd * 9, lineStartsArr[lineEnd]));
                 }
             }
-            // Hide out-of-view selections and offset them
+            // Hide out-of-view selections and offset them, including the partially visible row below the last line
             List<Rect2i> selectionNew = Lists.newArrayList();
             for (Rect2i rect2i : selection) {
                 Rect2i rect2iNew = new Rect2i(rect2i.getX(), rect2i.getY() - this.firstRow * ROW_HEIGHT, rect2i.getWidth(), rect2i.getHeight());
-                if (rect2iNew.getY() - this.getY() >= 0 && rect2iNew.getY() - this.getY() < getHeight()) {
+                if (rect2iNew.getY() - this.getY() >= 0 && rect2iNew.getY() + rect2iNew.getHeight() - this.getY() <= getHeight()) {
                     selectionNew.add(rect2iNew);
                 }
             }
