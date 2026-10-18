@@ -60,6 +60,9 @@ public class ScriptingData implements IScriptingData {
     private final Map<Path, WatchKey> pathWatchers = new ConcurrentHashMap<>();
     private final Map<WatchKey, Path> pathWatchersReverse = new ConcurrentHashMap<>();
 
+    // Disks changed on the file system, reloaded on the server thread
+    private final Set<Integer> pendingDiskReloads = ConcurrentHashMap.newKeySet();
+
     private boolean initialized = false;
     private WatchService watchService;
 
@@ -76,6 +79,13 @@ public class ScriptingData implements IScriptingData {
         if (!this.initialized) {
             this.initialized = true;
             this.initialize();
+        }
+
+        // Reload externally changed disks here, as change listeners may access the world
+        for (Iterator<Integer> it = pendingDiskReloads.iterator(); it.hasNext(); ) {
+            int diskId = it.next();
+            it.remove();
+            this.initializeDiskScripts(diskId);
         }
 
         // Flush changes to disk if needed
@@ -146,7 +156,6 @@ public class ScriptingData implements IScriptingData {
         watchThread.start();
     }
 
-    // Synchronized, as this is also called from the file watcher thread
     protected synchronized void initializeDiskScripts(int diskId) {
         // Watch all directories before reading files, so files created during reading still trigger a reload
         this.registerDiskWatchers(diskId);
@@ -207,8 +216,8 @@ public class ScriptingData implements IScriptingData {
                             if (changedPathAbsolute.startsWith(disksPath)) {
                                 try {
                                     int diskId = Integer.parseInt(changedPathAbsolute.getName(disksPath.getNameCount()).toString());
-                                    // Re-initialize the full directory
-                                    this.initializeDiskScripts(diskId);
+                                    // Re-initialize the full directory on the next tick
+                                    this.pendingDiskReloads.add(diskId);
                                 } catch (NumberFormatException e) {
                                     // Ignore non-disk directories
                                 }
