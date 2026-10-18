@@ -89,7 +89,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     private final List<ButtonIcon> toolbarEditButtons = Lists.newArrayList();
     private ButtonIcon buttonUndo;
     private ButtonIcon buttonRedo;
-    private ButtonText buttonFocus;
+    private ButtonIcon buttonFocus;
     private boolean focusMode;
     private WidgetDialog pendingDialog;
     @Nullable
@@ -183,13 +183,11 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             addRenderableWidget(buttonCreateFile);
         }
 
-        Component focusLabel = Component.translatable(focusMode ? "gui.integratedscripting.focus_mode.exit" : "gui.integratedscripting.focus_mode.enter");
-        buttonFocus = new ButtonText(focusMode ? this.width - FOCUS_MARGIN - 12 : this.leftPos + SCRIPT_X + SCRIPT_WIDTH - 11, focusMode ? FOCUS_MARGIN - 12 : this.topPos + 5, 12, 10,
-                focusLabel, Component.literal(focusMode ? "><" : "<>"), (button) -> this.toggleFocusMode(), true);
-        buttonFocus.setTooltip(Tooltip.create(focusLabel));
-        addRenderableWidget(buttonFocus);
-
-        this.addToolbar(this.leftPos + SCRIPT_X + SCRIPT_WIDTH, this.topPos + 5);
+        if (focusMode) {
+            this.addToolbar(this.width - FOCUS_MARGIN, FOCUS_MARGIN - 12);
+        } else {
+            this.addToolbar(this.leftPos + SCRIPT_X + SCRIPT_WIDTH, this.topPos + 5);
+        }
 
         // Restore the open script in the new editor
         if (getMenu().getActiveScriptPath() != null) {
@@ -205,6 +203,13 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
      * @param y The top of the toolbar.
      */
     private void addToolbar(int right, int y) {
+        Component focusLabel = Component.translatable(focusMode ? "gui.integratedscripting.focus_mode.exit" : "gui.integratedscripting.focus_mode.enter");
+        buttonFocus = new ButtonIcon(right - 10, y, 10, 10, focusLabel, (button) -> this.toggleFocusMode(),
+                focusMode ? ScriptImages.ACTION_FOCUS_EXIT : ScriptImages.ACTION_FOCUS_ENTER);
+        buttonFocus.setTooltip(Tooltip.create(focusLabel));
+        addRenderableWidget(buttonFocus);
+        right -= 10;
+
         String modifier = Minecraft.ON_OSX ? "Cmd" : "Ctrl";
         this.toolbarEditButtons.clear();
         this.buttonUndo = this.addToolbarButton(right - 60, y, ScriptImages.ACTION_UNDO, Component.translatable("gui.integratedscripting.action.undo", modifier), () -> this.textArea.undo());

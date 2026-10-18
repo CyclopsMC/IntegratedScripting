@@ -41,7 +41,7 @@
   "gui.integratedscripting.action.goto_line": "Go to line (%s+G)",
   "gui.integratedscripting.action.comment": "Toggle comment (%s+/)",
   "gui.integratedscripting.action.help": "Keyboard shortcuts",
-  "gui.integratedscripting.shortcuts": "%1$s+Z, %1$s+Y: undo, redo\n%1$s+F, %1$s+G: find, go to line\n%1$s+/: toggle comment\nTab, Shift+Tab: indent, unindent\nAlt+Up, Alt+Down: move lines\nPage Up, Page Down: move a page",
+  "gui.integratedscripting.shortcuts": "%1$s+Z, %1$s+Y: undo, redo\n%1$s+F, %1$s+G: find, go to line\n%1$s+/: toggle comment\nTab, Shift+Tab: indent, unindent\nAlt+Up, Alt+Down: move lines\nPage Up, Page Down: move a page\nEscape: close the search bar, leave focus mode\nRight-click a script: rename it",
   "gui.integratedscripting.removal_dialog.title": "Confirm script deletion",
   "gui.integratedscripting.removal_dialog.message": "Do you want to delete \"%s\"?",
   "gui.integratedscripting.removal_dialog.delete": "Delete",
