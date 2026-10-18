@@ -50,6 +50,7 @@ import org.cyclops.integratedscripting.part.PartTypeTerminalScripting;
 import javax.annotation.Nullable;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 
 /**
@@ -74,6 +75,8 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
     private final int activeDiskId;
     private final int activeScriptPathId;
     private final int selectionId;
+    @Nullable
+    private BiConsumer<Integer, Path> remoteScriptChangeListener;
 
     public ContainerTerminalScripting(int id, Inventory playerInventory, RegistryFriendlyByteBuf packetBuffer) {
         this(id, playerInventory, PartHelpers.readPartTarget(packetBuffer), Optional.empty(),
@@ -245,11 +248,29 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
         }
     }
 
+    public void setRemoteScriptChangeListener(@Nullable BiConsumer<Integer, Path> remoteScriptChangeListener) {
+        this.remoteScriptChangeListener = remoteScriptChangeListener;
+    }
+
+    /**
+     * Called on the client when a script was changed by the server.
+     * @param disk The disk id.
+     * @param path The script path.
+     */
+    public void onRemoteScriptChange(int disk, Path path) {
+        if (this.remoteScriptChangeListener != null) {
+            this.remoteScriptChangeListener.accept(disk, path);
+        }
+    }
+
     public Int2ObjectMap<Map<Path, String>> getLastScripts() {
         return lastScripts;
     }
 
     public void setServerScript(int disk, Path path, @Nullable String script) {
+        // The client already has this version, so don't send it back in broadcastChanges.
+        // Otherwise, this echo could overwrite newer client changes that were not synced yet.
+        setLastScript(disk, path, script);
         ScriptingNetworkHelpers.getScriptingData().setScript(disk, path, script, IScriptingData.ChangeLocation.MEMORY);
     }
 

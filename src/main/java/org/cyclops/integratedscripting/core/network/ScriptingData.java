@@ -17,15 +17,20 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.AtomicMoveNotSupportedException;
 import java.nio.file.ClosedWatchServiceException;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.nio.file.StandardWatchEventKinds;
 import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -34,7 +39,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * @author rubensworks
@@ -44,11 +51,14 @@ public class ScriptingData implements IScriptingData {
     public static final LevelResource LEVEL_RESOURCE = new LevelResource("integratedscripting");
 
     private final Int2ObjectMap<Map<Path, String>> diskScripts = new Int2ObjectAVLTreeMap<>();
+    // The file contents as last written or read by this class, to detect changes made outside of it
+    private final Map<Integer, Map<Path, String>> knownDiskContents = new ConcurrentHashMap<>();
     private final Path rootPath;
     private final Set<Pair<Integer, Path>> dirtyPaths = Sets.newHashSet();
     private final Int2ObjectMap<List<IDiskScriptsChangeListener>> scriptChangeListeners = new Int2ObjectAVLTreeMap<>();
-    private final Map<Path, WatchKey> pathWatchers = Maps.newHashMap();
-    private final Map<WatchKey, Path> pathWatchersReverse = Maps.newHashMap();
+    // Accessed by both the server thread and the file watcher thread
+    private final Map<Path, WatchKey> pathWatchers = new ConcurrentHashMap<>();
+    private final Map<WatchKey, Path> pathWatchersReverse = new ConcurrentHashMap<>();
 
     private boolean initialized = false;
     private WatchService watchService;
@@ -136,8 +146,12 @@ public class ScriptingData implements IScriptingData {
         watchThread.start();
     }
 
-    protected void initializeDiskScripts(int diskId) {
-        Map<Path, String> scripts = Maps.newHashMap();
+    // Synchronized, as this is also called from the file watcher thread
+    protected synchronized void initializeDiskScripts(int diskId) {
+        // Watch all directories before reading files, so files created during reading still trigger a reload
+        this.registerDiskWatchers(diskId);
+
+        Map<Path, String> scriptsDisk = Maps.newHashMap();
         Path diskDir = getDiskPath(diskId);
         Iterator<File> filesIt = FileUtils.iterateFilesAndDirs(diskDir.toFile(), FileFilterUtils.trueFileFilter(), FileFilterUtils.trueFileFilter());
         while (filesIt.hasNext()) {
@@ -145,9 +159,30 @@ public class ScriptingData implements IScriptingData {
             if (file.isFile()) {
                 Path filePathRelative = diskDir.relativize(file.toPath());
                 try {
-                    scripts.put(filePathRelative, FileUtils.readFileToString(file, StandardCharsets.UTF_8));
+                    scriptsDisk.put(filePathRelative, FileUtils.readFileToString(file, StandardCharsets.UTF_8));
                 } catch (IOException e) {
                     e.printStackTrace();
+                }
+            }
+        }
+
+        // Only apply changes made outside of this class.
+        // The file watcher may also trigger while scripts are being written here,
+        // in which case the disk contents are outdated compared to the scripts in memory.
+        Map<Path, String> known = knownDiskContents.computeIfAbsent(diskId, k -> new ConcurrentHashMap<>());
+        Map<Path, String> scriptsMemory = diskScripts.get(diskId);
+        Map<Path, String> scripts = scriptsMemory == null ? Maps.newHashMap() : Maps.newHashMap(scriptsMemory);
+        Set<Path> paths = Sets.newHashSet(scriptsDisk.keySet());
+        paths.addAll(known.keySet());
+        for (Path path : paths) {
+            String scriptDisk = scriptsDisk.get(path);
+            if (!Objects.equals(scriptDisk, known.get(path))) {
+                if (scriptDisk == null) {
+                    scripts.remove(path);
+                    known.remove(path);
+                } else {
+                    scripts.put(path, scriptDisk);
+                    known.put(path, scriptDisk);
                 }
             }
         }
@@ -181,6 +216,13 @@ public class ScriptingData implements IScriptingData {
                         }
                     }
                     poll = key.reset();
+                    if (!poll) {
+                        // The directory was deleted
+                        Path path = pathWatchersReverse.remove(key);
+                        if (path != null) {
+                            pathWatchers.remove(path);
+                        }
+                    }
                     Thread.yield();
                 }
             } catch (InterruptedException e) {
@@ -203,7 +245,7 @@ public class ScriptingData implements IScriptingData {
     }
 
     @Override
-    public void setScripts(int disk, Map<Path, String> scripts, ChangeLocation changeLocation) {
+    public synchronized void setScripts(int disk, Map<Path, String> scripts, ChangeLocation changeLocation) {
         // Update script data
         Map<Path, String> oldScripts = diskScripts.put(disk, scripts);
 
@@ -244,18 +286,8 @@ public class ScriptingData implements IScriptingData {
                 }
             }
 
-            // Unregister old watchers
-            if (oldScripts != null) {
-                for (Path path : oldScripts.keySet()) {
-                    this.unregisterPathWatcher(disk, path.getParent());
-                }
-            }
-
-            // Register watchers for all directories
-            this.registerPathWatcher(disk, null);
-            for (Path path : scripts.keySet()) {
-                this.registerPathWatcher(disk, path.getParent());
-            }
+            // Watchers are not re-registered, as events that happen in between would be lost
+            this.registerDiskWatchers(disk);
         }
 
         // Invoke listeners
@@ -287,7 +319,7 @@ public class ScriptingData implements IScriptingData {
     }
 
     @Override
-    public void setScript(int disk, Path scriptPathRelative, @Nullable String script, ChangeLocation changeLocation) {
+    public synchronized void setScript(int disk, Path scriptPathRelative, @Nullable String script, ChangeLocation changeLocation) {
         // Validate that the path is safe and contained within the disk root
         if (!isScriptPathSafe(disk, scriptPathRelative)) {
             return;
@@ -311,7 +343,7 @@ public class ScriptingData implements IScriptingData {
         }
         if (changeLocation == ChangeLocation.DISK) {
             // Register watcher
-            this.registerPathWatcher(disk, scriptPathRelative.getParent());
+            this.registerDiskWatchers(disk);
         }
 
         // Invoke listeners
@@ -320,6 +352,21 @@ public class ScriptingData implements IScriptingData {
             for (IDiskScriptsChangeListener listener : new ArrayList<>(listeners)) {
                 listener.onChange(scriptPathRelative);
             }
+        }
+    }
+
+    /**
+     * Watch all directories of a disk, including empty ones, so that new files in any of them are noticed.
+     */
+    protected void registerDiskWatchers(int diskId) {
+        Path diskPath = getDiskPath(diskId);
+        if (!Files.isDirectory(diskPath)) {
+            return;
+        }
+        try (Stream<Path> paths = Files.walk(diskPath)) {
+            paths.filter(Files::isDirectory).forEach(this::registerAbsolutePathWatcher);
+        } catch (IOException | UncheckedIOException e) {
+            // A directory may have been deleted while walking, which will trigger another reload
         }
     }
 
@@ -341,17 +388,6 @@ public class ScriptingData implements IScriptingData {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }
-    }
-
-    protected void unregisterPathWatcher(int diskId, @Nullable Path pathRelative) {
-        Path diskPath = getDiskPath(diskId);
-        Path pathAbsolute = pathRelative == null ? diskPath : diskPath.resolve(pathRelative);
-        WatchKey watchKey = pathWatchers.get(pathAbsolute);
-        if (watchKey != null) {
-            pathWatchers.remove(pathAbsolute);
-            pathWatchersReverse.remove(watchKey);
-            watchKey.cancel();
         }
     }
 
@@ -390,18 +426,43 @@ public class ScriptingData implements IScriptingData {
         );
     }
 
-    protected void flushScript(int disk, Path scriptPathRelative) {
+    /**
+     * Write a file without exposing partially written contents to the file watcher.
+     * The temporary file is created outside the watched disk directories.
+     */
+    protected void writeAtomically(Path path, String contents) throws IOException {
+        Path tempFile = Files.createTempFile(rootPath, "flush", ".tmp");
+        try {
+            // Temporary files are only accessible by their owner, so use the permissions of a regular file instead
+            if (Files.getFileStore(tempFile).supportsFileAttributeView(PosixFileAttributeView.class)) {
+                Files.setPosixFilePermissions(tempFile, Files.exists(path) ? Files.getPosixFilePermissions(path) : PosixFilePermissions.fromString("rw-r--r--"));
+            }
+            Files.writeString(tempFile, contents, StandardCharsets.UTF_8);
+            try {
+                Files.move(tempFile, path, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+            } catch (AtomicMoveNotSupportedException e) {
+                Files.move(tempFile, path, StandardCopyOption.REPLACE_EXISTING);
+            }
+        } finally {
+            Files.deleteIfExists(tempFile);
+        }
+    }
+
+    protected synchronized void flushScript(int disk, Path scriptPathRelative) {
         Map<Path, String> scripts = getScripts(disk);
         String script = scripts.get(scriptPathRelative);
         Path scriptPathAbsolute = getDiskPath(disk).resolve(scriptPathRelative);
         try {
+            Map<Path, String> known = knownDiskContents.computeIfAbsent(disk, k -> new ConcurrentHashMap<>());
             if (script == null) {
                 FileUtils.delete(scriptPathAbsolute.toFile());
+                known.remove(scriptPathRelative);
             } else {
                 scriptPathAbsolute.getParent().toFile().mkdirs();
-                FileUtils.write(scriptPathAbsolute.toFile(), script, StandardCharsets.UTF_8);
-                this.registerPathWatcher(disk, null);
-                this.registerPathWatcher(disk, scriptPathRelative.getParent());
+                writeAtomically(scriptPathAbsolute, script);
+                known.put(scriptPathRelative, script);
+                // Also watch intermediate directories that were created
+                this.registerDiskWatchers(disk);
             }
         } catch (IOException e) {
             e.printStackTrace();

@@ -1,5 +1,6 @@
 package org.cyclops.integratedscripting.core.network;
 
+import com.google.common.collect.Sets;
 import org.apache.commons.io.FileUtils;
 import org.cyclops.integratedscripting.api.network.IScriptingData;
 import org.junit.Test;
@@ -165,6 +166,164 @@ public class ScriptingDataTest {
                     scriptingData, 456, diskPath.resolve(scriptPath), scriptPath, 2);
 
             assertThat(scriptingData.getScripts(456).get(scriptPath), equalTo(scriptValue(observedValue)));
+        } finally {
+            scriptingData.close();
+            FileUtils.deleteDirectory(rootPath.toFile());
+        }
+    }
+
+    @Test
+    public void testFlushDoesNotExposePartialContents() throws IOException, InterruptedException {
+        Path rootPath = Files.createTempDirectory("integratedscripting-test");
+        ScriptingData scriptingData = new ScriptingData(rootPath);
+        try {
+            scriptingData.initialize();
+            Path scriptPath = Path.of("main.js");
+            String body = "x".repeat(1_000_000);
+
+            // The file watcher reloads the disk after each flush, which must never see a partially written file
+            for (int i = 0; i < 20; i++) {
+                scriptingData.setScript(789, scriptPath, body + i + "//end", IScriptingData.ChangeLocation.MEMORY);
+                scriptingData.tick();
+                long deadline = System.currentTimeMillis() + 100;
+                while (System.currentTimeMillis() < deadline) {
+                    String script = scriptingData.getScripts(789).get(scriptPath);
+                    assertTrue("Observed partial script contents", script != null && script.endsWith("//end"));
+                }
+            }
+
+            try (var files = Files.list(rootPath)) {
+                assertTrue("Temporary files were left behind", files.noneMatch(f -> f.toString().endsWith(".tmp")));
+            }
+        } finally {
+            scriptingData.close();
+            FileUtils.deleteDirectory(rootPath.toFile());
+        }
+    }
+
+    @Test
+    public void testFlushKeepsFilePermissions() throws IOException {
+        Path rootPath = Files.createTempDirectory("integratedscripting-test");
+        ScriptingData scriptingData = new ScriptingData(rootPath);
+        try {
+            org.junit.Assume.assumeTrue(Files.getFileStore(rootPath).supportsFileAttributeView(java.nio.file.attribute.PosixFileAttributeView.class));
+            Path scriptPath = Path.of("main.js");
+            Path scriptPathAbsolute = rootPath.resolve("scripting-disks").resolve("321").resolve(scriptPath);
+
+            // New files are readable by others
+            scriptingData.setScript(321, scriptPath, scriptValue(1), IScriptingData.ChangeLocation.MEMORY);
+            scriptingData.tick();
+            assertThat(java.nio.file.attribute.PosixFilePermissions.toString(Files.getPosixFilePermissions(scriptPathAbsolute)), equalTo("rw-r--r--"));
+
+            // Existing permissions are kept
+            Files.setPosixFilePermissions(scriptPathAbsolute, java.nio.file.attribute.PosixFilePermissions.fromString("rw-rw-r--"));
+            scriptingData.setScript(321, scriptPath, scriptValue(2), IScriptingData.ChangeLocation.MEMORY);
+            scriptingData.tick();
+            assertThat(java.nio.file.attribute.PosixFilePermissions.toString(Files.getPosixFilePermissions(scriptPathAbsolute)), equalTo("rw-rw-r--"));
+            assertThat(Files.readString(scriptPathAbsolute), equalTo(scriptValue(2)));
+        } finally {
+            scriptingData.close();
+            FileUtils.deleteDirectory(rootPath.toFile());
+        }
+    }
+
+    @Test
+    public void testDiskReloadDuringFirstFlushKeepsScript() throws IOException {
+        Path rootPath = Files.createTempDirectory("integratedscripting-test");
+        ScriptingData scriptingData = new ScriptingData(rootPath);
+        try {
+            scriptingData.initialize();
+            scriptingData.setScript(777, Path.of("main.js"), "value", IScriptingData.ChangeLocation.MEMORY);
+
+            // The file watcher reloads the disk once its directory is created, possibly before the script is written
+            Files.createDirectories(rootPath.resolve("scripting-disks").resolve("777"));
+            scriptingData.initializeDiskScripts(777);
+
+            assertThat(scriptingData.getScripts(777).get(Path.of("main.js")), equalTo("value"));
+        } finally {
+            scriptingData.close();
+            FileUtils.deleteDirectory(rootPath.toFile());
+        }
+    }
+
+    @Test
+    public void testDiskReloadAppliesExternalChanges() throws IOException {
+        Path rootPath = Files.createTempDirectory("integratedscripting-test");
+        ScriptingData scriptingData = new ScriptingData(rootPath);
+        try {
+            Path diskPath = rootPath.resolve("scripting-disks").resolve("778");
+            Files.createDirectories(diskPath);
+            Files.writeString(diskPath.resolve("a.js"), "a1");
+            Files.writeString(diskPath.resolve("b.js"), "b1");
+            scriptingData.initialize();
+            assertThat(scriptingData.getScripts(778).get(Path.of("a.js")), equalTo("a1"));
+
+            // Externally modify one file and delete another
+            Files.writeString(diskPath.resolve("a.js"), "a2");
+            Files.delete(diskPath.resolve("b.js"));
+            scriptingData.initializeDiskScripts(778);
+
+            assertThat(scriptingData.getScripts(778).get(Path.of("a.js")), equalTo("a2"));
+            assertThat(scriptingData.getScripts(778).get(Path.of("b.js")), nullValue());
+        } finally {
+            scriptingData.close();
+            FileUtils.deleteDirectory(rootPath.toFile());
+        }
+    }
+
+    @Test
+    public void testExternalFilesCreatedAfterDeletionsSynced() throws IOException, InterruptedException {
+        Path rootPath = Files.createTempDirectory("integratedscripting-test");
+        ScriptingData scriptingData = new ScriptingData(rootPath);
+        try {
+            Path diskPath = rootPath.resolve("scripting-disks").resolve("901");
+            Files.createDirectories(diskPath);
+            for (int i = 0; i < 4; i++) {
+                Files.writeString(diskPath.resolve("old" + i + ".js"), "old");
+            }
+            scriptingData.initialize();
+
+            // Delete and create files in quick succession, as a file manager or script would
+            for (int i = 0; i < 4; i++) {
+                Files.delete(diskPath.resolve("old" + i + ".js"));
+            }
+            for (int i = 0; i < 4; i++) {
+                Files.writeString(diskPath.resolve("new" + i + ".js"), "new");
+            }
+
+            awaitCondition(() -> scriptingData.getScripts(901).keySet().equals(Sets.newHashSet(
+                    Path.of("new0.js"), Path.of("new1.js"), Path.of("new2.js"), Path.of("new3.js"))));
+        } finally {
+            scriptingData.close();
+            FileUtils.deleteDirectory(rootPath.toFile());
+        }
+    }
+
+    @Test
+    public void testExternalFilesInNewSubdirectoriesSynced() throws IOException, InterruptedException {
+        Path rootPath = Files.createTempDirectory("integratedscripting-test");
+        ScriptingData scriptingData = new ScriptingData(rootPath);
+        try {
+            Path diskPath = rootPath.resolve("scripting-disks").resolve("902");
+            Files.createDirectories(diskPath);
+            Files.writeString(diskPath.resolve("main.js"), "main");
+            scriptingData.initialize();
+
+            // A file in a new nested directory
+            Files.createDirectories(diskPath.resolve("lib").resolve("helpers"));
+            Files.writeString(diskPath.resolve("lib").resolve("helpers").resolve("a.js"), "a");
+            awaitCondition(() -> "a".equals(scriptingData.getScripts(902).get(Path.of("lib/helpers/a.js"))));
+
+            // A file in the intermediate directory, which contains no scripts yet
+            Files.writeString(diskPath.resolve("lib").resolve("b.js"), "b");
+            awaitCondition(() -> "b".equals(scriptingData.getScripts(902).get(Path.of("lib/b.js"))));
+
+            // A file in an empty directory that already existed
+            Files.createDirectories(diskPath.resolve("empty"));
+            Files.writeString(diskPath.resolve("main.js"), "main2");
+            awaitCondition(() -> "main2".equals(scriptingData.getScripts(902).get(Path.of("main.js"))));
+            Files.writeString(diskPath.resolve("empty").resolve("c.js"), "c");
+            awaitCondition(() -> "c".equals(scriptingData.getScripts(902).get(Path.of("empty/c.js"))));
         } finally {
             scriptingData.close();
             FileUtils.deleteDirectory(rootPath.toFile());
