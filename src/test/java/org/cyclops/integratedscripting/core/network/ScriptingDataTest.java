@@ -258,6 +258,50 @@ public class ScriptingDataTest {
         }
     }
 
+    @Test
+    public void testDiskReloadDuringFirstFlushKeepsScript() throws IOException {
+        Path rootPath = Files.createTempDirectory("integratedscripting-test");
+        ScriptingData scriptingData = new ScriptingData(rootPath);
+        try {
+            scriptingData.initialize();
+            scriptingData.setScript(777, Path.of("main.js"), "value", IScriptingData.ChangeLocation.MEMORY);
+
+            // The file watcher reloads the disk once its directory is created, possibly before the script is written
+            Files.createDirectories(rootPath.resolve("scripting-disks").resolve("777"));
+            scriptingData.initializeDiskScripts(777);
+
+            assertThat(scriptingData.getScripts(777).get(Path.of("main.js")), equalTo("value"));
+        } finally {
+            scriptingData.close();
+            FileUtils.deleteDirectory(rootPath.toFile());
+        }
+    }
+
+    @Test
+    public void testDiskReloadAppliesExternalChanges() throws IOException {
+        Path rootPath = Files.createTempDirectory("integratedscripting-test");
+        ScriptingData scriptingData = new ScriptingData(rootPath);
+        try {
+            Path diskPath = rootPath.resolve("scripting-disks").resolve("778");
+            Files.createDirectories(diskPath);
+            Files.writeString(diskPath.resolve("a.js"), "a1");
+            Files.writeString(diskPath.resolve("b.js"), "b1");
+            scriptingData.initialize();
+            assertThat(scriptingData.getScripts(778).get(Path.of("a.js")), equalTo("a1"));
+
+            // Externally modify one file and delete another
+            Files.writeString(diskPath.resolve("a.js"), "a2");
+            Files.delete(diskPath.resolve("b.js"));
+            scriptingData.initializeDiskScripts(778);
+
+            assertThat(scriptingData.getScripts(778).get(Path.of("a.js")), equalTo("a2"));
+            assertThat(scriptingData.getScripts(778).get(Path.of("b.js")), nullValue());
+        } finally {
+            scriptingData.close();
+            FileUtils.deleteDirectory(rootPath.toFile());
+        }
+    }
+
     private static void awaitCondition(Condition condition) throws InterruptedException {
         assertTrue("Timed out waiting for condition", awaitCondition(condition, AWAIT_TIMEOUT_MS));
     }
