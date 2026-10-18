@@ -97,6 +97,13 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     private TextLayout layout;
     private TextHistory history = new TextHistory();
     private boolean draggingSelection;
+    @Nullable
+    private String searchQuery;
+    @Nullable
+    private String searchMatchesValue;
+    @Nullable
+    private String searchMatchesQuery;
+    private int[] searchMatches = new int[0];
     private String indent = "  ";
     @Nullable
     private IntPredicate shortcutListener;
@@ -109,22 +116,44 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         this.showLineNumbers = showLineNumbers;
         this.textFieldHelper = new TextFieldHelperExtended(this::getValue, this::setValuePassive, this::getClipboard, this::setClipboard, s -> true, this::setSelected, this::onCursorPosChanged);
         if (scrollBar) {
-            this.scrollBar = new WidgetScrollBar(x + width - SCROLLBAR_WIDTH, y, height,
-                    Component.translatable("gui.cyclopscore.scrollbar"), firstRow -> setFirstRow(firstRow, false), height / ROW_HEIGHT) {
-                @Override
-                public int getTotalRows() {
-                    return getDisplayCache().linesTotal;
-                }
-
-                @Override
-                public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-                    // Only show scrollbar if needed
-                    if (this.needsScrollBars()) {
-                        super.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
-                    }
-                }
-            };
+            this.scrollBar = this.createScrollBar();
         }
+    }
+
+    private WidgetScrollBar createScrollBar() {
+        int x = this.getX();
+        int y = this.getY();
+        int width = this.getWidth();
+        int height = this.getHeight();
+        return new WidgetScrollBar(x + width - SCROLLBAR_WIDTH, y, height,
+                Component.translatable("gui.cyclopscore.scrollbar"), firstRow -> setFirstRow(firstRow, false), height / ROW_HEIGHT) {
+            @Override
+            public int getTotalRows() {
+                return getDisplayCache().linesTotal;
+            }
+
+            @Override
+            public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
+                // Only show scrollbar if needed
+                if (this.needsScrollBars()) {
+                    super.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
+                }
+            }
+        };
+    }
+
+    /**
+     * Change the height, for example to make room for other widgets, while keeping the scroll and cursor position.
+     */
+    @Override
+    public void setHeight(int height) {
+        super.setHeight(height);
+        if (this.scrollBar != null) {
+            this.scrollBar = this.createScrollBar();
+            this.setFirstRow(this.firstRow, true);
+        }
+        this.clearDisplayCache();
+        this.ensureCursorVisible();
     }
 
     private DisplayCache createEmptyDisplayCache() {
@@ -191,6 +220,29 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
      */
     public void setIndent(String indent) {
         this.indent = indent;
+    }
+
+    /**
+     * @param searchQuery A query of which all occurrences are highlighted, or null.
+     */
+    public void setSearchQuery(@Nullable String searchQuery) {
+        this.searchQuery = searchQuery == null || searchQuery.isEmpty() ? null : searchQuery;
+    }
+
+    /**
+     * @return The start positions of all occurrences of the search query.
+     */
+    public int[] getSearchMatches() {
+        if (this.searchQuery == null) {
+            return new int[0];
+        }
+        String value = this.getValue();
+        if (!value.equals(this.searchMatchesValue) || !this.searchQuery.equals(this.searchMatchesQuery)) {
+            this.searchMatches = TextEditing.findAll(value, this.searchQuery);
+            this.searchMatchesValue = value;
+            this.searchMatchesQuery = this.searchQuery;
+        }
+        return this.searchMatches;
     }
 
     public void setHistory(TextHistory history) {
@@ -585,12 +637,38 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         List<LineInfo> lines = Arrays.asList(displayCache.lines);
         int offsetY = 0;
 
+        // Highlight all visible search matches
+        if (this.searchQuery != null) {
+            String value = this.getValue();
+            int visibleStart = displayCache.lineStarts[Math.min(this.firstRow, displayCache.lineStarts.length - 1)];
+            int visibleEnd = this.firstRow + this.getHeight() / ROW_HEIGHT < displayCache.lineStarts.length ? displayCache.lineStarts[this.firstRow + this.getHeight() / ROW_HEIGHT] : value.length();
+            for (int match : this.getSearchMatches()) {
+                if (match > visibleEnd) {
+                    break;
+                }
+                for (int pos = Math.max(match, visibleStart); pos < Math.min(match + this.searchQuery.length(), visibleEnd); pos++) {
+                    if (value.charAt(pos) != '\n') {
+                        this.renderCharBackground(guiGraphics, displayCache, pos, Helpers.RGBAToInt(255, 225, 120, 255));
+                    }
+                }
+            }
+        }
+
         // Highlight the bracket pair around the cursor
         if (this.isFocused()) {
             int[] brackets = TextEditing.findMatchingBrackets(this.getValue(), this.textFieldHelper.getCursorPos());
             if (brackets != null) {
                 for (int bracket : brackets) {
                     this.renderCharBackground(guiGraphics, displayCache, bracket, Helpers.RGBAToInt(160, 200, 255, 255));
+                }
+            }
+        }
+
+        // Mark the gutter of the line with a syntax error
+        if (this.syntaxError != null && this.showLineNumbers) {
+            for (LineInfo line : lines) {
+                if (line.lineNumber + 1 == this.syntaxError.line()) {
+                    guiGraphics.fill(this.getX(), line.y - 1, this.getX() + getLinesXOffset() - 1, line.y + ROW_HEIGHT - 1, Helpers.RGBAToInt(255, 160, 160, 255));
                 }
             }
         }
@@ -608,7 +686,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                         this.getX(),
                         line.y - offsetY + 2,
                         0.5f,
-                        this.syntaxError != null && this.syntaxError.line() == line.lineNumber + 1 ? Helpers.RGBToInt(220, 0, 0) : (line.hasCursor ? 0 : Helpers.RGBToInt(120, 120, 120)),
+                        this.syntaxError != null && this.syntaxError.line() == line.lineNumber + 1 ? Helpers.RGBToInt(170, 0, 0) : (line.hasCursor ? 0 : Helpers.RGBToInt(120, 120, 120)),
                         false,
                         Font.DisplayMode.NORMAL
                 );
@@ -629,6 +707,14 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         // Render scrollbar
         if (this.scrollBar != null) {
             this.scrollBar.render(guiGraphics, getX(), getY(), partialTicks);
+
+            // Mark the position of the syntax error on the scrollbar, so it can be found when scrolled out of view
+            if (this.syntaxError != null && displayCache.linesTotal > this.scrollBar.getVisibleRows()) {
+                int errorRow = findLineFromPos(displayCache.lineStarts, TextEditing.lineOffset(this.getValue(), this.syntaxError.line()));
+                int y = this.getY() + (int) ((long) errorRow * (this.getHeight() - 2) / displayCache.linesTotal);
+                int x = this.getX() + this.getWidth() - SCROLLBAR_WIDTH + 1;
+                guiGraphics.fill(x, y, x + SCROLLBAR_WIDTH - 2, y + 2, Helpers.RGBAToInt(220, 0, 0, 255));
+            }
         }
     }
 
