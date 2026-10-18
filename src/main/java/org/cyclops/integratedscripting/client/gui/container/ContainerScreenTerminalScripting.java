@@ -309,13 +309,11 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
         super.renderLabels(guiGraphics, mouseX, mouseY);
 
-        // Draw disk label, truncated if it would overlap the disk field
+        // Draw disk label, scaled to the space before the disk field, which fits the English label at normal size
         String diskLabel = L10NHelpers.localize("gui.integratedscripting.disk") + ":";
-        int maxDiskLabelWidth = DISK_X - 8 - 1;
-        if (font.width(diskLabel) > maxDiskLabelWidth) {
-            diskLabel = font.plainSubstrByWidth(diskLabel, maxDiskLabelWidth - font.width("\u2026")) + "\u2026";
-        }
-        guiGraphics.drawString(font, diskLabel, 8, 6, 16777215);
+        float diskLabelScale = (float) (DISK_X - 8 - 1) / font.width(diskLabel);
+        int diskLabelY = Math.round(6 + font.lineHeight * (1 - diskLabelScale) / 2);
+        RenderHelpers.drawScaledString(guiGraphics, font, diskLabel, 8, diskLabelY, diskLabelScale, 16777215, true, Font.DisplayMode.NORMAL);
 
         displayErrors.drawForeground(guiGraphics.pose(), getMenu().getReadErrors(), getErrorX(), getErrorY(), mouseX, mouseY, this, this.leftPos, this.topPos);
     }
