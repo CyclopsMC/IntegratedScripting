@@ -186,6 +186,10 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             ILanguageHandler languageHandler = getActiveLanguageHandler();
             return languageHandler != null ? languageHandler.getCompletions(text, cursor) : null;
         });
+        textArea.setSignatureProvider((text, cursor) -> {
+            ILanguageHandler languageHandler = getActiveLanguageHandler();
+            return languageHandler != null ? languageHandler.getSignatureHint(text, cursor) : null;
+        });
         textArea.setMarkupProvider(text -> {
             Path path = getMenu().getActiveScriptPath();
             ILanguageHandler languageHandler = path != null ? LanguageHandlers.REGISTRY.getProvider(path) : null;

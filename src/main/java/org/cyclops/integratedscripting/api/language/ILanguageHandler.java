@@ -77,6 +77,16 @@ public interface ILanguageHandler {
     }
 
     /**
+     * @param script The script contents.
+     * @param cursor The cursor position.
+     * @return The signature of the function call the cursor is in, or null if unknown.
+     */
+    @Nullable
+    public default String getSignatureHint(String script, int cursor) {
+        return null;
+    }
+
+    /**
      * Check a script for syntax errors, without executing it.
      * @param path The script path.
      * @param script The script contents.

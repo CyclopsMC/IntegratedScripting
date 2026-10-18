@@ -187,6 +187,12 @@ public class LanguageHandlerJavaScript implements ILanguageHandler {
         return JavaScriptCompletions.complete(script, cursor, getOperatorSignatures());
     }
 
+    @Nullable
+    @Override
+    public String getSignatureHint(String script, int cursor) {
+        return JavaScriptCompletions.signatureHint(script, cursor, getOperatorSignatures());
+    }
+
     protected Map<String, String> getOperatorSignatures() {
         // Operators are registered once, so this can be cached
         if (this.operatorSignatures == null) {

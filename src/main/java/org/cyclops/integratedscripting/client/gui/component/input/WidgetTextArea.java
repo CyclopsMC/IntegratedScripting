@@ -91,6 +91,8 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     @Nullable
     private BiFunction<String, Integer, ScriptCompletions> completionProvider;
     @Nullable
+    private BiFunction<String, Integer, String> signatureProvider;
+    @Nullable
     private ScriptCompletions completions;
     private int completionIndex;
     private WidgetTextArea.DisplayCache emptyDisplayCache = createEmptyDisplayCache();
@@ -267,6 +269,10 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     public void setCompletionProvider(@Nullable BiFunction<String, Integer, ScriptCompletions> completionProvider) {
         this.completionProvider = completionProvider;
+    }
+
+    public void setSignatureProvider(@Nullable BiFunction<String, Integer, String> signatureProvider) {
+        this.signatureProvider = signatureProvider;
     }
 
     /**
@@ -883,9 +889,17 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         if (displayCache.cursor != null) {
             this.renderCursor(guiGraphics, displayCache.cursor, displayCache.cursorAtEnd);
 
-            // Show completions while typing
-            if (this.isFocused() && this.completions != null) {
-                this.renderCompletions(guiGraphics, this.convertLocalToScreen(displayCache.cursor));
+            // Show completions while typing, or else the signature of the call at the cursor
+            if (this.isFocused()) {
+                Pos2i cursor = this.convertLocalToScreen(displayCache.cursor);
+                if (this.completions != null) {
+                    this.renderCompletions(guiGraphics, cursor);
+                } else if (this.signatureProvider != null) {
+                    String signature = this.signatureProvider.apply(this.getValue(), this.getCursorPos());
+                    if (signature != null) {
+                        this.renderSignature(guiGraphics, cursor, signature);
+                    }
+                }
             }
         }
 
@@ -990,6 +1004,26 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         width = Math.min(width, screenWidth - 4);
         int x = Math.min(this.getX() + getLinesXOffset(), screenWidth - 2 - width);
         return Pair.of(x, width);
+    }
+
+    private void renderSignature(GuiGraphics guiGraphics, Pos2i cursor, String signature) {
+        Pair<Integer, Integer> xAndWidth = this.fitHorizontally(this.font.width(signature) + 2);
+        int x = xAndWidth.getLeft();
+        int width = xAndWidth.getRight();
+        if (this.font.width(signature) > width - 2) {
+            signature = this.font.plainSubstrByWidth(signature, width - 2 - this.font.width("\u2026")) + "\u2026";
+        }
+        // Show above the line of the cursor if possible, otherwise below it
+        int y = cursor.y - ROW_HEIGHT - 1;
+        if (y < this.getY() - 1) {
+            y = cursor.y + ROW_HEIGHT + 1;
+        }
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(0, 0, 200);
+        guiGraphics.fill(x - 1, y - 1, x + width + 1, y + ROW_HEIGHT + 1, Helpers.RGBAToInt(80, 80, 80, 255));
+        guiGraphics.fill(x, y, x + width, y + ROW_HEIGHT, Helpers.RGBAToInt(255, 250, 220, 255));
+        guiGraphics.drawString(this.font, signature, x + 1, y + 1, Helpers.RGBToInt(60, 60, 60), false);
+        guiGraphics.pose().popPose();
     }
 
     private void renderCursor(GuiGraphics guiGraphics, Pos2i pos, boolean cursorAtEnd) {

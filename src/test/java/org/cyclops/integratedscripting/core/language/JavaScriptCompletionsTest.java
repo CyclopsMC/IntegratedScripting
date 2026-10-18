@@ -46,4 +46,22 @@ public class JavaScriptCompletionsTest {
         assertThat(JavaScriptCompletions.complete("idContext.ops.itemstack", 18, SIGNATURES), nullValue());
     }
 
+    @Test
+    public void testSignatureHint() {
+        String script = "const a = idContext.ops.integerMax(1, Math.max(2, 3), ";
+        assertThat(JavaScriptCompletions.signatureHint(script, script.length(), SIGNATURES), equalTo("integerMax(Integer, Integer): Integer"));
+        String nested = "idContext.ops.integerMax(idContext.ops.itemstackSize(x";
+        assertThat(JavaScriptCompletions.signatureHint(nested, nested.length(), SIGNATURES), equalTo("itemstackSize(Item): Integer"));
+    }
+
+    @Test
+    public void testSignatureHintNone() {
+        String closed = "idContext.ops.itemstackSize(x) + 1";
+        assertThat(JavaScriptCompletions.signatureHint(closed, closed.length(), SIGNATURES), nullValue());
+        String other = "foo(x";
+        assertThat(JavaScriptCompletions.signatureHint(other, other.length(), SIGNATURES), nullValue());
+        String statement = "idContext.ops.itemstackSize(x;\nfoo(";
+        assertThat(JavaScriptCompletions.signatureHint(statement, statement.length(), SIGNATURES), nullValue());
+    }
+
 }

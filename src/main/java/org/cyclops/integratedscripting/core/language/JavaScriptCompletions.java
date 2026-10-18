@@ -16,6 +16,8 @@ import java.util.Map;
 public class JavaScriptCompletions {
 
     public static final String OPS_PREFIX = "idContext.ops.";
+    // How far back to look for the call that the cursor is in
+    private static final int MAX_CALL_DISTANCE = 1000;
 
     /**
      * @param script A script.
@@ -49,6 +51,47 @@ public class JavaScriptCompletions {
         }
         items.sort(Comparator.comparing(ScriptCompletions.Item::name));
         return new ScriptCompletions(start, items);
+    }
+
+    /**
+     * @param script A script.
+     * @param cursor The cursor position.
+     * @param signatures Operator names mapped to their signatures.
+     * @return The name and signature of the operator call the cursor is in, or null if it is not in one.
+     */
+    @Nullable
+    public static String signatureHint(String script, int cursor, Map<String, String> signatures) {
+        int depth = 0;
+        for (int i = cursor - 1; i >= 0 && i >= cursor - MAX_CALL_DISTANCE; i--) {
+            char c = script.charAt(i);
+            if (c == ')' || c == ']' || c == '}') {
+                depth++;
+            } else if (c == '[' || c == '{') {
+                if (depth == 0) {
+                    return null;
+                }
+                depth--;
+            } else if (c == '(') {
+                if (depth > 0) {
+                    depth--;
+                } else {
+                    int end = i;
+                    int start = end;
+                    while (start > 0 && Character.isJavaIdentifierPart(script.charAt(start - 1))) {
+                        start--;
+                    }
+                    String name = script.substring(start, end);
+                    String signature = signatures.get(name);
+                    if (signature != null && script.startsWith(OPS_PREFIX, start - OPS_PREFIX.length())) {
+                        return name + signature;
+                    }
+                    // Look further, for calls nested in arguments
+                }
+            } else if (c == ';' && depth == 0) {
+                return null;
+            }
+        }
+        return null;
     }
 
 }
