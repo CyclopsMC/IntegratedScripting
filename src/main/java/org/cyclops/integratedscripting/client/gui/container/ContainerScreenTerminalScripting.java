@@ -88,8 +88,6 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         this.imageHeight = 240;
         this.titleLabelX = 88;
         this.titleLabelY = 6;
-        this.inventoryLabelX = 88;
-        this.inventoryLabelY = this.imageHeight - 94;
         this.firstRow = 0;
         this.lastClientSyncTick = 0;
     }
@@ -306,7 +304,8 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
     @Override
     protected void renderLabels(GuiGraphics guiGraphics, int mouseX, int mouseY) {
-        super.renderLabels(guiGraphics, mouseX, mouseY);
+        // The inventory label is left out, so its row can show the card binding
+        guiGraphics.drawString(this.font, this.title, this.titleLabelX, this.titleLabelY, 4210752, false);
 
         // Draw disk label
         guiGraphics.drawString(font, L10NHelpers.localize("gui.integratedscripting.disk") + ":", 8, 6, 16777215);
@@ -315,7 +314,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         Component bindingLabel = getBindingLabel();
         if (bindingLabel != null) {
             int right = getErrorX() - 2;
-            guiGraphics.drawString(font, bindingLabel, right - font.width(bindingLabel), SCRIPT_Y + SCRIPT_HEIGHT + 3, 4210752, false);
+            guiGraphics.drawString(font, bindingLabel, right - font.width(bindingLabel), getErrorY() + 2, 4210752, false);
         }
 
         displayErrors.drawForeground(guiGraphics.pose(), getMenu().getReadErrors(), getErrorX(), getErrorY(), mouseX, mouseY, this, this.leftPos, this.topPos);
