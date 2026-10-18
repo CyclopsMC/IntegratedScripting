@@ -304,8 +304,10 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             this.textFieldHelper.setCursorPos(i, true);
             this.clearDisplayCache();
             this.setFocused(true);
+            return true;
         }
-        return true;
+        // Let other drags through, such as spreading items over inventory slots
+        return false;
     }
 
     @Override
