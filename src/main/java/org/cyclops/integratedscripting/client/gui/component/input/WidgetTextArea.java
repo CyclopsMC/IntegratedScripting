@@ -73,7 +73,9 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     public static final int ROW_HEIGHT = 9;
     private static final int COMPLETION_ROWS = 6;
-    public static final int SCROLLBAR_WIDTH = 14;
+    public static final int SCROLLBAR_WIDTH = 7;
+    // Same height as the vanilla scroller, which the scrollbar's drag handling assumes
+    private static final int SCROLLBAR_HANDLE_HEIGHT = 15;
     // Height of the arrow between a syntax error tooltip and its error
     private static final int TOOLTIP_ARROW = 4;
     // How far vanilla tooltip backgrounds extend beyond their contents
@@ -156,9 +158,15 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
             @Override
             public void renderWidget(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
-                // Only show scrollbar if needed
+                // Only show scrollbar if needed, and draw a narrower handle than the vanilla scroller to leave more room for text
                 if (this.needsScrollBars()) {
-                    super.renderWidget(guiGraphics, mouseX, mouseY, partialTicks);
+                    int x = this.getX();
+                    int y = this.getY() + (int) ((this.getHeight() - SCROLLBAR_HANDLE_HEIGHT - 2) * this.getCurrentScroll());
+                    int x2 = x + SCROLLBAR_WIDTH - 1;
+                    int y2 = y + SCROLLBAR_HANDLE_HEIGHT;
+                    guiGraphics.fill(x, y, x2, y2, Helpers.RGBAToInt(85, 85, 85, 255));
+                    guiGraphics.fill(x, y, x2 - 1, y2 - 1, Helpers.RGBAToInt(255, 255, 255, 255));
+                    guiGraphics.fill(x + 1, y + 1, x2 - 1, y2 - 1, Helpers.RGBAToInt(198, 198, 198, 255));
                 }
             }
         };
