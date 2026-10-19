@@ -7,6 +7,7 @@ import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingCreateNewScriptPacket;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingDeleteScriptPacket;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingModifiedScriptPacket;
+import org.cyclops.integratedscripting.network.packet.TerminalScriptingRenameScriptPacket;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingSyntaxErrorPacket;
 
 /**
@@ -29,5 +30,6 @@ public class CommonProxy extends CommonProxyComponent {
         packetHandler.register(TerminalScriptingCreateNewScriptPacket.ID, TerminalScriptingCreateNewScriptPacket.CODEC);
         packetHandler.register(TerminalScriptingDeleteScriptPacket.ID, TerminalScriptingDeleteScriptPacket.CODEC);
         packetHandler.register(TerminalScriptingSyntaxErrorPacket.ID, TerminalScriptingSyntaxErrorPacket.CODEC);
+        packetHandler.register(TerminalScriptingRenameScriptPacket.ID, TerminalScriptingRenameScriptPacket.CODEC);
     }
 }

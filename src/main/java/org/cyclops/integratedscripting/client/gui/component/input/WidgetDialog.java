@@ -5,6 +5,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -14,7 +15,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import org.cyclops.cyclopscore.client.gui.component.button.ButtonText;
 import org.cyclops.cyclopscore.helper.Helpers;
+import org.cyclops.cyclopscore.helper.RenderHelpers;
 import org.cyclops.integratedscripting.Reference;
+
+import javax.annotation.Nullable;
 
 /**
  * Shows a confirm/cancel dialog
@@ -32,10 +36,23 @@ public class WidgetDialog extends AbstractWidget implements GuiEventListener {
     private final Component message;
     private final ButtonText buttonConfirm;
     private final ButtonText buttonCancel;
+    @Nullable
+    private final EditBox input;
+    @Nullable
+    private Component warning;
 
     public WidgetDialog(Font font, int x, int y, Screen parent,
                         Component title, Component message, Component confirm, Component cancel,
                         Button.OnPress confirmCallback, Button.OnPress cancelCallback) {
+        this(font, x, y, parent, title, message, confirm, cancel, confirmCallback, cancelCallback, null);
+    }
+
+    /**
+     * @param inputValue If not null, a text input is shown with this initial value.
+     */
+    public WidgetDialog(Font font, int x, int y, Screen parent,
+                        Component title, Component message, Component confirm, Component cancel,
+                        Button.OnPress confirmCallback, Button.OnPress cancelCallback, @Nullable String inputValue) {
         super(x, y, WIDTH, HEIGHT, message);
         this.font = font;
         this.parent = parent;
@@ -44,6 +61,21 @@ public class WidgetDialog extends AbstractWidget implements GuiEventListener {
 
         this.buttonConfirm = new ButtonText(x + 50, y + HEIGHT - 15 - 5, 50, 15, confirm, confirm, confirmCallback, true);
         this.buttonCancel = new ButtonText(x + WIDTH - 50 - 50, y + HEIGHT - 15 - 5, 50, 15, cancel, cancel, cancelCallback, true);
+        if (inputValue != null) {
+            this.input = new EditBox(font, x + 10, y + 31, WIDTH - 20, 12, message);
+            this.input.setMaxLength(256);
+            this.input.setValue(inputValue);
+            this.input.setFocused(true);
+        } else {
+            this.input = null;
+        }
+    }
+
+    /**
+     * @param warning A short warning to show below the input, or null.
+     */
+    public void setWarning(@Nullable Component warning) {
+        this.warning = warning;
     }
 
     protected void drawBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
@@ -65,14 +97,38 @@ public class WidgetDialog extends AbstractWidget implements GuiEventListener {
 
         guiGraphics.drawCenteredString(font, title, this.getX() + this.width / 2, this.getY() + 4, 16777215);
         FormattedCharSequence formattedcharsequence = message.getVisualOrderText();
-        guiGraphics.drawString(font, message, (this.getX() + this.width / 2 - font.width(formattedcharsequence) / 2), (this.getY() + 25), 4210752, false);
+        guiGraphics.drawString(font, message, (this.getX() + this.width / 2 - font.width(formattedcharsequence) / 2), (this.getY() + (this.input != null ? 19 : 25)), 4210752, false);
+        if (this.input != null) {
+            this.input.render(guiGraphics, mouseX, mouseY, partialTicks);
+        }
+        if (this.warning != null) {
+            // Scaled down to fit between the input and the buttons, and further for long translations
+            String warning = this.warning.getString();
+            float scale = Math.min(0.5F, (float) (WIDTH - 20) / font.width(warning));
+            RenderHelpers.drawScaledString(guiGraphics, font, warning, this.getX() + this.width / 2 - (int) (font.width(warning) * scale / 2),
+                    this.getY() + 45, scale, Helpers.RGBToInt(140, 30, 30), false, Font.DisplayMode.NORMAL);
+        }
     }
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
         return this.buttonConfirm.mouseClicked(mouseX, mouseY, mouseButton)
                 || this.buttonCancel.mouseClicked(mouseX, mouseY, mouseButton)
+                || (this.input != null && this.input.mouseClicked(mouseX, mouseY, mouseButton))
                 || super.mouseClicked(mouseX, mouseY, mouseButton);
+    }
+
+    @Nullable
+    public EditBox getInput() {
+        return input;
+    }
+
+    public void confirm() {
+        this.buttonConfirm.onPress();
+    }
+
+    public void cancel() {
+        this.buttonCancel.onPress();
     }
 
     @Override

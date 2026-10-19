@@ -28,8 +28,10 @@ public class Keys {
     public static final KeyMapping COMMENT = create("comment", KeyModifier.CONTROL, GLFW.GLFW_KEY_SLASH);
     public static final KeyMapping MOVE_LINES_UP = create("move_lines_up", KeyModifier.ALT, GLFW.GLFW_KEY_UP);
     public static final KeyMapping MOVE_LINES_DOWN = create("move_lines_down", KeyModifier.ALT, GLFW.GLFW_KEY_DOWN);
+    // F11 is taken by the window fullscreen toggle of Minecraft
+    public static final KeyMapping FOCUS_MODE = create("focus_mode", KeyModifier.NONE, GLFW.GLFW_KEY_F12);
 
-    public static final List<KeyMapping> ALL = List.of(UNDO, REDO, FIND, GOTO_LINE, COMMENT, MOVE_LINES_UP, MOVE_LINES_DOWN);
+    public static final List<KeyMapping> ALL = List.of(UNDO, REDO, FIND, GOTO_LINE, COMMENT, MOVE_LINES_UP, MOVE_LINES_DOWN, FOCUS_MODE);
 
     private static KeyMapping create(String name, KeyModifier modifier, int key) {
         return new KeyMapping("key." + Reference.MOD_ID + "." + name, KeyConflictContext.GUI, modifier,
