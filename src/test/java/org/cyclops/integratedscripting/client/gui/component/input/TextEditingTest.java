@@ -220,4 +220,41 @@ public class TextEditingTest {
         assertThat(TextEditing.newline(s("  if (a) {", 10), TWO), equalTo(s("  if (a) {\n    ", 15)));
     }
 
+
+    private static int[] wrap(String value, int width) {
+        return TextEditing.wrapLines(value, width, c -> 1);
+    }
+
+    @Test
+    public void testWrapLinesFits() {
+        assertThat(wrap("", 10), equalTo(new int[]{0}));
+        assertThat(wrap("abc\ndef", 10), equalTo(new int[]{0, 4}));
+        assertThat(wrap("abc\n", 10), equalTo(new int[]{0}));
+        assertThat(wrap("a\n\nb", 10), equalTo(new int[]{0, 2, 3}));
+    }
+
+    @Test
+    public void testWrapLinesAtSpace() {
+        // Trailing spaces stay on the line
+        assertThat(wrap("return abc", 8), equalTo(new int[]{0, 7}));
+        assertThat(wrap("a   bc", 3), equalTo(new int[]{0, 4}));
+    }
+
+    @Test
+    public void testWrapLinesAtPunctuation() {
+        assertThat(wrap("ctx.ops.size(item)", 10), equalTo(new int[]{0, 7, 13}));
+        assertThat(wrap("abc,def", 5), equalTo(new int[]{0, 4}));
+    }
+
+    @Test
+    public void testWrapLinesKeepsOperatorsAndNumbers() {
+        assertThat(wrap("a>=b", 2), equalTo(new int[]{0, 1, 3}));
+        assertThat(wrap("x=12.5", 5), equalTo(new int[]{0, 2}));
+    }
+
+    @Test
+    public void testWrapLinesSplitsLongTokens() {
+        assertThat(wrap("abcdefgh", 3), equalTo(new int[]{0, 3, 6}));
+    }
+
 }
