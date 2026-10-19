@@ -168,6 +168,12 @@ public class LanguageHandlerJavaScript implements ILanguageHandler {
         return RESERVED_WORDS;
     }
 
+    @Nullable
+    @Override
+    public Set<String> getTopLevelMembers(String script) {
+        return JavaScriptDeclarations.find(script);
+    }
+
     @Override
     public IScriptFactory getScriptFactory() throws EvaluationException {
         return this.scriptFactory;

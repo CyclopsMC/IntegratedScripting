@@ -57,6 +57,16 @@ public interface ILanguageHandler {
     }
 
     /**
+     * @param script The script contents.
+     * @return The names of the members declared at the top level of the script,
+     *         or null if they can not be determined.
+     */
+    @Nullable
+    public default Set<String> getTopLevelMembers(String script) {
+        return null;
+    }
+
+    /**
      * Check a script for syntax errors, without executing it.
      * @param path The script path.
      * @param script The script contents.
