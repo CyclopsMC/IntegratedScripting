@@ -26,7 +26,10 @@
   "gui.integratedscripting.disk": "Disk",
   "gui.integratedscripting.script": "Script",
   "gui.integratedscripting.create_file": "Create File",
+  "gui.integratedscripting.open_folder": "Open scripts folder",
   "gui.integratedscripting.find": "Find",
+  "gui.integratedscripting.focus_mode.enter": "Enlarge editor",
+  "gui.integratedscripting.focus_mode.exit": "Back to normal size",
   "gui.integratedscripting.goto_line": "Go to line",
   "gui.integratedscripting.find.label": "Find:",
   "gui.integratedscripting.goto_line.label": "Line:",
@@ -37,6 +40,12 @@
   "gui.integratedscripting.removal_dialog.message": "Do you want to delete \"%s\"?",
   "gui.integratedscripting.removal_dialog.delete": "Delete",
   "gui.integratedscripting.removal_dialog.keep": "Keep",
+  "gui.integratedscripting.rename_dialog.title": "Rename script",
+  "gui.integratedscripting.rename_dialog.message": "New path, such as dir/name.js:",
+  "gui.integratedscripting.rename_dialog.rename": "Rename",
+  "gui.integratedscripting.rename_dialog.cancel": "Cancel",
+  "gui.integratedscripting.rename_dialog.warning": "Variable cards bound to this script will stop working.",
+  "gui.integratedscripting.rename_hint": "Right-click to rename",
   "gui.integratedscripting.error.invalid_member": "Select a valid function name or variable name inside the script editor to bind with.",
   "gui.integratedscripting.error.invalid_member.current": "Current selection: \"%s\"",
   "gui.integratedscripting.error.reserved_member": "\"%s\" is a keyword, so it can not be bound. Select a function name or variable name instead.",
@@ -51,6 +60,7 @@
   "key.integratedscripting.comment": "Toggle comment",
   "key.integratedscripting.move_lines_up": "Move lines up",
   "key.integratedscripting.move_lines_down": "Move lines down",
+  "key.integratedscripting.focus_mode": "Enlarge editor",
 
   "_comment": "Value Type Translation",
   "valuetype.integratedscripting.error.translation.unknown_to_graal": "Could not find a translator from %s values to Graal.",
@@ -142,6 +152,8 @@
   "info_book.integratedscripting.terminal_shortcuts.text1": "The script editor of the &lScripting Terminal&r has the keyboard shortcuts shown below. You can change them in the &oControls&r settings, under &oIntegrated Scripting&r. Most of these actions are also available as buttons above the editor.",
   "info_book.integratedscripting.terminal_shortcuts.text2": "Some keys can not be changed: &oTab&r and &oShift+Tab&r indent and unindent the selected lines, &oPage Up&r and &oPage Down&r move by a page, &oCtrl+Left&r and &oCtrl+Right&r (&oOption&r on Mac) move by word, &oHome&r and &oEnd&r (also &oCmd+Left&r and &oCmd+Right&r on Mac) move to the start or end of the line, &oCtrl+Home&r and &oCtrl+End&r (also &oCmd+Up&r and &oCmd+Down&r on Mac) move to the start or end of the script, and &oCtrl+Shift+Z&r (&oCmd+Shift+Z&r on Mac) also redoes.",
   "info_book.integratedscripting.terminal_shortcuts.text3": "While finding text or going to a line, &oEnter&r and &oShift+Enter&r go to the next and previous match, and &oEscape&r closes the search bar.",
+  "info_book.integratedscripting.terminal_shortcuts.text4": "To rename a script, right-click it in the script list.",
+  "info_book.integratedscripting.terminal_shortcuts.text5": "When the editor is enlarged, &oEscape&r also returns to the normal terminal.",
 
   "info_book.integratedscripting.writing": "Writing Scripts",
 
@@ -189,9 +201,10 @@
 
   "info_book.integratedscripting.advanced.external_editing": "External Editing",
   "info_book.integratedscripting.advanced.external_editing.text1": "If you have access to the file system on which your singleplayer or multiplayer game is running, you can access script files through any external editor. This allows you to create scripts using your favorite IDE (such as Vi, but definitely not Emacs).",
-  "info_book.integratedscripting.advanced.external_editing.text2": "Script files are accessible via the &oworld/integratedscripting/&r directory (see &osaves/&r for singleplayer worlds). In here, you will find directories for all &lScripting Disks&r by their id. Inside of each &lScripting Disk&r directory, you will find all script files stored in that disk.",
+  "info_book.integratedscripting.advanced.external_editing.text2": "Script files are accessible via the &oworld/integratedscripting/scripting-disks/&r directory (see &osaves/&r for singleplayer worlds). In here, you will find directories for all &lScripting Disks&r by their id. Inside of each &lScripting Disk&r directory, you will find all script files stored in that disk.",
   "info_book.integratedscripting.advanced.external_editing.text3": "You can safely modify these script files through an external editor, even if the game is running. After externally saving the file, they will be updated automatically in the game, and dependent variables will be updated as well.",
   "info_book.integratedscripting.advanced.external_editing.text4": "If your external editor supports this (modern IDEs do), modifying a script file through the &lScripting Terminal&r will also cause the files to be updated in your external editor.",
+  "info_book.integratedscripting.advanced.external_editing.text5": "In singleplayer, the folder button below the script list of the &lScripting Terminal&r opens the directory of the selected disk.",
 
   "info_book.integratedscripting.advanced.logging": "Logging",
   "info_book.integratedscripting.advanced.logging.text1": "For complex scripts, the need may arise to debug them by temporarily writing to external log files.",

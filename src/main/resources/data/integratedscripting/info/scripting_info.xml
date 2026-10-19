@@ -59,6 +59,8 @@
         <paragraph>info_book.integratedscripting.terminal_shortcuts.text1</paragraph>
         <paragraph>info_book.integratedscripting.terminal_shortcuts.text2</paragraph>
         <paragraph>info_book.integratedscripting.terminal_shortcuts.text3</paragraph>
+        <paragraph>info_book.integratedscripting.terminal_shortcuts.text4</paragraph>
+        <paragraph>info_book.integratedscripting.terminal_shortcuts.text5</paragraph>
         <appendix type="keybinding">key.integratedscripting.undo</appendix>
         <appendix type="keybinding">key.integratedscripting.redo</appendix>
         <appendix type="keybinding">key.integratedscripting.find</appendix>
@@ -66,6 +68,7 @@
         <appendix type="keybinding">key.integratedscripting.comment</appendix>
         <appendix type="keybinding">key.integratedscripting.move_lines_up</appendix>
         <appendix type="keybinding">key.integratedscripting.move_lines_down</appendix>
+        <appendix type="keybinding">key.integratedscripting.focus_mode</appendix>
     </section>
 
     <section name="info_book.integratedscripting.writing">
@@ -177,6 +180,7 @@ function getRunningAvg(value) {
             <paragraph>info_book.integratedscripting.advanced.external_editing.text2</paragraph>
             <paragraph>info_book.integratedscripting.advanced.external_editing.text3</paragraph>
             <paragraph>info_book.integratedscripting.advanced.external_editing.text4</paragraph>
+            <paragraph>info_book.integratedscripting.advanced.external_editing.text5</paragraph>
         </section>
 
         <section name="info_book.integratedscripting.advanced.logging">
