@@ -15,6 +15,7 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
@@ -162,6 +163,13 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
                 openNavigate(!find);
                 return true;
             }
+            if (Keys.matches(Keys.FOCUS_MODE, key, scanCode, modifiers)) {
+                this.toggleFocusMode();
+                // Keep typing in the recreated editor
+                this.setFocused(this.textArea);
+                this.textArea.setFocused(true);
+                return true;
+            }
             return false;
         });
         getMenu().setRemoteScriptChangeListener(this::onRemoteScriptChanged);
@@ -208,7 +216,17 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         Component focusLabel = Component.translatable(focusMode ? "gui.integratedscripting.focus_mode.exit" : "gui.integratedscripting.focus_mode.enter");
         buttonFocus = new ButtonIcon(right - 10, y, 10, 10, focusLabel, (button) -> this.toggleFocusMode(),
                 focusMode ? ScriptImages.ACTION_FOCUS_EXIT : ScriptImages.ACTION_FOCUS_ENTER);
-        buttonFocus.setTooltip(Tooltip.create(focusLabel));
+        // Escape also leaves the enlarged editor
+        MutableComponent focusKeys = focusMode ? Component.translatable("key.keyboard.escape") : null;
+        if (!Keys.FOCUS_MODE.isUnbound()) {
+            focusKeys = focusKeys == null ? Keys.FOCUS_MODE.getTranslatedKeyMessage().copy()
+                    : focusKeys.append(", ").append(Keys.FOCUS_MODE.getTranslatedKeyMessage());
+        }
+        MutableComponent focusTooltip = focusLabel.copy();
+        if (focusKeys != null) {
+            focusTooltip.append(Component.literal(" (").append(focusKeys).append(")").withStyle(ChatFormatting.GRAY));
+        }
+        buttonFocus.setTooltip(Tooltip.create(focusTooltip));
         addRenderableWidget(buttonFocus);
         right -= 10;
 

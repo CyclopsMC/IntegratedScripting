@@ -28,7 +28,7 @@
   "gui.integratedscripting.create_file": "Create File",
   "gui.integratedscripting.find": "Find",
   "gui.integratedscripting.focus_mode.enter": "Enlarge editor",
-  "gui.integratedscripting.focus_mode.exit": "Back to normal size (Escape)",
+  "gui.integratedscripting.focus_mode.exit": "Back to normal size",
   "gui.integratedscripting.goto_line": "Go to line",
   "gui.integratedscripting.find.label": "Find:",
   "gui.integratedscripting.goto_line.label": "Line:",
@@ -59,6 +59,7 @@
   "key.integratedscripting.comment": "Toggle comment",
   "key.integratedscripting.move_lines_up": "Move lines up",
   "key.integratedscripting.move_lines_down": "Move lines down",
+  "key.integratedscripting.focus_mode": "Enlarge editor",
 
   "_comment": "Value Type Translation",
   "valuetype.integratedscripting.error.translation.unknown_to_graal": "Could not find a translator from %s values to Graal.",
@@ -151,7 +152,7 @@
   "info_book.integratedscripting.terminal_shortcuts.text2": "Some keys can not be changed: &oTab&r and &oShift+Tab&r indent and unindent the selected lines, &oPage Up&r and &oPage Down&r move by a page, &oCtrl+Left&r and &oCtrl+Right&r (&oOption&r on Mac) move by word, &oHome&r and &oEnd&r (also &oCmd+Left&r and &oCmd+Right&r on Mac) move to the start or end of the line, &oCtrl+Home&r and &oCtrl+End&r (also &oCmd+Up&r and &oCmd+Down&r on Mac) move to the start or end of the script, and &oCtrl+Shift+Z&r (&oCmd+Shift+Z&r on Mac) also redoes.",
   "info_book.integratedscripting.terminal_shortcuts.text3": "While finding text or going to a line, &oEnter&r and &oShift+Enter&r go to the next and previous match, and &oEscape&r closes the search bar.",
   "info_book.integratedscripting.terminal_shortcuts.text4": "To rename a script, right-click it in the script list.",
-  "info_book.integratedscripting.terminal_shortcuts.text5": "In focus mode, &oEscape&r returns to the normal terminal.",
+  "info_book.integratedscripting.terminal_shortcuts.text5": "When the editor is enlarged, &oEscape&r also returns to the normal terminal.",
 
   "info_book.integratedscripting.writing": "Writing Scripts",
 
