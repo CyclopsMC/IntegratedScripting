@@ -117,7 +117,7 @@
   "info_book.integratedscripting.writing.methods.text1": "Para combater a verbosidade das funções globais, você pode escrever código de forma mais compacta usando &lmétodos de objeto&r.",
   "info_book.integratedscripting.writing.methods.text2": "Tipos de valor de objeto como &8Blocos&0, &8Itens&0, &8Fluidos&0, ... terão &lmétodos&r anexados a eles quando usados em JavaScript.",
   "info_book.integratedscripting.writing.methods.text3": "Métodos de objeto são apenas funções simples, mas seu primeiro argumento está vinculado ao valor do objeto.",
-  "info_book.integratedscripting.writing.methods.text4": "Por exemplo, a função global &oitemstackStackable&r recebe um único argumento de &8Item&0 e retorna um &9Booleano&0. Esta função está disponível como um método em valores de &8Item&0 através do nome &ostackable&r, que não recebe argumentos.",
+  "info_book.integratedscripting.writing.methods.text4": "Por exemplo, a função global &oitemstackIsStackable&r recebe um único argumento de &8Item&0 e retorna um &9Booleano&0. Esta função está disponível como um método em valores de &8Item&0 através do nome &oisStackable&r, que não recebe argumentos.",
   "info_book.integratedscripting.writing.methods.text5": "Funções globais que aceitam dois ou mais argumentos estarão disponíveis como métodos em valores de objeto, com todos os argumentos deslocados por um. Por exemplo, a função global &oitemstackStrength&r aceita um argumento de &8Item&0 e &8Bloco&0, mas também está disponível como método em &8Itens&0 com um único argumento de &8Bloco&0.",
   "info_book.integratedscripting.advanced": "Avançado",
   "info_book.integratedscripting.advanced.transient_storage": "Armazenamento Transiente",
@@ -165,5 +165,5 @@
   "info_book.integratedscripting.tutorials.functions.text4": "Concretamente, leremos a lista de itens usando o &lLeitor de Inventário&r e a &lFiltraremos&r usando nossa função recém-criada. Você pode vincular a função a um &lCartão de Variável&r selecionando-a no editor e inserindo um &lCartão de Variável&r vazio, que a armazenará como um &2Operador&0.",
   "info_book.integratedscripting.tutorials.functions.text5": "Você está livre para usar qualquer implementação da função de filtro para este tutorial. A seguir, você pode encontrar um exemplo de script válido que você pode copiar.",
   "info_book.integratedscripting.tutorials.functions.text6": "Para completar o tutorial, mostre o resultado da lista filtrada em um &lPainel de Exibição&r.",
-  "info_book.integratedscripting.tutorials.functions.text7": "Neste exemplo de script, você verá que pode invocar métodos integrados em itens, como &oisStackable()&r e &ostacksize()&r. Mais detalhes sobre quais métodos estão disponíveis podem ser encontrados mais adiante no manual completo."
+  "info_book.integratedscripting.tutorials.functions.text7": "Neste exemplo de script, você verá que pode invocar métodos integrados em itens, como &oisStackable()&r e &osize()&r. Mais detalhes sobre quais métodos estão disponíveis podem ser encontrados mais adiante no manual completo."
 }

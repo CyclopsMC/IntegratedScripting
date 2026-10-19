@@ -115,7 +115,7 @@
   "info_book.integratedscripting.writing.methods.text1": "全局函数的语法较为繁琐。使用更为紧凑的&l对象方法&r有时可以简化脚本。",
   "info_book.integratedscripting.writing.methods.text2": "在JavaScript中使用时，&8方块&0、&8物品s&0和&8流体s&0等对象类型均有对应&l方法&r。",
   "info_book.integratedscripting.writing.methods.text3": "对象方法与相应的普通函数一致，但在调用时会将对象绑定到首个参数上。",
-  "info_book.integratedscripting.writing.methods.text4": "例如，全局函数&oitemstackStackable&r接受单个&8物品&0参数，并返回一个&9布尔型&0。相应的对象方法为&ostackable&r，不接受参数。",
+  "info_book.integratedscripting.writing.methods.text4": "例如，全局函数&oitemstackIsStackable&r接受单个&8物品&0参数，并返回一个&9布尔型&0。相应的对象方法为&oisStackable&r，不接受参数。",
   "info_book.integratedscripting.writing.methods.text5": "接受两个及以上参数的全局函数也有相应的对象方法：首个参数绑定至对象，其余参数顺延。比如，全局函数&oitemstackStrength&r接受一个&8物品&0和一个&8方块&0参数；在&8物品&0上的相应方法只接受后一&8方块&0参数。",
   "info_book.integratedscripting.advanced": "进阶",
   "info_book.integratedscripting.advanced.transient_storage": "暂态存储",
@@ -162,5 +162,5 @@
   "info_book.integratedscripting.tutorials.functions.text4": "详细说明一下，我们会通过&l物品栏读取器&r读出物品列表，再使用新建的函数&l过滤&r该列表。插入空&l变量卡&r并在编辑界面中选择函数，即可将其绑定至&l变量卡&r，此函数会存储为&2运算符&0。",
   "info_book.integratedscripting.tutorials.functions.text5": "此教程中可以使用任意方式实现过滤函数。在此给出一份有效示例脚本，以供随意复制。",
   "info_book.integratedscripting.tutorials.functions.text6": "在&l显示器&r中展示列表的过滤结果，即可完成本教程。",
-  "info_book.integratedscripting.tutorials.functions.text7": "此示例脚本中调用了物品的内置方法，诸如&oisStackable()&r和&ostacksize()&r。有关哪些方法可用的详细信息，后续可见完整手册。"
+  "info_book.integratedscripting.tutorials.functions.text7": "此示例脚本中调用了物品的内置方法，诸如&oisStackable()&r和&osize()&r。有关哪些方法可用的详细信息，后续可见完整手册。"
 }

@@ -39,6 +39,7 @@ import org.cyclops.cyclopscore.client.gui.component.WidgetScrollBar;
 import org.cyclops.cyclopscore.client.gui.component.input.IInputListener;
 import org.cyclops.cyclopscore.helper.Helpers;
 import org.cyclops.cyclopscore.helper.RenderHelpers;
+import org.cyclops.integratedscripting.api.language.ScriptSyntaxError;
 import org.cyclops.integratedscripting.client.key.Keys;
 import org.lwjgl.glfw.GLFW;
 
@@ -92,6 +93,8 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     @Nullable
     private WidgetScrollBar scrollBar;
     private int firstRow;
+    @Nullable
+    private TextLayout layout;
     private TextHistory history = new TextHistory();
     private boolean draggingSelection;
     private double dragMouseX;
@@ -107,6 +110,8 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     private String indent = "  ";
     @Nullable
     private ShortcutListener shortcutListener;
+    @Nullable
+    private ScriptSyntaxError syntaxError;
 
     public WidgetTextArea(Font font, int x, int y, int width, int height, Component narrationMessage, boolean scrollBar, boolean showLineNumbers) {
         super(font, x, y, width, height, narrationMessage);
@@ -156,7 +161,8 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     private DisplayCache createEmptyDisplayCache() {
         Pos2i pos = convertLocalToScreen(new Pos2i(0, 0));
-        return new DisplayCache("", pos, true, new int[]{0}, new LineInfo[]{new LineInfo(Collections.emptyList(), pos.x, pos.y, 0, false)}, new LineInfo[]{new LineInfo(Collections.emptyList(), pos.x, pos.y, 0, false)}, new Rect2i[0], 0, 0);
+        TextLayout layout = new TextLayout("", new int[]{0}, new String[]{""}, new int[]{0}, new Markup(Collections.emptyList()));
+        return new DisplayCache("", pos, true, new int[]{0}, new LineInfo[]{new LineInfo(layout, 0, pos.x, pos.y, false)}, new LineInfo[]{new LineInfo(layout, 0, pos.x, pos.y, false)}, new Rect2i[0], 0, 0);
     }
 
     public void setFirstRow(int firstRow, boolean propagateToScrollbar) {
@@ -208,6 +214,10 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         this.ensureCursorVisible();
     }
 
+    public void setSyntaxError(@Nullable ScriptSyntaxError syntaxError) {
+        this.syntaxError = syntaxError;
+    }
+
     /**
      * @param indent The string that is inserted for one indentation level.
      */
@@ -244,10 +254,13 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     public void setMarkupProvider(@Nullable IMarkupProvider markupProvider) {
         this.markupProvider = markupProvider;
+        this.layout = null;
     }
 
     public void setValue(String value) {
         this.firstRow = 0;
+        // Another script may have the same contents but another language
+        this.layout = null;
         this.setValuePassive(value);
 
         textFieldHelper.setCursorToStart();
@@ -747,10 +760,20 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             }
         }
 
+        // Mark the gutter of the line with a syntax error
+        if (this.syntaxError != null && this.showLineNumbers) {
+            for (LineInfo line : lines) {
+                if (line.lineNumber + 1 == this.syntaxError.line()) {
+                    // Fill the space between the editor border and the gutter separator
+                    guiGraphics.fill(this.getX() - 1, line.y - 1, this.getX() + getLinesXOffset() - 2, line.y + ROW_HEIGHT - 1, Helpers.RGBAToInt(255, 160, 160, 255));
+                }
+            }
+        }
+
         // Draw lines
         int lastLineNumber = -1;
         for(LineInfo line : lines) {
-            guiGraphics.drawString(this.font, line.asComponent, line.x, line.y - offsetY, -16777216, false);
+            guiGraphics.drawString(this.font, line.getComponent(), line.x, line.y - offsetY, -16777216, false);
             // Draw line number
             if (this.showLineNumbers && lastLineNumber != line.lineNumber) {
                 RenderHelpers.drawScaledString(
@@ -760,12 +783,16 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                         this.getX(),
                         line.y - offsetY + 2,
                         0.5f,
-                        line.hasCursor ? 0 : Helpers.RGBToInt(120, 120, 120),
+                        this.syntaxError != null && this.syntaxError.line() == line.lineNumber + 1 ? Helpers.RGBToInt(170, 0, 0) : (line.hasCursor ? 0 : Helpers.RGBToInt(120, 120, 120)),
                         false,
                         Font.DisplayMode.NORMAL
                 );
             }
             lastLineNumber = line.lineNumber;
+        }
+
+        if (this.syntaxError != null) {
+            this.renderSyntaxError(guiGraphics, displayCache, lines, mouseX, mouseY);
         }
 
         // Show highlighting and cursor
@@ -777,6 +804,36 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         // Render scrollbar
         if (this.scrollBar != null) {
             this.scrollBar.render(guiGraphics, getX(), getY(), partialTicks);
+
+            // Mark the position of the syntax error on the scrollbar, so it can be found when scrolled out of view
+            if (this.syntaxError != null && displayCache.linesTotal > this.scrollBar.getVisibleRows()) {
+                int errorRow = findLineFromPos(displayCache.lineStarts, TextEditing.lineOffset(this.getValue(), this.syntaxError.line()));
+                int y = this.getY() + (int) ((long) errorRow * (this.getHeight() - 2) / displayCache.linesTotal);
+                int x = this.getX() + this.getWidth() - SCROLLBAR_WIDTH + 1;
+                guiGraphics.fill(x, y, x + SCROLLBAR_WIDTH - 2, y + 2, Helpers.RGBAToInt(220, 0, 0, 255));
+            }
+        }
+    }
+
+    private void renderSyntaxError(GuiGraphics guiGraphics, DisplayCache displayCache, List<LineInfo> lines, int mouseX, int mouseY) {
+        String value = this.getValue();
+        // Underline the character at the error position
+        int pos = Math.min(value.length(), TextEditing.lineOffset(value, this.syntaxError.line()) + Math.max(0, this.syntaxError.column() - 1));
+        int line = findLineFromPos(displayCache.lineStarts, pos);
+        int row = line - this.firstRow;
+        if (row >= 0 && row < this.getHeight() / ROW_HEIGHT) {
+            int x = this.font.width(value.substring(displayCache.lineStarts[line], pos));
+            int width = pos < value.length() && value.charAt(pos) != '\n' ? this.font.width(value.substring(pos, pos + 1)) : 4;
+            Pos2i screenPos = this.convertLocalToScreen(new Pos2i(x, row * ROW_HEIGHT));
+            guiGraphics.fill(screenPos.x, screenPos.y + ROW_HEIGHT - 2, screenPos.x + width, screenPos.y + ROW_HEIGHT - 1, Helpers.RGBAToInt(220, 0, 0, 255));
+        }
+
+        // Show the message when hovering the error line
+        for (LineInfo lineInfo : lines) {
+            if (lineInfo.lineNumber + 1 == this.syntaxError.line() && mouseX >= this.getX() && mouseX < this.getX() + this.getWidth()
+                    && mouseY >= lineInfo.y && mouseY < lineInfo.y + ROW_HEIGHT && Minecraft.getInstance().screen != null) {
+                Minecraft.getInstance().screen.setTooltipForNextRenderPass(this.font.split(Component.literal(this.syntaxError.message()), 200));
+            }
         }
     }
 
@@ -869,47 +926,25 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         } else {
             int cursorPos = this.textFieldHelper.getCursorPos();
             int selectionPos = this.textFieldHelper.getSelectionPos();
-            IntList linePositionsOld = new IntArrayList();
-            List<Pair<String, Style>> linesRaw = Lists.newArrayList();
-            IntList lineNumbers = new IntArrayList();
-            List<Boolean> linesHasCursor = Lists.newArrayList();
-            MutableBoolean mutableboolean = new MutableBoolean();
-            StringSplitter stringsplitter = this.font.getSplitter();
-            MutableInt lineNumber = new MutableInt();
-            stringsplitter.splitLines(s, getTextWidth() /* changed */, Style.EMPTY, true, (style, startPos, endPos) -> {
-                String stringPart = s.substring(startPos, endPos);
-                boolean hasNewLine = stringPart.endsWith("\n");
-                mutableboolean.setValue(hasNewLine);
-                linePositionsOld.add(startPos);
-                linesRaw.add(Pair.of(StringUtils.stripEnd(stringPart, " \n"), style));
-                lineNumbers.add(lineNumber.intValue());
-                linesHasCursor.add(cursorPos >= startPos && cursorPos < (hasNewLine ? endPos : s.indexOf("\n", endPos)));
-                if (hasNewLine) {
-                    lineNumber.increment();
-                }
-            });
-            // Add an empty line after a trailing newline, so the cursor can be placed and scrolled there
-            if (mutableboolean.isTrue()) {
-                linePositionsOld.add(s.length());
-                linesRaw.add(Pair.of("", Style.EMPTY));
-                lineNumbers.add(lineNumber.intValue());
-                linesHasCursor.add(cursorPos == s.length());
-            }
+            TextLayout layout = this.getLayout(s);
 
             // Keep scroll position within bounds, as the text may have shrunk
             if (this.scrollBar != null) {
-                int maxFirstRow = Math.max(0, linesRaw.size() - this.scrollBar.getVisibleRows());
+                int maxFirstRow = Math.max(0, layout.lineStarts.length - this.scrollBar.getVisibleRows());
                 if (this.firstRow > maxFirstRow) {
                     this.firstRow = maxFirstRow;
                     this.scrollBar.setFirstRow(this.firstRow, false);
                 }
             }
 
+            int cursorLineNumber = layout.lineNumbers[findLineFromPos(layout.lineStarts, cursorPos)];
             List<LineInfo> linesAll = Lists.newArrayList();
-            for (int k3 = 0; k3 < linesRaw.size(); k3++) {
+            for (int k3 = 0; k3 < layout.lineStarts.length; k3++) {
                 Pos2i bookeditscreen$pos2i1 = this.convertLocalToScreen(new Pos2i(0, (k3 - this.firstRow) * 9)); // Offset firstRow!
-                linesAll.add(new LineInfo(this.markupLine(linesRaw.get(k3).getRight(), linesRaw.get(k3).getLeft()), bookeditscreen$pos2i1.x, bookeditscreen$pos2i1.y, lineNumbers.getInt(k3), linesHasCursor.get(k3)));
+                linesAll.add(new LineInfo(layout, k3, bookeditscreen$pos2i1.x, bookeditscreen$pos2i1.y, layout.lineNumbers[k3] == cursorLineNumber));
             }
+            IntList linePositionsOld = IntArrayList.wrap(layout.lineStarts);
+            StringSplitter stringsplitter = this.font.getSplitter();
 
             // --- Changed ---
             // Slice lines based on scroll position
@@ -967,11 +1002,85 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         }
     }
 
-    private List<Pair<Style, String>> markupLine(Style style, String line) {
-        if (this.markupProvider != null) {
-            return this.markupProvider.markupLine(style, line);
+    /**
+     * @return The wrapped and marked up lines of a text, which is only recomputed when the text changes.
+     */
+    private TextLayout getLayout(String s) {
+        if (this.layout == null || !this.layout.text.equals(s)) {
+            IntList lineStarts = new IntArrayList();
+            List<String> contents = Lists.newArrayList();
+            IntList lineNumbers = new IntArrayList();
+            MutableBoolean trailingNewline = new MutableBoolean();
+            MutableInt lineNumber = new MutableInt();
+            this.font.getSplitter().splitLines(s, getTextWidth() /* changed */, Style.EMPTY, true, (style, startPos, endPos) -> {
+                String stringPart = s.substring(startPos, endPos);
+                boolean hasNewLine = stringPart.endsWith("\n");
+                trailingNewline.setValue(hasNewLine);
+                lineStarts.add(startPos);
+                contents.add(StringUtils.stripEnd(stringPart, " \n"));
+                lineNumbers.add(lineNumber.intValue());
+                if (hasNewLine) {
+                    lineNumber.increment();
+                }
+            });
+            // Add an empty line after a trailing newline, so the cursor can be placed and scrolled there
+            if (trailingNewline.isTrue()) {
+                lineStarts.add(s.length());
+                contents.add("");
+                lineNumbers.add(lineNumber.intValue());
+            }
+            // Mark up the full text at once, so that constructs such as block comments can span multiple lines
+            this.layout = new TextLayout(s, lineStarts.toIntArray(), contents.toArray(new String[0]), lineNumbers.toIntArray(), new Markup(this.markup(s)));
         }
-        return Stream.of(Pair.of(style, line)).collect(Collectors.toList());
+        return this.layout;
+    }
+
+    private List<Pair<Style, String>> markup(String text) {
+        if (this.markupProvider != null) {
+            List<Pair<Style, String>> segments = this.markupProvider.markup(text);
+            // Ignore markup that doesn't match the text
+            if (segments.stream().mapToInt(segment -> segment.getRight().length()).sum() == text.length()) {
+                return segments;
+            }
+        }
+        return Stream.of(Pair.of(Style.EMPTY, text)).collect(Collectors.toList());
+    }
+
+    /**
+     * Styled segments of a text, which can be sliced by position.
+     */
+    static class Markup {
+        private final int[] starts;
+        private final Style[] styles;
+
+        Markup(List<Pair<Style, String>> segments) {
+            this.starts = new int[segments.size()];
+            this.styles = new Style[segments.size()];
+            int pos = 0;
+            for (int i = 0; i < segments.size(); i++) {
+                this.starts[i] = pos;
+                this.styles[i] = segments.get(i).getLeft();
+                pos += segments.get(i).getRight().length();
+            }
+        }
+
+        List<Pair<Style, String>> slice(String text, int from, int to) {
+            List<Pair<Style, String>> result = Lists.newArrayList();
+            if (from >= to) {
+                return result;
+            }
+            int i = Math.max(0, findLineFromPos(this.starts, from));
+            while (i < this.starts.length && this.starts[i] < to) {
+                int segmentEnd = i + 1 < this.starts.length ? this.starts[i + 1] : text.length();
+                int start = Math.max(from, this.starts[i]);
+                int end = Math.min(to, segmentEnd);
+                if (start < end) {
+                    result.add(Pair.of(this.styles[i], text.substring(start, end)));
+                }
+                i++;
+            }
+            return result;
+        }
     }
 
     static int findLineFromPos(int[] p_98150_, int p_98151_) {
@@ -1053,29 +1162,64 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         }
     }
 
+    /**
+     * The wrapped lines of a text, independent of the scroll and cursor position.
+     */
+    @OnlyIn(Dist.CLIENT)
+    static class TextLayout {
+        final String text;
+        final int[] lineStarts;
+        final String[] contents;
+        final int[] lineNumbers;
+        final Markup markup;
+        final Component[] components;
+
+        TextLayout(String text, int[] lineStarts, String[] contents, int[] lineNumbers, Markup markup) {
+            this.text = text;
+            this.lineStarts = lineStarts;
+            this.contents = contents;
+            this.lineNumbers = lineNumbers;
+            this.markup = markup;
+            this.components = new Component[lineStarts.length];
+        }
+
+        /**
+         * Lazily create the styled component of a line, as only visible lines are rendered.
+         */
+        Component getComponent(int line) {
+            if (this.components[line] == null) {
+                MutableComponent component = Component.literal("");
+                for (Pair<Style, String> value : this.markup.slice(this.text, this.lineStarts[line], this.lineStarts[line] + this.contents[line].length())) {
+                    component = component.append(Component.literal(value.getRight()).setStyle(value.getLeft()));
+                }
+                this.components[line] = component;
+            }
+            return this.components[line];
+        }
+    }
+
     @OnlyIn(Dist.CLIENT)
     static class LineInfo {
-        final List<Pair<Style, String>> contentsStyled;
+        private final TextLayout layout;
+        private final int line;
         final String contents;
-        final Component asComponent;
         final int x;
         final int y;
         final int lineNumber;
         final boolean hasCursor;
 
-        public LineInfo(List<Pair<Style, String>> contentsStyled, int x, int y, int lineNumber, boolean hasCursor) {
-            this.contentsStyled = contentsStyled;
-            this.contents = contentsStyled.stream().map(Pair::getRight).collect(Collectors.joining());
+        public LineInfo(TextLayout layout, int line, int x, int y, boolean hasCursor) {
+            this.layout = layout;
+            this.line = line;
+            this.contents = layout.contents[line];
             this.x = x;
             this.y = y;
-            this.lineNumber = lineNumber;
+            this.lineNumber = layout.lineNumbers[line];
             this.hasCursor = hasCursor;
+        }
 
-            MutableComponent component = Component.literal("");
-            for (Pair<Style, String> value : contentsStyled) {
-                component = component.append(Component.literal(value.getRight()).setStyle(value.getLeft()));
-            }
-            this.asComponent = component;
+        public Component getComponent() {
+            return this.layout.getComponent(this.line);
         }
     }
 
@@ -1091,7 +1235,11 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     }
 
     public static interface IMarkupProvider {
-        public List<Pair<Style, String>> markupLine(Style style, String line);
+        /**
+         * @param text The full text.
+         * @return Styled segments that together form the full text.
+         */
+        public List<Pair<Style, String>> markup(String text);
     }
 
     public static interface ShortcutListener {

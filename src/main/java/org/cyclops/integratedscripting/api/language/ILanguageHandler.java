@@ -8,6 +8,9 @@ import org.cyclops.cyclopscore.client.gui.image.IImage;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integratedscripting.api.network.IScriptFactory;
 
+import javax.annotation.Nullable;
+import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -27,6 +30,23 @@ public interface ILanguageHandler {
 
     public List<Pair<Style, String>> markupLine(String line);
 
+    /**
+     * Mark up a full script, which allows constructs such as block comments to span multiple lines.
+     * @param script The script contents.
+     * @return Styled segments that together form the full script.
+     */
+    public default List<Pair<Style, String>> markupScript(String script) {
+        List<Pair<Style, String>> segments = new ArrayList<>();
+        String[] lines = script.split("\n", -1);
+        for (int i = 0; i < lines.length; i++) {
+            if (i > 0) {
+                segments.add(Pair.of(Style.EMPTY, "\n"));
+            }
+            segments.addAll(markupLine(lines[i]));
+        }
+        return segments;
+    }
+
     public IScriptFactory getScriptFactory() throws EvaluationException;
 
     /**
@@ -34,6 +54,17 @@ public interface ILanguageHandler {
      */
     public default Set<String> getReservedWords() {
         return Collections.emptySet();
+    }
+
+    /**
+     * Check a script for syntax errors, without executing it.
+     * @param path The script path.
+     * @param script The script contents.
+     * @return The first syntax error, or null if there is none or if checking is not supported.
+     */
+    @Nullable
+    public default ScriptSyntaxError checkSyntax(Path path, String script) {
+        return null;
     }
 
     public void onServerStarted();

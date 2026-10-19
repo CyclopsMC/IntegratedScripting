@@ -132,7 +132,7 @@
   "info_book.integratedscripting.terminal.text4": "If the disk does not contain any script files yet, you can create them by clicking on the \"+\"-button on the bottom-left side of the screen.",
   "info_book.integratedscripting.terminal.text5": "The script file list on the left-hand side of the screen is used to select a script for editing. When clicking on a script, its editable contents will show up on the right-hand-side of the screen.",
   "info_book.integratedscripting.terminal.text6": "The text field on the right-hand side of the screen allows you to edit the contents of script files, which will be saved automatically after each modification.",
-  "info_book.integratedscripting.terminal.text7": "While the editor will perform limited syntax highlighting, it is not able to detect syntax errors at this time. Syntax errors will be reported when executing scripts via &lVariable Cards&r.",
+  "info_book.integratedscripting.terminal.text7": "The editor performs limited syntax highlighting, and marks the line of the first syntax error in red. Hover over that line to see the error message.",
   "info_book.integratedscripting.terminal.text8": "In order to use a script member as &lIntegrated Dynamics&r logic, you can bind it to a &lVariable Card&r.",
   "info_book.integratedscripting.terminal.text9": "You can do this by first selecting a script member in the text editor by selecting it with your cursor, such as a variable name or function name.",
   "info_book.integratedscripting.terminal.text10": "After that, you can insert a &lVariable Card&r into the slot on the right-hand side of the screen to bind it to this script member.",
@@ -174,7 +174,7 @@
   "info_book.integratedscripting.writing.methods.text1": "To counter the verbosity of global functions, you can write code more compactly using &lobject methods&r.",
   "info_book.integratedscripting.writing.methods.text2": "Object value types such as &8Blocks&0, &8Items&0, &8Fluids&0, ... will have &lmethods&r attached to them when used in JavaScript.",
   "info_book.integratedscripting.writing.methods.text3": "Object methods are just plain functions, but their first argument is tied to the object value.",
-  "info_book.integratedscripting.writing.methods.text4": "For example, the global function &oitemstackStackable&r takes a single &8Item&0 argument and outputs a &9Boolean&0. This function is available as a method on &8Item&0 values via the name &ostackable&r, which takes zero arguments.",
+  "info_book.integratedscripting.writing.methods.text4": "For example, the global function &oitemstackIsStackable&r takes a single &8Item&0 argument and outputs a &9Boolean&0. This function is available as a method on &8Item&0 values via the name &oisStackable&r, which takes zero arguments.",
   "info_book.integratedscripting.writing.methods.text5": "Global functions that accept two or more arguments will be available as methods on object values, with all arguments shifted by one. For example, the global function &oitemstackStrength&r accepts an &8Item&0 and a &8Block&0 argument, but is also available as method on &8Items&0 with a single &8Block&0 argument.",
 
   "info_book.integratedscripting.advanced": "Advanced",
@@ -232,5 +232,5 @@
   "info_book.integratedscripting.tutorials.functions.text4": "Concretely, we will read the list of items using the &lInventory Reader&r, and &lFilter&r it using our newly created function. You can bind the function to a &lVariable Card&r by selecting it in the editor and inserting an empty &lVariable Card&r, which will store it as an &2Operator&0.",
   "info_book.integratedscripting.tutorials.functions.text5": "You are free to use any implementation of the filter function for this tutorial. Hereafter, you can find a valid example script which you are free to copy.",
   "info_book.integratedscripting.tutorials.functions.text6": "To complete the tutorial, show the result of the filtered list in a &lDisplay Panel&r.",
-  "info_book.integratedscripting.tutorials.functions.text7": "In this example script, you will see that you can invoke built-in methods on items such as &oisStackable()&r and &ostacksize()&r. More details on which methods are available can be found later in the full manual."
+  "info_book.integratedscripting.tutorials.functions.text7": "In this example script, you will see that you can invoke built-in methods on items such as &oisStackable()&r and &osize()&r. More details on which methods are available can be found later in the full manual."
 }

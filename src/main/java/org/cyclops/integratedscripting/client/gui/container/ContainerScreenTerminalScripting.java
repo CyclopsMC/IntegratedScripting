@@ -13,6 +13,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.StringUtil;
@@ -153,12 +154,17 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             return false;
         });
         getMenu().setRemoteScriptChangeListener(this::onRemoteScriptChanged);
+        getMenu().setSyntaxErrorListener((disk, path) -> {
+            if (disk == getMenu().getActiveDisk() && path.equals(getMenu().getActiveScriptPath())) {
+                this.textArea.setSyntaxError(getMenu().getSyntaxError(disk, path));
+            }
+        });
         textArea.setListenerSelection(this::onSelectionModified);
         textArea.setListenerCursor(this::onSelectionModified);
-        textArea.setMarkupProvider((style, line) -> {
+        textArea.setMarkupProvider(text -> {
             Path path = getMenu().getActiveScriptPath();
             ILanguageHandler languageHandler = path != null ? LanguageHandlers.REGISTRY.getProvider(path) : null;
-            return languageHandler != null ? languageHandler.markupLine(line) : Stream.of(Pair.of(style, line)).collect(Collectors.toList());
+            return languageHandler != null ? languageHandler.markupScript(text) : Stream.of(Pair.of(Style.EMPTY, text)).collect(Collectors.toList());
         });
         addRenderableWidget(textArea);
 
@@ -581,6 +587,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         String script = getMenu().getActiveScript();
         this.textArea.setValue(script == null ? "" : script);
         Path path = getMenu().getActiveScriptPath();
+        this.textArea.setSyntaxError(path == null ? null : getMenu().getSyntaxError(getMenu().getActiveDisk(), path));
         this.textArea.setHistory(path == null ? new TextHistory() : scriptHistories.computeIfAbsent(Pair.of(getMenu().getActiveDisk(), path), k -> new TextHistory()));
     }
 
