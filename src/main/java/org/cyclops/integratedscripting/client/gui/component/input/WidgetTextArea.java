@@ -922,15 +922,21 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
         // Render scrollbar
         if (this.scrollBar != null) {
-            this.scrollBar.render(guiGraphics, getX(), getY(), partialTicks);
-
-            // Mark the position of the syntax error on the scrollbar, so it can be found when scrolled out of view
+            // Mark the position of the syntax error on the scrollbar, so it can be found when scrolled out of view.
+            // This is drawn below the handle, which only covers it when the error is roughly in view.
             if (this.syntaxError != null && displayCache.linesTotal > this.scrollBar.getVisibleRows()) {
                 int errorRow = findLineFromPos(displayCache.lineStarts, TextEditing.lineOffset(this.getValue(), this.syntaxError.line()));
                 int y = this.getY() + (int) ((long) errorRow * (this.getHeight() - 2) / displayCache.linesTotal);
-                int x = this.getX() + this.getWidth() - SCROLLBAR_WIDTH + 1;
-                guiGraphics.fill(x, y, x + SCROLLBAR_WIDTH - 2, y + 2, Helpers.RGBAToInt(220, 0, 0, 255));
+                int x = this.getX() + this.getWidth() - SCROLLBAR_WIDTH;
+                guiGraphics.fill(x, y, x + SCROLLBAR_WIDTH - 1, y + 2, Helpers.RGBAToInt(220, 0, 0, 255));
+
+                // Show the message when hovering the mark
+                if (mouseX >= x && mouseX < x + SCROLLBAR_WIDTH - 1 && mouseY >= y - 1 && mouseY < y + 3 && Minecraft.getInstance().screen != null) {
+                    Minecraft.getInstance().screen.setTooltipForNextRenderPass(this.font.split(Component.literal(this.syntaxError.message()), 200));
+                }
             }
+
+            this.scrollBar.render(guiGraphics, getX(), getY(), partialTicks);
         }
     }
 
