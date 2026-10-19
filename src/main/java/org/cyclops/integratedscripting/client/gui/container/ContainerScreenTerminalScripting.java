@@ -741,6 +741,10 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         this.firstRow = firstRow;
     }
 
+    public boolean isFocusMode() {
+        return focusMode;
+    }
+
     @Nullable
     private ILanguageHandler getActiveLanguageHandler() {
         Path path = getMenu().getActiveScriptPath();
