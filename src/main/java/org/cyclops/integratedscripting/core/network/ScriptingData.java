@@ -77,7 +77,6 @@ public class ScriptingData implements IScriptingData {
     public void tick() {
         // Initialize once
         if (!this.initialized) {
-            this.initialized = true;
             this.initialize();
         }
 
@@ -116,6 +115,8 @@ public class ScriptingData implements IScriptingData {
     }
 
     public void initialize() {
+        // Also when called directly, so a later tick doesn't start a second file watcher
+        this.initialized = true;
         Path disksPath = getDisksPath();
         disksPath.toFile().mkdirs();
 
