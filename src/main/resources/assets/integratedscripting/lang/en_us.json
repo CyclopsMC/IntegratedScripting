@@ -43,6 +43,7 @@
   "gui.integratedscripting.rename_dialog.message": "New path, such as dir/name.js:",
   "gui.integratedscripting.rename_dialog.rename": "Rename",
   "gui.integratedscripting.rename_dialog.cancel": "Cancel",
+  "gui.integratedscripting.rename_dialog.warning": "Variable cards bound to this script will stop working.",
   "gui.integratedscripting.rename_hint": "Right-click to rename",
   "gui.integratedscripting.error.invalid_member": "Select a valid function name or variable name inside the script editor to bind with.",
   "gui.integratedscripting.error.invalid_member.current": "Current selection: \"%s\"",

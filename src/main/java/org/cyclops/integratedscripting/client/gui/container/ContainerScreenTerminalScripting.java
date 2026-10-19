@@ -727,6 +727,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
                     removeWidget(pendingDialog);
                     pendingDialog = null;
                 }, path.toString());
+        pendingDialog.setWarning(Component.translatable("gui.integratedscripting.rename_dialog.warning"));
         addRenderableWidget(pendingDialog);
     }
 
