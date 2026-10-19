@@ -18,10 +18,14 @@ import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeInteger;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypeString;
 import org.cyclops.integrateddynamics.core.evaluate.variable.ValueTypes;
 import org.cyclops.integrateddynamics.part.PartTypePanelDisplay;
+import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.Reference;
 import org.cyclops.integratedscripting.api.network.IScriptingData;
 import org.cyclops.integratedscripting.core.network.ScriptingNetworkHelpers;
 
+import java.io.IOException;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 
 import static org.cyclops.integrateddynamics.gametest.GameTestHelpersIntegratedDynamics.*;
@@ -186,6 +190,35 @@ public class GameTestsScripts {
                 ), "Display panel errors do not match");
             }
         });
+    }
+
+    @GameTest(template = TEMPLATE_EMPTY, timeoutTicks = TIMEOUT)
+    public void testScriptsDisplayScriptErrorResolvedAfterExternalFix(GameTestHelper helper) {
+        GameTestHelpersIntegratedScripting.NetworkPositions positions = createBasicNetwork(helper, POS);
+
+        // Write a script that fails when evaluated
+        ScriptingNetworkHelpers.getScriptingData().setScript(positions.diskId(), Path.of("script0.js"), "const abc = doesNotExist();", IScriptingData.ChangeLocation.MEMORY);
+
+        // Create variable from script and place it in a display
+        ItemStack variableScript = createVariableForScript(helper.getLevel(), positions.diskId(), Path.of("script0.js"), "abc");
+        Pair<PartTypePanelDisplay, PartTypePanelDisplay.State> partAndState = placeVariableInDisplayPanel(helper.getLevel(), positions.displayPanel(), variableScript);
+
+        helper.startSequence()
+                .thenWaitUntil(() -> helper.assertFalse(partAndState.getRight().getGlobalErrors().isEmpty(), "Display panel must show the script error"))
+                // Let the network settle, so that only the script change can make the display update
+                .thenIdle(40)
+                // Fix the script externally, so the file watcher picks it up
+                .thenExecute(() -> {
+                    Path scriptFile = IntegratedScripting._instance.scriptingData.getRootPath()
+                            .resolve("scripting-disks").resolve(String.valueOf(positions.diskId())).resolve("script0.js");
+                    try {
+                        Files.writeString(scriptFile, "const abc = 3;");
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                })
+                .thenWaitUntil(() -> assertValueEqual(partAndState.getRight().getDisplayValue(), ValueTypeInteger.ValueInteger.of(3)))
+                .thenSucceed();
     }
 
 }
