@@ -97,6 +97,8 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     @Nullable
     private ButtonIcon buttonOpenFolder;
     private int buttonOpenFolderDisk = Integer.MIN_VALUE;
+    // The disk a script is being created on, so the new script can be opened once the server sends it
+    private int createdScriptDisk = -1;
     private final List<ButtonIcon> toolbarEditButtons = Lists.newArrayList();
     private ButtonIcon buttonUndo;
     private ButtonIcon buttonRedo;
@@ -198,7 +200,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         // The scripts folder can only be opened if this client is running the server, such as in singleplayer
         boolean canOpenFolder = Minecraft.getInstance().hasSingleplayerServer();
         buttonCreateFile = new ButtonText(this.leftPos + PATHS_X, this.topPos + 222, canOpenFolder ? PATHS_WIDTH - 12 : PATHS_WIDTH, 10, Component.translatable("gui.integratedscripting.create_file"), Component.literal("+"),
-                (button) -> getMenu().createNewFile(), true);
+                (button) -> this.createNewFile(), true);
         buttonOpenFolder = null;
         buttonOpenFolderDisk = Integer.MIN_VALUE;
         if (!focusMode) {
@@ -745,7 +747,22 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         this.textArea.setHistory(path == null ? new TextHistory() : scriptHistories.computeIfAbsent(Pair.of(getMenu().getActiveDisk(), path), k -> new TextHistory()));
     }
 
-    private void onRemoteScriptChanged(int disk, Path path) {
+    private void createNewFile() {
+        this.createdScriptDisk = getMenu().getActiveDisk();
+        getMenu().createNewFile();
+    }
+
+    private void onRemoteScriptChanged(int disk, Path path, boolean created) {
+        // Open a newly created script
+        if (created && disk == this.createdScriptDisk && disk == getMenu().getActiveDisk()) {
+            this.createdScriptDisk = -1;
+            this.saveCursorPos();
+            getMenu().setActiveScriptPath(path);
+            this.onActiveScriptSelected();
+            this.setFocused(this.textArea);
+            return;
+        }
+
         // Show changes from outside this editor, such as external file edits, instead of overwriting them on the next edit
         if (disk == getMenu().getActiveDisk() && path.equals(getMenu().getActiveScriptPath())) {
             String script = getMenu().getActiveScript();
