@@ -26,6 +26,7 @@
   "gui.integratedscripting.disk": "Disk",
   "gui.integratedscripting.script": "Script",
   "gui.integratedscripting.create_file": "Create File",
+  "gui.integratedscripting.open_folder": "Open scripts folder",
   "gui.integratedscripting.find": "Find",
   "gui.integratedscripting.focus_mode.enter": "Enlarge editor",
   "gui.integratedscripting.focus_mode.exit": "Back to normal size",
@@ -200,9 +201,10 @@
 
   "info_book.integratedscripting.advanced.external_editing": "External Editing",
   "info_book.integratedscripting.advanced.external_editing.text1": "If you have access to the file system on which your singleplayer or multiplayer game is running, you can access script files through any external editor. This allows you to create scripts using your favorite IDE (such as Vi, but definitely not Emacs).",
-  "info_book.integratedscripting.advanced.external_editing.text2": "Script files are accessible via the &oworld/integratedscripting/&r directory (see &osaves/&r for singleplayer worlds). In here, you will find directories for all &lScripting Disks&r by their id. Inside of each &lScripting Disk&r directory, you will find all script files stored in that disk.",
+  "info_book.integratedscripting.advanced.external_editing.text2": "Script files are accessible via the &oworld/integratedscripting/scripting-disks/&r directory (see &osaves/&r for singleplayer worlds). In here, you will find directories for all &lScripting Disks&r by their id. Inside of each &lScripting Disk&r directory, you will find all script files stored in that disk.",
   "info_book.integratedscripting.advanced.external_editing.text3": "You can safely modify these script files through an external editor, even if the game is running. After externally saving the file, they will be updated automatically in the game, and dependent variables will be updated as well.",
   "info_book.integratedscripting.advanced.external_editing.text4": "If your external editor supports this (modern IDEs do), modifying a script file through the &lScripting Terminal&r will also cause the files to be updated in your external editor.",
+  "info_book.integratedscripting.advanced.external_editing.text5": "In singleplayer, the folder button below the script list of the &lScripting Terminal&r opens the directory of the selected disk.",
 
   "info_book.integratedscripting.advanced.logging": "Logging",
   "info_book.integratedscripting.advanced.logging.text1": "For complex scripts, the need may arise to debug them by temporarily writing to external log files.",

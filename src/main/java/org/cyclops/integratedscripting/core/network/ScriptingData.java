@@ -110,7 +110,7 @@ public class ScriptingData implements IScriptingData {
         return rootPath.resolve("scripting-disks");
     }
 
-    protected Path getDiskPath(int id) {
+    public Path getDiskPath(int id) {
         return getDisksPath().resolve(String.valueOf(id));
     }
 

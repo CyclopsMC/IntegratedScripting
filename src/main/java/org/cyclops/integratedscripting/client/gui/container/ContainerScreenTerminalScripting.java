@@ -14,6 +14,7 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.ChatFormatting;
+import net.minecraft.Util;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
@@ -23,6 +24,7 @@ import net.minecraft.util.StringUtil;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.Level;
 import org.cyclops.cyclopscore.client.gui.component.WidgetScrollBar;
 import org.cyclops.cyclopscore.client.gui.component.button.ButtonText;
 import org.cyclops.cyclopscore.client.gui.component.input.WidgetArrowedListField;
@@ -54,6 +56,8 @@ import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.Nullable;
 import java.nio.file.InvalidPathException;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
@@ -89,6 +93,9 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     private int firstRow;
     private WidgetTextArea textArea;
     private ButtonText buttonCreateFile;
+    @Nullable
+    private ButtonIcon buttonOpenFolder;
+    private int buttonOpenFolderDisk = Integer.MIN_VALUE;
     private final List<ButtonIcon> toolbarEditButtons = Lists.newArrayList();
     private ButtonIcon buttonUndo;
     private ButtonIcon buttonRedo;
@@ -187,10 +194,24 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         });
         addRenderableWidget(textArea);
 
-        buttonCreateFile = new ButtonText(this.leftPos + 19, this.topPos + 222, 56, 10, Component.translatable("gui.integratedscripting.create_file"), Component.literal("+"),
+        // The scripts folder can only be opened if this client is running the server, such as in singleplayer
+        boolean canOpenFolder = Minecraft.getInstance().hasSingleplayerServer();
+        buttonCreateFile = new ButtonText(this.leftPos + PATHS_X, this.topPos + 222, canOpenFolder ? PATHS_WIDTH - 12 : PATHS_WIDTH, 10, Component.translatable("gui.integratedscripting.create_file"), Component.literal("+"),
                 (button) -> getMenu().createNewFile(), true);
+        buttonOpenFolder = null;
+        buttonOpenFolderDisk = Integer.MIN_VALUE;
         if (!focusMode) {
             addRenderableWidget(buttonCreateFile);
+            if (canOpenFolder) {
+                buttonOpenFolder = new ButtonIcon(this.leftPos + PATHS_X + PATHS_WIDTH - 10, this.topPos + 222, 10, 10,
+                        Component.translatable("gui.integratedscripting.open_folder"), (button) -> {
+                            this.openDiskFolder();
+                            // Run after the click is handled, as that focuses the button
+                            Minecraft.getInstance().tell(() -> this.setFocused(null));
+                        }, ScriptImages.ACTION_OPEN_FOLDER);
+                addRenderableWidget(buttonOpenFolder);
+                this.updateOpenFolderButton();
+            }
         }
 
         if (focusMode) {
@@ -257,6 +278,37 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         return button;
     }
 
+    protected Path getDiskFolder(int disk) {
+        return IntegratedScripting._instance.scriptingData.getDiskPath(disk).toAbsolutePath().normalize();
+    }
+
+    private void updateOpenFolderButton() {
+        int disk = getMenu().getActiveDisk();
+        if (this.buttonOpenFolder != null && disk != this.buttonOpenFolderDisk) {
+            this.buttonOpenFolderDisk = disk;
+            this.buttonOpenFolder.active = disk >= 0;
+            Component tooltip = Component.translatable("gui.integratedscripting.open_folder");
+            if (disk >= 0) {
+                tooltip = tooltip.copy().append("\n").append(Component.literal(this.getDiskFolder(disk).toString()).withStyle(ChatFormatting.GRAY));
+            }
+            this.buttonOpenFolder.setTooltip(Tooltip.create(tooltip));
+        }
+    }
+
+    private void openDiskFolder() {
+        int disk = getMenu().getActiveDisk();
+        if (disk >= 0) {
+            Path path = this.getDiskFolder(disk);
+            try {
+                // The folder of a disk without scripts may not exist yet
+                Files.createDirectories(path);
+            } catch (IOException e) {
+                IntegratedScripting.clog(Level.ERROR, "Could not create the scripts folder " + path + ": " + e.getMessage());
+            }
+            Util.getPlatform().openPath(path);
+        }
+    }
+
     private void updateToolbar() {
         boolean scriptOpen = getMenu().getActiveScript() != null;
         for (ButtonIcon button : this.toolbarEditButtons) {
@@ -270,6 +322,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     protected void containerTick() {
         super.containerTick();
         textArea.tick();
+        this.updateOpenFolderButton();
         this.updateToolbar();
         // The matches change when the script is edited while searching
         this.updateSearchStatus();
