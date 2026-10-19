@@ -15,6 +15,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.FormattedCharSequence;
 import org.cyclops.cyclopscore.client.gui.component.button.ButtonText;
 import org.cyclops.cyclopscore.helper.Helpers;
+import org.cyclops.cyclopscore.helper.RenderHelpers;
 import org.cyclops.integratedscripting.Reference;
 
 import javax.annotation.Nullable;
@@ -37,6 +38,8 @@ public class WidgetDialog extends AbstractWidget implements GuiEventListener {
     private final ButtonText buttonCancel;
     @Nullable
     private final EditBox input;
+    @Nullable
+    private Component warning;
 
     public WidgetDialog(Font font, int x, int y, Screen parent,
                         Component title, Component message, Component confirm, Component cancel,
@@ -68,6 +71,13 @@ public class WidgetDialog extends AbstractWidget implements GuiEventListener {
         }
     }
 
+    /**
+     * @param warning A short warning to show below the input, or null.
+     */
+    public void setWarning(@Nullable Component warning) {
+        this.warning = warning;
+    }
+
     protected void drawBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTicks) {
         // Gray-out background
         RenderSystem.setShaderColor(0F, 0F, 0F, 0.95F);
@@ -90,6 +100,13 @@ public class WidgetDialog extends AbstractWidget implements GuiEventListener {
         guiGraphics.drawString(font, message, (this.getX() + this.width / 2 - font.width(formattedcharsequence) / 2), (this.getY() + (this.input != null ? 19 : 25)), 4210752, false);
         if (this.input != null) {
             this.input.render(guiGraphics, mouseX, mouseY, partialTicks);
+        }
+        if (this.warning != null) {
+            // Scaled down to fit between the input and the buttons, and further for long translations
+            String warning = this.warning.getString();
+            float scale = Math.min(0.5F, (float) (WIDTH - 20) / font.width(warning));
+            RenderHelpers.drawScaledString(guiGraphics, font, warning, this.getX() + this.width / 2 - (int) (font.width(warning) * scale / 2),
+                    this.getY() + 45, scale, Helpers.RGBToInt(140, 30, 30), false, Font.DisplayMode.NORMAL);
         }
     }
 

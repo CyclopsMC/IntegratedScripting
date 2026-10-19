@@ -136,7 +136,7 @@ public class ScriptingDataTest {
             scriptingData.initialize();
             Path diskPath = rootPath.resolve("scripting-disks").resolve("123");
             Files.createDirectories(diskPath);
-            awaitCondition(() -> scriptingData.getDisks().contains(123));
+            awaitCondition(scriptingData, () -> scriptingData.getDisks().contains(123));
 
             Path scriptPath = Path.of("main.js");
             int observedValue = writeScriptValueUntilObserved(
@@ -323,7 +323,7 @@ public class ScriptingDataTest {
                 Files.writeString(diskPath.resolve("new" + i + ".js"), "new");
             }
 
-            awaitCondition(() -> scriptingData.getScripts(901).keySet().equals(Sets.newHashSet(
+            awaitCondition(scriptingData, () -> scriptingData.getScripts(901).keySet().equals(Sets.newHashSet(
                     Path.of("new0.js"), Path.of("new1.js"), Path.of("new2.js"), Path.of("new3.js"))));
         } finally {
             scriptingData.close();
@@ -344,36 +344,39 @@ public class ScriptingDataTest {
             // A file in a new nested directory
             Files.createDirectories(diskPath.resolve("lib").resolve("helpers"));
             Files.writeString(diskPath.resolve("lib").resolve("helpers").resolve("a.js"), "a");
-            awaitCondition(() -> "a".equals(scriptingData.getScripts(902).get(Path.of("lib/helpers/a.js"))));
+            awaitCondition(scriptingData, () -> "a".equals(scriptingData.getScripts(902).get(Path.of("lib/helpers/a.js"))));
 
             // A file in the intermediate directory, which contains no scripts yet
             Files.writeString(diskPath.resolve("lib").resolve("b.js"), "b");
-            awaitCondition(() -> "b".equals(scriptingData.getScripts(902).get(Path.of("lib/b.js"))));
+            awaitCondition(scriptingData, () -> "b".equals(scriptingData.getScripts(902).get(Path.of("lib/b.js"))));
 
             // A file in an empty directory that already existed
             Files.createDirectories(diskPath.resolve("empty"));
             Files.writeString(diskPath.resolve("main.js"), "main2");
-            awaitCondition(() -> "main2".equals(scriptingData.getScripts(902).get(Path.of("main.js"))));
+            awaitCondition(scriptingData, () -> "main2".equals(scriptingData.getScripts(902).get(Path.of("main.js"))));
             Files.writeString(diskPath.resolve("empty").resolve("c.js"), "c");
-            awaitCondition(() -> "c".equals(scriptingData.getScripts(902).get(Path.of("empty/c.js"))));
+            awaitCondition(scriptingData, () -> "c".equals(scriptingData.getScripts(902).get(Path.of("empty/c.js"))));
         } finally {
             scriptingData.close();
             FileUtils.deleteDirectory(rootPath.toFile());
         }
     }
 
-    private static void awaitCondition(Condition condition) throws InterruptedException {
-        assertTrue("Timed out waiting for condition", awaitCondition(condition, AWAIT_TIMEOUT_MS));
+    private static void awaitCondition(ScriptingData scriptingData, Condition condition) throws InterruptedException {
+        assertTrue("Timed out waiting for condition", awaitCondition(scriptingData, condition, AWAIT_TIMEOUT_MS));
     }
 
-    private static boolean awaitCondition(Condition condition, int timeoutMs) throws InterruptedException {
+    private static boolean awaitCondition(ScriptingData scriptingData, Condition condition, int timeoutMs) throws InterruptedException {
         long deadline = System.currentTimeMillis() + timeoutMs;
         while (System.currentTimeMillis() < deadline) {
+            // External changes are applied on tick
+            scriptingData.tick();
             if (condition.matches()) {
                 return true;
             }
             Thread.sleep(POLLING_INTERVAL_MS);
         }
+        scriptingData.tick();
         return condition.matches();
     }
 
@@ -384,7 +387,7 @@ public class ScriptingDataTest {
         while (System.currentTimeMillis() < deadline) {
             String expectedScriptValue = scriptValue(value);
             Files.writeString(scriptPathAbsolute, expectedScriptValue);
-            if (awaitCondition(() -> expectedScriptValue.equals(scriptingData.getScripts(disk).get(scriptPathRelative)),
+            if (awaitCondition(scriptingData, () -> expectedScriptValue.equals(scriptingData.getScripts(disk).get(scriptPathRelative)),
                     ATTEMPT_TIMEOUT_MS)) {
                 return value;
             }

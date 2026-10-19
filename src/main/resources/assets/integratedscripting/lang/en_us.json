@@ -29,7 +29,7 @@
   "gui.integratedscripting.open_folder": "Open scripts folder",
   "gui.integratedscripting.find": "Find",
   "gui.integratedscripting.focus_mode.enter": "Enlarge editor",
-  "gui.integratedscripting.focus_mode.exit": "Back to normal size (Escape)",
+  "gui.integratedscripting.focus_mode.exit": "Back to normal size",
   "gui.integratedscripting.goto_line": "Go to line",
   "gui.integratedscripting.find.label": "Find:",
   "gui.integratedscripting.goto_line.label": "Line:",
@@ -44,6 +44,7 @@
   "gui.integratedscripting.rename_dialog.message": "New path, such as dir/name.js:",
   "gui.integratedscripting.rename_dialog.rename": "Rename",
   "gui.integratedscripting.rename_dialog.cancel": "Cancel",
+  "gui.integratedscripting.rename_dialog.warning": "Variable cards bound to this script will stop working.",
   "gui.integratedscripting.rename_hint": "Right-click to rename",
   "gui.integratedscripting.error.invalid_member": "Select a valid function name or variable name inside the script editor to bind with.",
   "gui.integratedscripting.error.invalid_member.current": "Current selection: \"%s\"",
@@ -63,6 +64,7 @@
   "key.integratedscripting.comment": "Toggle comment",
   "key.integratedscripting.move_lines_up": "Move lines up",
   "key.integratedscripting.move_lines_down": "Move lines down",
+  "key.integratedscripting.focus_mode": "Enlarge editor",
 
   "_comment": "Value Type Translation",
   "valuetype.integratedscripting.error.translation.unknown_to_graal": "Could not find a translator from %s values to Graal.",
@@ -155,7 +157,7 @@
   "info_book.integratedscripting.terminal_shortcuts.text2": "Some keys can not be changed: &oTab&r and &oShift+Tab&r indent and unindent the selected lines, &oPage Up&r and &oPage Down&r move by a page, &oCtrl+Left&r and &oCtrl+Right&r (&oOption&r on Mac) move by word, &oHome&r and &oEnd&r (also &oCmd+Left&r and &oCmd+Right&r on Mac) move to the start or end of the line, &oCtrl+Home&r and &oCtrl+End&r (also &oCmd+Up&r and &oCmd+Down&r on Mac) move to the start or end of the script, and &oCtrl+Shift+Z&r (&oCmd+Shift+Z&r on Mac) also redoes.",
   "info_book.integratedscripting.terminal_shortcuts.text3": "While finding text or going to a line, &oEnter&r and &oShift+Enter&r go to the next and previous match, and &oEscape&r closes the search bar.",
   "info_book.integratedscripting.terminal_shortcuts.text4": "To rename a script, right-click it in the script list.",
-  "info_book.integratedscripting.terminal_shortcuts.text5": "In focus mode, &oEscape&r returns to the normal terminal.",
+  "info_book.integratedscripting.terminal_shortcuts.text5": "When the editor is enlarged, &oEscape&r also returns to the normal terminal.",
 
   "info_book.integratedscripting.writing": "Writing Scripts",
 
@@ -188,7 +190,7 @@
   "info_book.integratedscripting.writing.methods.text1": "To counter the verbosity of global functions, you can write code more compactly using &lobject methods&r.",
   "info_book.integratedscripting.writing.methods.text2": "Object value types such as &8Blocks&0, &8Items&0, &8Fluids&0, ... will have &lmethods&r attached to them when used in JavaScript.",
   "info_book.integratedscripting.writing.methods.text3": "Object methods are just plain functions, but their first argument is tied to the object value.",
-  "info_book.integratedscripting.writing.methods.text4": "For example, the global function &oitemstackStackable&r takes a single &8Item&0 argument and outputs a &9Boolean&0. This function is available as a method on &8Item&0 values via the name &ostackable&r, which takes zero arguments.",
+  "info_book.integratedscripting.writing.methods.text4": "For example, the global function &oitemstackIsStackable&r takes a single &8Item&0 argument and outputs a &9Boolean&0. This function is available as a method on &8Item&0 values via the name &oisStackable&r, which takes zero arguments.",
   "info_book.integratedscripting.writing.methods.text5": "Global functions that accept two or more arguments will be available as methods on object values, with all arguments shifted by one. For example, the global function &oitemstackStrength&r accepts an &8Item&0 and a &8Block&0 argument, but is also available as method on &8Items&0 with a single &8Block&0 argument.",
 
   "info_book.integratedscripting.advanced": "Advanced",
@@ -247,5 +249,5 @@
   "info_book.integratedscripting.tutorials.functions.text4": "Concretely, we will read the list of items using the &lInventory Reader&r, and &lFilter&r it using our newly created function. You can bind the function to a &lVariable Card&r by selecting it in the editor and inserting an empty &lVariable Card&r, which will store it as an &2Operator&0.",
   "info_book.integratedscripting.tutorials.functions.text5": "You are free to use any implementation of the filter function for this tutorial. Hereafter, you can find a valid example script which you are free to copy.",
   "info_book.integratedscripting.tutorials.functions.text6": "To complete the tutorial, show the result of the filtered list in a &lDisplay Panel&r.",
-  "info_book.integratedscripting.tutorials.functions.text7": "In this example script, you will see that you can invoke built-in methods on items such as &oisStackable()&r and &ostacksize()&r. More details on which methods are available can be found later in the full manual."
+  "info_book.integratedscripting.tutorials.functions.text7": "In this example script, you will see that you can invoke built-in methods on items such as &oisStackable()&r and &osize()&r. More details on which methods are available can be found later in the full manual."
 }
