@@ -24,6 +24,7 @@ import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.StringUtil;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.neoforged.fml.ModList;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.logging.log4j.Level;
 import org.cyclops.cyclopscore.client.gui.component.WidgetScrollBar;
@@ -87,6 +88,8 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     public static int SCRIPT_WIDTH = 168;
     public static int SCRIPT_HEIGHT = 115;
     public static int FOCUS_MARGIN = 20;
+    // JEI keeps its bookmark and config buttons in the bottom corners, even when its overlay is hidden
+    public static int FOCUS_MARGIN_JEI = 28;
 
     private final Player player;
 
@@ -159,8 +162,9 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
         if (focusMode) {
             // Let the editor take up most of the screen
-            int height = (this.height - 2 * FOCUS_MARGIN) / WidgetTextArea.ROW_HEIGHT * WidgetTextArea.ROW_HEIGHT;
-            textArea = new WidgetTextArea(Minecraft.getInstance().font, FOCUS_MARGIN, FOCUS_MARGIN, this.width - 2 * FOCUS_MARGIN, height, Component.translatable("gui.integratedscripting.script"), true, true);
+            int margin = getFocusMargin();
+            int height = (this.height - 2 * margin) / WidgetTextArea.ROW_HEIGHT * WidgetTextArea.ROW_HEIGHT;
+            textArea = new WidgetTextArea(Minecraft.getInstance().font, margin, margin, this.width - 2 * margin, height, Component.translatable("gui.integratedscripting.script"), true, true);
         } else {
             textArea = new WidgetTextArea(Minecraft.getInstance().font, this.leftPos + SCRIPT_X + 1, this.topPos + SCRIPT_Y + 1, SCRIPT_WIDTH, SCRIPT_HEIGHT, Component.translatable("gui.integratedscripting.script"), true, true);
         }
@@ -218,7 +222,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         }
 
         if (focusMode) {
-            this.addToolbar(this.width - FOCUS_MARGIN, FOCUS_MARGIN - 12);
+            this.addToolbar(this.width - getFocusMargin(), getFocusMargin() - 12);
         } else {
             this.addToolbar(this.leftPos + SCRIPT_X + SCRIPT_WIDTH, this.topPos + 5);
         }
@@ -384,7 +388,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             guiGraphics.fill(textArea.getX() - 1, textArea.getY() - 1, textArea.getX() + textArea.getWidth() + 1, textArea.getY() + textArea.getHeight() + 1, Helpers.RGBAToInt(224, 224, 224, 255));
             Path path = getMenu().getActiveScriptPath();
             if (path != null) {
-                guiGraphics.drawString(font, path.toString(), FOCUS_MARGIN, FOCUS_MARGIN - 11, 16777215);
+                guiGraphics.drawString(font, path.toString(), getFocusMargin(), getFocusMargin() - 11, 16777215);
             }
             for (net.minecraft.client.gui.components.Renderable renderable : this.renderables) {
                 renderable.render(guiGraphics, mouseX, mouseY, partialTicks);
@@ -739,6 +743,10 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
     public void setFirstRow(int firstRow) {
         this.firstRow = firstRow;
+    }
+
+    protected int getFocusMargin() {
+        return ModList.get().isLoaded("jei") ? FOCUS_MARGIN_JEI : FOCUS_MARGIN;
     }
 
     public boolean isFocusMode() {
