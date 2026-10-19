@@ -28,6 +28,7 @@ import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.StringUtil;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -35,6 +36,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.mutable.MutableBoolean;
 import org.apache.commons.lang3.mutable.MutableInt;
 import org.apache.commons.lang3.tuple.Pair;
+import org.joml.Vector2i;
 import org.cyclops.cyclopscore.client.gui.component.WidgetScrollBar;
 import org.cyclops.cyclopscore.client.gui.component.input.IInputListener;
 import org.cyclops.cyclopscore.helper.Helpers;
@@ -72,6 +74,13 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     public static final int ROW_HEIGHT = 9;
     private static final int COMPLETION_ROWS = 6;
     public static final int SCROLLBAR_WIDTH = 14;
+    // Height of the arrow between a syntax error tooltip and its error
+    private static final int TOOLTIP_ARROW = 4;
+    // How far vanilla tooltip backgrounds extend beyond their contents
+    private static final int TOOLTIP_BORDER = 4;
+    // Colors of vanilla tooltips
+    private static final int TOOLTIP_BACKGROUND = 0xF0100010;
+    private static final int TOOLTIP_BORDER_COLOR = 0x505000FF;
 
     private final TextFieldHelperExtended textFieldHelper;
     private final Font font;
@@ -923,20 +932,62 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         int pos = Math.min(value.length(), TextEditing.lineOffset(value, this.syntaxError.line()) + Math.max(0, this.syntaxError.column() - 1));
         int line = findLineFromPos(displayCache.lineStarts, pos);
         int row = line - this.firstRow;
+        int errorCenterX = -1;
         if (row >= 0 && row < this.getHeight() / ROW_HEIGHT) {
             int x = this.font.width(value.substring(displayCache.lineStarts[line], pos));
             int width = pos < value.length() && value.charAt(pos) != '\n' ? this.font.width(value.substring(pos, pos + 1)) : 4;
             Pos2i screenPos = this.convertLocalToScreen(new Pos2i(x, row * ROW_HEIGHT));
             guiGraphics.fill(screenPos.x, screenPos.y + ROW_HEIGHT - 2, screenPos.x + width, screenPos.y + ROW_HEIGHT - 1, Helpers.RGBAToInt(220, 0, 0, 255));
+            errorCenterX = screenPos.x + width / 2;
         }
 
-        // Show the message when hovering the error line
+        // Show the message when hovering the error line, which may be wrapped over multiple rows
+        int top = Integer.MAX_VALUE;
+        int bottom = Integer.MIN_VALUE;
+        boolean hovering = false;
         for (LineInfo lineInfo : lines) {
-            if (lineInfo.lineNumber + 1 == this.syntaxError.line() && mouseX >= this.getX() && mouseX < this.getX() + this.getWidth()
-                    && mouseY >= lineInfo.y && mouseY < lineInfo.y + ROW_HEIGHT && Minecraft.getInstance().screen != null) {
-                Minecraft.getInstance().screen.setTooltipForNextRenderPass(this.font.split(Component.literal(this.syntaxError.message()), 200));
+            if (lineInfo.lineNumber + 1 == this.syntaxError.line()) {
+                top = Math.min(top, lineInfo.y);
+                bottom = Math.max(bottom, lineInfo.y + ROW_HEIGHT);
+                hovering |= mouseX >= this.getX() && mouseX < this.getX() + this.getWidth()
+                        && mouseY >= lineInfo.y && mouseY < lineInfo.y + ROW_HEIGHT;
             }
         }
+        if (hovering && Minecraft.getInstance().screen != null) {
+            List<FormattedCharSequence> message = this.font.split(Component.literal(this.syntaxError.message()), 200);
+            int screenHeight = Minecraft.getInstance().getWindow().getGuiScaledHeight();
+            // Same height as vanilla tooltips of text lines
+            int tooltipHeight = message.size() * 10 - (message.size() == 1 ? 2 : 0);
+
+            // Like in other editors, show the message below the line, or above it if there is no room
+            boolean below = bottom + TOOLTIP_ARROW + TOOLTIP_BORDER + tooltipHeight + TOOLTIP_BORDER <= screenHeight
+                    || top - TOOLTIP_ARROW - TOOLTIP_BORDER - tooltipHeight - TOOLTIP_BORDER < 0;
+            int tooltipY = below ? bottom + TOOLTIP_ARROW + TOOLTIP_BORDER : top - TOOLTIP_ARROW - TOOLTIP_BORDER - tooltipHeight;
+            int anchorX = errorCenterX >= 0 ? errorCenterX - 12 : mouseX + 12;
+            Minecraft.getInstance().screen.setTooltipForNextRenderPass(message, (screenWidth, screenHeightIgnored, mouseXIgnored, mouseYIgnored, width, height) ->
+                    new Vector2i(Math.max(TOOLTIP_BORDER, Math.min(anchorX, screenWidth - width - TOOLTIP_BORDER)), tooltipY), true);
+
+            // Point at the column of the error
+            if (errorCenterX >= 0) {
+                this.renderTooltipArrow(guiGraphics, errorCenterX, below ? bottom : top - 1, below);
+            }
+        }
+    }
+
+    /**
+     * Draw an arrow between a tooltip and the given position, in the style of vanilla tooltips.
+     */
+    private void renderTooltipArrow(GuiGraphics guiGraphics, int x, int tipY, boolean pointUp) {
+        guiGraphics.pose().pushPose();
+        // Same depth as tooltips
+        guiGraphics.pose().translate(0, 0, 400);
+        for (int i = 0; i < TOOLTIP_ARROW; i++) {
+            int y = pointUp ? tipY + i : tipY - i;
+            guiGraphics.fill(x - i, y, x + i + 1, y + 1, TOOLTIP_BACKGROUND);
+            guiGraphics.fill(x - i, y, x - i + 1, y + 1, TOOLTIP_BORDER_COLOR);
+            guiGraphics.fill(x + i, y, x + i + 1, y + 1, TOOLTIP_BORDER_COLOR);
+        }
+        guiGraphics.pose().popPose();
     }
 
     private void renderCharBackground(GuiGraphics guiGraphics, DisplayCache displayCache, int pos, int color) {
