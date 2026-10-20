@@ -25,6 +25,7 @@ org.cyclops.integratedscripting.evaluate.translation.translator
 org.cyclops.integratedscripting.gametest
 org.cyclops.integratedscripting.inventory.container
 org.cyclops.integratedscripting.item
+org.cyclops.integratedscripting.modcompat.jei
 org.cyclops.integratedscripting.network.packet
 org.cyclops.integratedscripting.part
 org.cyclops.integratedscripting.proxy
