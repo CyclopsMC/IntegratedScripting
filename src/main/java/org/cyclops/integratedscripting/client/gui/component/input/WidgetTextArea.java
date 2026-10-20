@@ -25,9 +25,13 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.BookEditScreen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.Rect2i;
+import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
+import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.util.Mth;
 import net.minecraft.util.StringUtil;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -39,6 +43,7 @@ import org.cyclops.cyclopscore.client.gui.component.WidgetScrollBar;
 import org.cyclops.cyclopscore.client.gui.component.input.IInputListener;
 import org.cyclops.cyclopscore.helper.Helpers;
 import org.cyclops.cyclopscore.helper.RenderHelpers;
+import org.cyclops.integratedscripting.api.language.ScriptCompletions;
 import org.cyclops.integratedscripting.api.language.ScriptSyntaxError;
 import org.cyclops.integratedscripting.client.key.Keys;
 import org.lwjgl.glfw.GLFW;
@@ -47,6 +52,7 @@ import javax.annotation.Nullable;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -68,6 +74,14 @@ import java.util.stream.Stream;
 public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     public static final int ROW_HEIGHT = 9;
+    private static final int COMPLETION_ROWS = 6;
+    // Colors of the completion and signature popups
+    private static final int POPUP_BACKGROUND = 0xFF202020;
+    private static final int POPUP_BORDER = 0xFFA0A0A0;
+    // Neutral, so the colors of value types stay readable
+    private static final int POPUP_SELECTED = 0xFF505050;
+    private static final int POPUP_TEXT = 0xFFE0E0E0;
+    private static final int POPUP_DETAIL = 0xFF909090;
     public static final int SCROLLBAR_WIDTH = 14;
 
     private final TextFieldHelperExtended textFieldHelper;
@@ -85,6 +99,19 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     private IInputListener listenerCursor;
     @Nullable
     private IMarkupProvider markupProvider;
+    @Nullable
+    private BiFunction<String, Integer, ScriptCompletions> completionProvider;
+    @Nullable
+    private BiFunction<String, Integer, Component> signatureProvider;
+    @Nullable
+    private ScriptCompletions completions;
+    private int completionIndex;
+    // Where the completions were last drawn, to handle clicks and scrolling on them
+    private int completionsX;
+    private int completionsY;
+    private int completionsWidth;
+    private int completionsFirstItem;
+    private int completionsRows;
     private WidgetTextArea.DisplayCache emptyDisplayCache = createEmptyDisplayCache();
     @Nullable
     private WidgetTextArea.DisplayCache displayCache = emptyDisplayCache;
@@ -257,6 +284,86 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         this.layout = null;
     }
 
+    public void setCompletionProvider(@Nullable BiFunction<String, Integer, ScriptCompletions> completionProvider) {
+        this.completionProvider = completionProvider;
+    }
+
+    public void setSignatureProvider(@Nullable BiFunction<String, Integer, Component> signatureProvider) {
+        this.signatureProvider = signatureProvider;
+    }
+
+    /**
+     * Only show completions while typing, not when moving the cursor.
+     */
+    private void updateCompletions(boolean textChanged) {
+        if (textChanged && this.completionProvider != null) {
+            ScriptCompletions completionsNew = this.completionProvider.apply(this.getValue(), this.getCursorPos());
+            if (completionsNew == null || this.completions == null || !completionsNew.items().equals(this.completions.items())) {
+                this.completionIndex = 0;
+            }
+            this.completions = completionsNew;
+        } else {
+            this.completions = null;
+        }
+    }
+
+    /**
+     * @return If completions were shown.
+     */
+    public boolean dismissCompletions() {
+        boolean shown = this.completions != null;
+        this.completions = null;
+        return shown;
+    }
+
+    private boolean completionKeyPressed(int key) {
+        int count = this.completions.items().size();
+        switch (key) {
+            case GLFW.GLFW_KEY_DOWN:
+                this.completionIndex = (this.completionIndex + 1) % count;
+                return true;
+            case GLFW.GLFW_KEY_UP:
+                this.completionIndex = (this.completionIndex + count - 1) % count;
+                return true;
+            case GLFW.GLFW_KEY_TAB:
+            case GLFW.GLFW_KEY_ENTER:
+            case GLFW.GLFW_KEY_KP_ENTER:
+                this.acceptCompletion();
+                return true;
+            case GLFW.GLFW_KEY_ESCAPE:
+                this.completions = null;
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * @return The row of the shown completions at the given position, or -1 if there is none.
+     */
+    private int getCompletionRowAt(double mouseX, double mouseY) {
+        if (this.completions == null || this.completionsRows == 0 || mouseX < this.completionsX || mouseX >= this.completionsX + this.completionsWidth
+                || mouseY < this.completionsY + 1 || mouseY >= this.completionsY + 1 + this.completionsRows * ROW_HEIGHT) {
+            return -1;
+        }
+        return Math.min((int) (mouseY - this.completionsY - 1) / ROW_HEIGHT, this.completionsRows - 1);
+    }
+
+    private void acceptCompletion() {
+        TextHistory.State before = this.getState();
+        // Replace the text directly instead of selecting it, as a selection would change the bound member
+        String insert = this.completions.items().get(this.completionIndex).name() + "(";
+        String value = this.getValue();
+        int cursorPos = this.getCursorPos();
+        int start = this.completions.start();
+        int newCursorPos = start + insert.length();
+        this.completions = null;
+        this.setState(new TextHistory.State(value.substring(0, start) + insert + value.substring(cursorPos), newCursorPos, newCursorPos));
+        this.recordHistory(before, false);
+        this.clearDisplayCache();
+        this.ensureCursorVisible();
+    }
+
     public void setValue(String value) {
         this.firstRow = 0;
         // Another script may have the same contents but another language
@@ -352,6 +459,14 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+        // Insert a clicked completion
+        int completionRow = this.getCompletionRowAt(mouseX, mouseY);
+        if (completionRow >= 0 && mouseButton == 0) {
+            this.completionIndex = this.completionsFirstItem + completionRow;
+            this.acceptCompletion();
+            return true;
+        }
+        this.completions = null;
         if (mouseButton == 1 && mouseX >= this.getX() && mouseX < this.getX() + this.width
                 && mouseY >= this.getY() && mouseY < this.getY() + this.height) {
             // Don't select everything on right-click, as typing would then replace the whole script
@@ -404,6 +519,11 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double mouseZ, double scroll) {
+        // Move through the completions when scrolling on them
+        if (scroll != 0 && this.getCompletionRowAt(mouseX, mouseY) >= 0) {
+            this.completionIndex = Mth.clamp(this.completionIndex - (int) Math.signum(scroll), 0, this.completions.items().size() - 1);
+            return true;
+        }
         if (this.scrollBar != null && mouseX >= this.getX() && mouseX < this.getX() + this.width
                 && mouseY >= this.getY() && mouseY < this.getY() + this.height
                 && this.scrollBar.mouseScrolled(mouseX, mouseY, mouseZ, scroll)) {
@@ -451,6 +571,9 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     @Override
     public boolean keyPressed(int typedChar, int keyCode, int modifiers) {
+        if (this.completions != null && this.completionKeyPressed(typedChar)) {
+            return true;
+        }
         if (this.shortcutListener != null && this.shortcutListener.keyPressed(typedChar, keyCode, modifiers)) {
             return true;
         }
@@ -461,6 +584,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             if (!history) {
                 this.recordHistory(before, false);
             }
+            this.updateCompletions(!history && !before.value().equals(this.getValue()));
             this.clearDisplayCache();
             this.setFocused(true);
             this.ensureCursorVisible();
@@ -481,6 +605,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             TextHistory.State before = this.getState();
             this.textFieldHelper.insertText(Character.toString(typedChar));
             this.recordHistory(before, true);
+            this.updateCompletions(true);
             this.clearDisplayCache();
             this.setFocused(true);
             this.ensureCursorVisible();
@@ -803,6 +928,19 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         this.renderHighlight(displayCache.selection);
         if (displayCache.cursor != null) {
             this.renderCursor(guiGraphics, displayCache.cursor, displayCache.cursorAtEnd);
+
+            // Show completions while typing, or else the signature of the call at the cursor
+            if (this.isFocused()) {
+                Pos2i cursor = this.convertLocalToScreen(displayCache.cursor);
+                if (this.completions != null) {
+                    this.renderCompletions(guiGraphics, cursor);
+                } else if (this.signatureProvider != null) {
+                    Component signature = this.signatureProvider.apply(this.getValue(), this.getCursorPos());
+                    if (signature != null) {
+                        this.renderSignature(guiGraphics, cursor, signature);
+                    }
+                }
+            }
         }
 
         // Render scrollbar
@@ -852,6 +990,90 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         int width = this.font.width(value.substring(pos, pos + 1));
         Pos2i screenPos = this.convertLocalToScreen(new Pos2i(x, row * ROW_HEIGHT));
         guiGraphics.fill(screenPos.x, screenPos.y - 1, screenPos.x + width, screenPos.y + ROW_HEIGHT - 1, color);
+    }
+
+    private void renderCompletions(GuiGraphics guiGraphics, Pos2i cursor) {
+        List<ScriptCompletions.Item> items = this.completions.items();
+        int rows = Math.min(items.size(), COMPLETION_ROWS);
+        int firstItem = Math.max(0, Math.min(this.completionIndex - rows / 2, items.size() - rows));
+        // Grow beyond the editor if needed, as signatures can be long
+        int width = getTextWidth();
+        for (int i = 0; i < rows; i++) {
+            ScriptCompletions.Item item = items.get(firstItem + i);
+            width = Math.max(width, this.font.width(item.name()) + 4 + this.font.width(item.detail()) + 2);
+        }
+        Pair<Integer, Integer> xAndWidth = this.fitHorizontally(width);
+        int x = xAndWidth.getLeft();
+        width = xAndWidth.getRight();
+        int height = rows * ROW_HEIGHT + 2;
+        // Show below the line of the cursor if possible, otherwise above it
+        int y = cursor.y + ROW_HEIGHT;
+        if (y + height > this.getY() + this.getHeight() && cursor.y - height - 1 >= this.getY()) {
+            y = cursor.y - height - 1;
+        }
+        this.completionsX = x;
+        this.completionsY = y;
+        this.completionsWidth = width;
+        this.completionsFirstItem = firstItem;
+        this.completionsRows = rows;
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(0, 0, 200);
+        // Dark, like tooltips, as the colors of value types are made for those
+        guiGraphics.fill(x - 1, y - 1, x + width + 1, y + height + 1, POPUP_BORDER);
+        guiGraphics.fill(x, y, x + width, y + height, POPUP_BACKGROUND);
+        for (int i = 0; i < rows; i++) {
+            ScriptCompletions.Item item = items.get(firstItem + i);
+            int rowY = y + 1 + i * ROW_HEIGHT;
+            if (firstItem + i == this.completionIndex) {
+                guiGraphics.fill(x, rowY, x + width, rowY + ROW_HEIGHT, POPUP_SELECTED);
+            }
+            String name = this.font.plainSubstrByWidth(item.name(), width - 2);
+            guiGraphics.drawString(this.font, name, x + 1, rowY + 1, POPUP_TEXT, false);
+            int detailX = x + 1 + this.font.width(name) + 4;
+            int detailWidth = x + width - 1 - detailX;
+            if (detailWidth > 10) {
+                guiGraphics.drawString(this.font, this.truncate(item.detail(), detailWidth), detailX, rowY + 1, POPUP_DETAIL, false);
+            }
+        }
+        guiGraphics.pose().popPose();
+    }
+
+    /**
+     * @return The x position and width of a popup at the start of the text, moved left if it would leave the screen.
+     */
+    private Pair<Integer, Integer> fitHorizontally(int width) {
+        int screenWidth = Minecraft.getInstance().getWindow().getGuiScaledWidth();
+        width = Math.min(width, screenWidth - 4);
+        int x = Math.min(this.getX() + getLinesXOffset(), screenWidth - 2 - width);
+        return Pair.of(x, width);
+    }
+
+    private void renderSignature(GuiGraphics guiGraphics, Pos2i cursor, Component signature) {
+        Pair<Integer, Integer> xAndWidth = this.fitHorizontally(this.font.width(signature) + 2);
+        int x = xAndWidth.getLeft();
+        int width = xAndWidth.getRight();
+        // Show above the line of the cursor if possible, otherwise below it
+        int y = cursor.y - ROW_HEIGHT - 1;
+        if (y < this.getY() - 1) {
+            y = cursor.y + ROW_HEIGHT + 1;
+        }
+        guiGraphics.pose().pushPose();
+        guiGraphics.pose().translate(0, 0, 200);
+        guiGraphics.fill(x - 1, y - 1, x + width + 1, y + ROW_HEIGHT + 1, POPUP_BORDER);
+        guiGraphics.fill(x, y, x + width, y + ROW_HEIGHT, POPUP_BACKGROUND);
+        guiGraphics.drawString(this.font, this.truncate(signature, width - 2), x + 1, y + 1, POPUP_TEXT, false);
+        guiGraphics.pose().popPose();
+    }
+
+    /**
+     * @return The text, cut off with an ellipsis if it is wider than the given width.
+     */
+    private FormattedCharSequence truncate(Component text, int width) {
+        if (this.font.width(text) <= width) {
+            return text.getVisualOrderText();
+        }
+        FormattedText truncated = FormattedText.composite(this.font.substrByWidth(text, Math.max(0, width - this.font.width("\u2026"))), FormattedText.of("\u2026"));
+        return Language.getInstance().getVisualOrder(truncated);
     }
 
     private void renderCursor(GuiGraphics guiGraphics, Pos2i pos, boolean cursorAtEnd) {

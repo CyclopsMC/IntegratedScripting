@@ -191,6 +191,14 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         });
         textArea.setListenerSelection(this::onSelectionModified);
         textArea.setListenerCursor(this::onSelectionModified);
+        textArea.setCompletionProvider((text, cursor) -> {
+            ILanguageHandler languageHandler = getActiveLanguageHandler();
+            return languageHandler != null ? languageHandler.getCompletions(text, cursor) : null;
+        });
+        textArea.setSignatureProvider((text, cursor) -> {
+            ILanguageHandler languageHandler = getActiveLanguageHandler();
+            return languageHandler != null ? languageHandler.getSignatureHint(text, cursor) : null;
+        });
         textArea.setMarkupProvider(text -> {
             Path path = getMenu().getActiveScriptPath();
             ILanguageHandler languageHandler = path != null ? LanguageHandlers.REGISTRY.getProvider(path) : null;
@@ -752,6 +760,12 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         this.firstRow = firstRow;
     }
 
+    @Nullable
+    private ILanguageHandler getActiveLanguageHandler() {
+        Path path = getMenu().getActiveScriptPath();
+        return path != null ? LanguageHandlers.REGISTRY.getProvider(path) : null;
+    }
+
     private void onActiveScriptSelected() {
         String script = getMenu().getActiveScript();
         this.textArea.setValue(script == null ? "" : script);
@@ -926,6 +940,11 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         // Close the search bar before closing the screen
         if (this.searchBar != null && typedChar == GLFW.GLFW_KEY_ESCAPE) {
             closeNavigate();
+            return true;
+        }
+
+        // Close completions before leaving focus mode or closing the screen
+        if (typedChar == GLFW.GLFW_KEY_ESCAPE && this.textArea.isFocused() && this.textArea.dismissCompletions()) {
             return true;
         }
 

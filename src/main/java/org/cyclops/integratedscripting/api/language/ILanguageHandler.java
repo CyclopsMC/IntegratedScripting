@@ -1,5 +1,6 @@
 package org.cyclops.integratedscripting.api.language;
 
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -63,6 +64,26 @@ public interface ILanguageHandler {
      */
     @Nullable
     public default Set<String> getTopLevelMembers(String script) {
+        return null;
+    }
+
+    /**
+     * @param script The script contents.
+     * @param cursor The cursor position.
+     * @return Completion candidates at the cursor, or null if there are none.
+     */
+    @Nullable
+    public default ScriptCompletions getCompletions(String script, int cursor) {
+        return null;
+    }
+
+    /**
+     * @param script The script contents.
+     * @param cursor The cursor position.
+     * @return The signature of the function call the cursor is in, or null if unknown.
+     */
+    @Nullable
+    public default Component getSignatureHint(String script, int cursor) {
         return null;
     }
 
