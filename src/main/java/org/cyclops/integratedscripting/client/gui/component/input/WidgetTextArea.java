@@ -28,6 +28,7 @@ import net.minecraft.client.renderer.Rect2i;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
+import net.minecraft.util.Mth;
 import net.minecraft.util.StringUtil;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -95,6 +96,12 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     @Nullable
     private ScriptCompletions completions;
     private int completionIndex;
+    // Where the completions were last drawn, to handle clicks and scrolling on them
+    private int completionsX;
+    private int completionsY;
+    private int completionsWidth;
+    private int completionsFirstItem;
+    private int completionsRows;
     private WidgetTextArea.DisplayCache emptyDisplayCache = createEmptyDisplayCache();
     @Nullable
     private WidgetTextArea.DisplayCache displayCache = emptyDisplayCache;
@@ -321,6 +328,17 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         }
     }
 
+    /**
+     * @return The row of the shown completions at the given position, or -1 if there is none.
+     */
+    private int getCompletionRowAt(double mouseX, double mouseY) {
+        if (this.completions == null || this.completionsRows == 0 || mouseX < this.completionsX || mouseX >= this.completionsX + this.completionsWidth
+                || mouseY < this.completionsY + 1 || mouseY >= this.completionsY + 1 + this.completionsRows * ROW_HEIGHT) {
+            return -1;
+        }
+        return Math.min((int) (mouseY - this.completionsY - 1) / ROW_HEIGHT, this.completionsRows - 1);
+    }
+
     private void acceptCompletion() {
         TextHistory.State before = this.getState();
         // Replace the text directly instead of selecting it, as a selection would change the bound member
@@ -431,6 +449,13 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     @Override
     public boolean mouseClicked(double mouseX, double mouseY, int mouseButton) {
+        // Insert a clicked completion
+        int completionRow = this.getCompletionRowAt(mouseX, mouseY);
+        if (completionRow >= 0 && mouseButton == 0) {
+            this.completionIndex = this.completionsFirstItem + completionRow;
+            this.acceptCompletion();
+            return true;
+        }
         this.completions = null;
         if (mouseButton == 1 && mouseX >= this.getX() && mouseX < this.getX() + this.width
                 && mouseY >= this.getY() && mouseY < this.getY() + this.height) {
@@ -484,6 +509,11 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     @Override
     public boolean mouseScrolled(double mouseX, double mouseY, double mouseZ, double scroll) {
+        // Move through the completions when scrolling on them
+        if (scroll != 0 && this.getCompletionRowAt(mouseX, mouseY) >= 0) {
+            this.completionIndex = Mth.clamp(this.completionIndex - (int) Math.signum(scroll), 0, this.completions.items().size() - 1);
+            return true;
+        }
         if (this.scrollBar != null && mouseX >= this.getX() && mouseX < this.getX() + this.width
                 && mouseY >= this.getY() && mouseY < this.getY() + this.height
                 && this.scrollBar.mouseScrolled(mouseX, mouseY, mouseZ, scroll)) {
@@ -971,6 +1001,11 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         if (y + height > this.getY() + this.getHeight() && cursor.y - height - 1 >= this.getY()) {
             y = cursor.y - height - 1;
         }
+        this.completionsX = x;
+        this.completionsY = y;
+        this.completionsWidth = width;
+        this.completionsFirstItem = firstItem;
+        this.completionsRows = rows;
         guiGraphics.pose().pushPose();
         guiGraphics.pose().translate(0, 0, 200);
         guiGraphics.fill(x - 1, y - 1, x + width + 1, y + height + 1, Helpers.RGBAToInt(80, 80, 80, 255));
