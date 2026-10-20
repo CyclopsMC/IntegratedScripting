@@ -3,7 +3,6 @@ package org.cyclops.integratedscripting.client.gui.container;
 import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.mojang.blaze3d.systems.RenderSystem;
 import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import net.minecraft.client.KeyMapping;
@@ -87,6 +86,8 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     public static int SCRIPT_Y = 18;
     public static int SCRIPT_WIDTH = 168;
     public static int SCRIPT_HEIGHT = 115;
+    // Darkens areas that are not usable yet
+    private static final int INACTIVE_OVERLAY = Helpers.RGBAToInt(0, 0, 0, 60);
     public static int FOCUS_MARGIN = 20;
     // JEI keeps its bookmark and config buttons in the bottom corners, even when its overlay is hidden
     public static int FOCUS_MARGIN_JEI = 28;
@@ -151,7 +152,8 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         fieldDisk.setTextColor(16777215);
         fieldDisk.setCanLoseFocus(true);
         fieldDisk.setEditable(true);
-        fieldDisk.setValue(String.valueOf(getMenu().getActiveDisk()));
+        // Without disks, the active disk is -1, which is not a real disk
+        fieldDisk.setValue(getMenu().getActiveDisk() >= 0 ? String.valueOf(getMenu().getActiveDisk()) : "");
 
         scrollBar = new WidgetScrollBar(leftPos + 5, topPos + 18, 162,
                 Component.translatable("gui.cyclopscore.scrollbar"), this::setFirstRow, PATHS_MAX_ROWS) {
@@ -216,7 +218,8 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
                 (button) -> this.createNewFile(), true);
         buttonOpenFolder = null;
         buttonOpenFolderDisk = Integer.MIN_VALUE;
-        if (!focusMode) {
+        // Scripts can only be created or opened on a disk
+        if (!focusMode && !getMenu().getAvailableDisks().isEmpty()) {
             addRenderableWidget(buttonCreateFile);
             if (canOpenFolder) {
                 buttonOpenFolder = new ButtonIcon(this.leftPos + PATHS_X + PATHS_WIDTH - 10, this.topPos + 222, 10, 10,
@@ -440,20 +443,36 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             this.renderScriptPaths(guiGraphics, mouseX, mouseY, partialTicks);
         } else {
             // Gray-out editor and file list
-            RenderSystem.setShaderColor(0.3F, 0.3F, 0.3F, 0.3F);
-            guiGraphics.fill(leftPos + PATHS_X, topPos + PATHS_Y, leftPos + PATHS_X + PATHS_WIDTH, topPos + PATHS_Y + PATHS_HEIGHT, Helpers.RGBAToInt(50, 50, 50, 100));
-            RenderSystem.setShaderColor(1, 1, 1, 1);
+            guiGraphics.fill(leftPos + PATHS_X, topPos + PATHS_Y, leftPos + PATHS_X + PATHS_WIDTH, topPos + PATHS_Y + PATHS_HEIGHT, INACTIVE_OVERLAY);
         }
 
         if (this.getMenu().getActiveScript() == null) {
             // Gray-out editor and file list
-            RenderSystem.setShaderColor(0.3F, 0.3F, 0.3F, 0.3F);
-            guiGraphics.fill(leftPos + SCRIPT_X_INNER, topPos + SCRIPT_Y, leftPos + SCRIPT_X_INNER + SCRIPT_WIDTH, topPos + SCRIPT_Y + SCRIPT_HEIGHT, Helpers.RGBAToInt(50, 50, 50, 100));
-            RenderSystem.setShaderColor(1, 1, 1, 1);
+            // Gray-out the whole editor, but center the hint right of the line numbers
+            int editorX = leftPos + SCRIPT_X_INNER;
+            int editorY = topPos + SCRIPT_Y + 1;
+            int editorWidth = SCRIPT_X + 1 + SCRIPT_WIDTH - SCRIPT_X_INNER;
+            guiGraphics.fill(leftPos + SCRIPT_X + 1, editorY, editorX + editorWidth, editorY + SCRIPT_HEIGHT, INACTIVE_OVERLAY);
+
+            // Explain what to do to start editing, centered in the editor
+            List<FormattedCharSequence> lines = font.split(getEmptyEditorHint(), editorWidth - 8);
+            int lineY = editorY + (SCRIPT_HEIGHT - lines.size() * font.lineHeight) / 2;
+            for (FormattedCharSequence line : lines) {
+                guiGraphics.drawString(font, line, editorX + (editorWidth - font.width(line)) / 2, lineY, Helpers.RGBToInt(60, 60, 60), false);
+                lineY += font.lineHeight;
+            }
         }
 
         displayErrors.drawBackground(guiGraphics, getMenu().getReadErrors(), getErrorX(), getErrorY(), getErrorX(), getErrorY(), this,
                 this.leftPos, this.topPos, getMenu().canWriteScriptToVariable());
+    }
+
+    protected Component getEmptyEditorHint() {
+        if (getMenu().getAvailableDisks().isEmpty()) {
+            return Component.translatable("gui.integratedscripting.hint.no_disks");
+        }
+        Map<Path, String> scripts = getActiveScripts();
+        return Component.translatable(scripts == null || scripts.isEmpty() ? "gui.integratedscripting.hint.no_scripts" : "gui.integratedscripting.hint.select_script");
     }
 
     @Nullable
