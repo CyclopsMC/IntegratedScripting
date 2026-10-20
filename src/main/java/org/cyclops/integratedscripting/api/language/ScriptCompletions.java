@@ -1,5 +1,7 @@
 package org.cyclops.integratedscripting.api.language;
 
+import net.minecraft.network.chat.Component;
+
 import java.util.List;
 
 /**
@@ -14,7 +16,7 @@ public record ScriptCompletions(int start, List<Item> items) {
      * @param name The text to insert.
      * @param detail A short description, such as a signature.
      */
-    public record Item(String name, String detail) {
+    public record Item(String name, Component detail) {
     }
 
 }
