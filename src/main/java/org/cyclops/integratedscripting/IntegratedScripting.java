@@ -37,6 +37,7 @@ import org.cyclops.integratedscripting.capability.ScriptingNetworkCapabilityCons
 import org.cyclops.integratedscripting.command.CommandTestScript;
 import org.cyclops.integratedscripting.component.DataComponentDiskIdConfig;
 import org.cyclops.integratedscripting.core.client.model.ScriptingVariableModelProviders;
+import org.cyclops.integratedscripting.core.evaluate.ScriptEvaluationStatuses;
 import org.cyclops.integratedscripting.core.evaluate.ScriptVariableFacadeHandler;
 import org.cyclops.integratedscripting.core.packageddependencies.PackagedDependenciesLoader;
 import org.cyclops.integratedscripting.core.language.LanguageHandlerRegistry;
@@ -128,6 +129,7 @@ public class IntegratedScripting extends ModBaseVersionable<IntegratedScripting>
         }
         this.scriptingData = null;
         EvaluationExceptionResolutionHelpers.reset();
+        ScriptEvaluationStatuses.reset();
     }
 
     @SubscribeEvent

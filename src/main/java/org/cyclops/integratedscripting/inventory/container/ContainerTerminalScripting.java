@@ -40,6 +40,7 @@ import org.cyclops.integratedscripting.api.language.ILanguageHandler;
 import org.cyclops.integratedscripting.api.language.ScriptSyntaxError;
 import org.cyclops.integratedscripting.api.network.IScriptingData;
 import org.cyclops.integratedscripting.api.network.IScriptingNetwork;
+import org.cyclops.integratedscripting.core.evaluate.ScriptEvaluationStatuses;
 import org.cyclops.integratedscripting.core.evaluate.ScriptVariableFacadeHandler;
 import org.cyclops.integratedscripting.core.item.ScriptVariableFacade;
 import org.cyclops.integratedscripting.core.language.LanguageHandlers;
@@ -80,6 +81,7 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
     private final int activeDiskId;
     private final int activeScriptPathId;
     private final int selectionId;
+    private final int cardEvaluationId;
     @Nullable
     private IRemoteScriptChangeListener remoteScriptChangeListener;
     private final Map<Pair<Integer, Path>, ScriptSyntaxError> syntaxErrors = Maps.newHashMap();
@@ -119,6 +121,7 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
         setActiveDisk(this.availableDisks.isEmpty() ? -1 : this.availableDisks.getInt(0));
         this.activeScriptPathId = getNextValueId();
         this.selectionId = getNextValueId();
+        this.cardEvaluationId = getNextValueId();
     }
 
 
@@ -235,7 +238,19 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
             });
 
             this.checkActiveScriptSyntax();
+
+            // Send the last evaluation of the bound card
+            IScriptVariableFacade cardFacade = getCardFacade();
+            ValueNotifierHelpers.setValue(this, cardEvaluationId, cardFacade == null ? Collections.emptyList()
+                    : ScriptEvaluationStatuses.describe(cardFacade.getDisk(), cardFacade.getPath(), cardFacade.getMember()));
         }
+    }
+
+    /**
+     * @return Lines describing the last evaluation of the bound card.
+     */
+    public List<MutableComponent> getCardEvaluation() {
+        return ValueNotifierHelpers.getValueTextComponentList(this, cardEvaluationId);
     }
 
     /**
@@ -432,13 +447,19 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
      */
     @Nullable
     public String getCardMember() {
+        IScriptVariableFacade facade = getCardFacade();
+        return facade != null ? facade.getMember() : null;
+    }
+
+    @Nullable
+    protected IScriptVariableFacade getCardFacade() {
         ItemStack itemStack = getContainerInventory().getItem(0);
         if (itemStack.isEmpty()) {
             return null;
         }
         IVariableFacadeHandlerRegistry registry = IntegratedDynamics._instance.getRegistryManager().getRegistry(IVariableFacadeHandlerRegistry.class);
         IVariableFacade variableFacade = registry.handle(ValueDeseralizationContext.of(getLevel()), itemStack);
-        return variableFacade instanceof IScriptVariableFacade scriptVariableFacade ? scriptVariableFacade.getMember() : null;
+        return variableFacade instanceof IScriptVariableFacade scriptVariableFacade ? scriptVariableFacade : null;
     }
 
     @Nullable
