@@ -2,15 +2,17 @@ package org.cyclops.integratedscripting.core.language;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
 import net.minecraft.network.chat.TextColor;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.cyclops.cyclopscore.client.gui.image.IImage;
 import org.cyclops.cyclopscore.helper.Helpers;
-import org.cyclops.cyclopscore.helper.L10NHelpers;
 import org.cyclops.integrateddynamics.api.evaluate.EvaluationException;
 import org.cyclops.integrateddynamics.api.evaluate.operator.IOperator;
+import org.cyclops.integrateddynamics.api.evaluate.variable.IValueType;
 import org.cyclops.integrateddynamics.core.evaluate.operator.Operators;
 import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.Reference;
@@ -35,7 +37,6 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * @author rubensworks
@@ -61,7 +62,7 @@ public class LanguageHandlerJavaScript implements ILanguageHandler {
     public final Map<String, Style> tokenStyles;
     private final IScriptFactory scriptFactory;
     @Nullable
-    private Map<String, String> operatorSignatures;
+    private Map<String, Component> operatorSignatures;
 
     public LanguageHandlerJavaScript() {
         this.tokenStyles = Maps.newHashMap();
@@ -189,24 +190,36 @@ public class LanguageHandlerJavaScript implements ILanguageHandler {
 
     @Nullable
     @Override
-    public String getSignatureHint(String script, int cursor) {
+    public Component getSignatureHint(String script, int cursor) {
         return JavaScriptCompletions.signatureHint(script, cursor, getOperatorSignatures());
     }
 
-    protected Map<String, String> getOperatorSignatures() {
+    protected Map<String, Component> getOperatorSignatures() {
         // Operators are registered once, so this can be cached
         if (this.operatorSignatures == null) {
-            Map<String, String> signatures = Maps.newHashMap();
+            Map<String, Component> signatures = Maps.newHashMap();
             for (Map.Entry<String, IOperator> entry : Operators.REGISTRY.getGlobalInteractOperators().entrySet()) {
                 IOperator operator = entry.getValue();
-                String inputs = Arrays.stream(operator.getInputTypes())
-                        .map(type -> L10NHelpers.localize(type.getTranslationKey()))
-                        .collect(Collectors.joining(", "));
-                signatures.put(entry.getKey(), "(" + inputs + "): " + L10NHelpers.localize(operator.getOutputType().getTranslationKey()));
+                MutableComponent signature = Component.literal("(");
+                IValueType<?>[] inputs = operator.getInputTypes();
+                for (int i = 0; i < inputs.length; i++) {
+                    if (i > 0) {
+                        signature.append(", ");
+                    }
+                    signature.append(getTypeName(inputs[i]));
+                }
+                signatures.put(entry.getKey(), signature.append("): ").append(getTypeName(operator.getOutputType())));
             }
             this.operatorSignatures = signatures;
         }
         return this.operatorSignatures;
+    }
+
+    /**
+     * @return The name of a value type in its color, as in tooltips.
+     */
+    protected static Component getTypeName(IValueType<?> type) {
+        return Component.translatable(type.getTranslationKey()).withStyle(type.getDisplayColorFormat());
     }
 
     @Override

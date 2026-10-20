@@ -25,9 +25,12 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.BookEditScreen;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.Rect2i;
+import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.FormattedText;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.network.chat.Style;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.Mth;
 import net.minecraft.util.StringUtil;
 import net.neoforged.api.distmarker.Dist;
@@ -72,6 +75,13 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
 
     public static final int ROW_HEIGHT = 9;
     private static final int COMPLETION_ROWS = 6;
+    // Colors of the completion and signature popups
+    private static final int POPUP_BACKGROUND = 0xFF202020;
+    private static final int POPUP_BORDER = 0xFFA0A0A0;
+    // Neutral, so the colors of value types stay readable
+    private static final int POPUP_SELECTED = 0xFF505050;
+    private static final int POPUP_TEXT = 0xFFE0E0E0;
+    private static final int POPUP_DETAIL = 0xFF909090;
     public static final int SCROLLBAR_WIDTH = 14;
 
     private final TextFieldHelperExtended textFieldHelper;
@@ -92,7 +102,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
     @Nullable
     private BiFunction<String, Integer, ScriptCompletions> completionProvider;
     @Nullable
-    private BiFunction<String, Integer, String> signatureProvider;
+    private BiFunction<String, Integer, Component> signatureProvider;
     @Nullable
     private ScriptCompletions completions;
     private int completionIndex;
@@ -278,7 +288,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         this.completionProvider = completionProvider;
     }
 
-    public void setSignatureProvider(@Nullable BiFunction<String, Integer, String> signatureProvider) {
+    public void setSignatureProvider(@Nullable BiFunction<String, Integer, Component> signatureProvider) {
         this.signatureProvider = signatureProvider;
     }
 
@@ -925,7 +935,7 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
                 if (this.completions != null) {
                     this.renderCompletions(guiGraphics, cursor);
                 } else if (this.signatureProvider != null) {
-                    String signature = this.signatureProvider.apply(this.getValue(), this.getCursorPos());
+                    Component signature = this.signatureProvider.apply(this.getValue(), this.getCursorPos());
                     if (signature != null) {
                         this.renderSignature(guiGraphics, cursor, signature);
                     }
@@ -1008,24 +1018,21 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         this.completionsRows = rows;
         guiGraphics.pose().pushPose();
         guiGraphics.pose().translate(0, 0, 200);
-        guiGraphics.fill(x - 1, y - 1, x + width + 1, y + height + 1, Helpers.RGBAToInt(80, 80, 80, 255));
-        guiGraphics.fill(x, y, x + width, y + height, Helpers.RGBAToInt(250, 250, 250, 255));
+        // Dark, like tooltips, as the colors of value types are made for those
+        guiGraphics.fill(x - 1, y - 1, x + width + 1, y + height + 1, POPUP_BORDER);
+        guiGraphics.fill(x, y, x + width, y + height, POPUP_BACKGROUND);
         for (int i = 0; i < rows; i++) {
             ScriptCompletions.Item item = items.get(firstItem + i);
             int rowY = y + 1 + i * ROW_HEIGHT;
             if (firstItem + i == this.completionIndex) {
-                guiGraphics.fill(x, rowY, x + width, rowY + ROW_HEIGHT, Helpers.RGBAToInt(190, 210, 255, 255));
+                guiGraphics.fill(x, rowY, x + width, rowY + ROW_HEIGHT, POPUP_SELECTED);
             }
             String name = this.font.plainSubstrByWidth(item.name(), width - 2);
-            guiGraphics.drawString(this.font, name, x + 1, rowY + 1, 0, false);
+            guiGraphics.drawString(this.font, name, x + 1, rowY + 1, POPUP_TEXT, false);
             int detailX = x + 1 + this.font.width(name) + 4;
             int detailWidth = x + width - 1 - detailX;
             if (detailWidth > 10) {
-                String detail = item.detail();
-                if (this.font.width(detail) > detailWidth) {
-                    detail = this.font.plainSubstrByWidth(detail, detailWidth - this.font.width("\u2026")) + "\u2026";
-                }
-                guiGraphics.drawString(this.font, detail, detailX, rowY + 1, Helpers.RGBToInt(120, 120, 120), false);
+                guiGraphics.drawString(this.font, this.truncate(item.detail(), detailWidth), detailX, rowY + 1, POPUP_DETAIL, false);
             }
         }
         guiGraphics.pose().popPose();
@@ -1041,13 +1048,10 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         return Pair.of(x, width);
     }
 
-    private void renderSignature(GuiGraphics guiGraphics, Pos2i cursor, String signature) {
+    private void renderSignature(GuiGraphics guiGraphics, Pos2i cursor, Component signature) {
         Pair<Integer, Integer> xAndWidth = this.fitHorizontally(this.font.width(signature) + 2);
         int x = xAndWidth.getLeft();
         int width = xAndWidth.getRight();
-        if (this.font.width(signature) > width - 2) {
-            signature = this.font.plainSubstrByWidth(signature, width - 2 - this.font.width("\u2026")) + "\u2026";
-        }
         // Show above the line of the cursor if possible, otherwise below it
         int y = cursor.y - ROW_HEIGHT - 1;
         if (y < this.getY() - 1) {
@@ -1055,10 +1059,21 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         }
         guiGraphics.pose().pushPose();
         guiGraphics.pose().translate(0, 0, 200);
-        guiGraphics.fill(x - 1, y - 1, x + width + 1, y + ROW_HEIGHT + 1, Helpers.RGBAToInt(80, 80, 80, 255));
-        guiGraphics.fill(x, y, x + width, y + ROW_HEIGHT, Helpers.RGBAToInt(255, 250, 220, 255));
-        guiGraphics.drawString(this.font, signature, x + 1, y + 1, Helpers.RGBToInt(60, 60, 60), false);
+        guiGraphics.fill(x - 1, y - 1, x + width + 1, y + ROW_HEIGHT + 1, POPUP_BORDER);
+        guiGraphics.fill(x, y, x + width, y + ROW_HEIGHT, POPUP_BACKGROUND);
+        guiGraphics.drawString(this.font, this.truncate(signature, width - 2), x + 1, y + 1, POPUP_TEXT, false);
         guiGraphics.pose().popPose();
+    }
+
+    /**
+     * @return The text, cut off with an ellipsis if it is wider than the given width.
+     */
+    private FormattedCharSequence truncate(Component text, int width) {
+        if (this.font.width(text) <= width) {
+            return text.getVisualOrderText();
+        }
+        FormattedText truncated = FormattedText.composite(this.font.substrByWidth(text, Math.max(0, width - this.font.width("\u2026"))), FormattedText.of("\u2026"));
+        return Language.getInstance().getVisualOrder(truncated);
     }
 
     private void renderCursor(GuiGraphics guiGraphics, Pos2i pos, boolean cursorAtEnd) {

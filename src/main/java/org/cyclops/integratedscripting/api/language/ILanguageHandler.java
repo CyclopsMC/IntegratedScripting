@@ -1,5 +1,6 @@
 package org.cyclops.integratedscripting.api.language;
 
+import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.Style;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -82,7 +83,7 @@ public interface ILanguageHandler {
      * @return The signature of the function call the cursor is in, or null if unknown.
      */
     @Nullable
-    public default String getSignatureHint(String script, int cursor) {
+    public default Component getSignatureHint(String script, int cursor) {
         return null;
     }
 

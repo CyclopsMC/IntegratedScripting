@@ -1,6 +1,7 @@
 package org.cyclops.integratedscripting.core.language;
 
 import com.google.common.collect.Lists;
+import net.minecraft.network.chat.Component;
 import org.cyclops.integratedscripting.api.language.ScriptCompletions;
 
 import javax.annotation.Nullable;
@@ -26,7 +27,7 @@ public class JavaScriptCompletions {
      * @return The operators matching the name before the cursor, or null if the cursor is not after idContext.ops.
      */
     @Nullable
-    public static ScriptCompletions complete(String script, int cursor, Map<String, String> signatures) {
+    public static ScriptCompletions complete(String script, int cursor, Map<String, Component> signatures) {
         int start = cursor;
         while (start > 0 && Character.isJavaIdentifierPart(script.charAt(start - 1))) {
             start--;
@@ -41,7 +42,7 @@ public class JavaScriptCompletions {
         String prefix = script.substring(start, cursor);
         String prefixLower = prefix.toLowerCase(Locale.ROOT);
         List<ScriptCompletions.Item> items = Lists.newArrayList();
-        for (Map.Entry<String, String> entry : signatures.entrySet()) {
+        for (Map.Entry<String, Component> entry : signatures.entrySet()) {
             if (entry.getKey().toLowerCase(Locale.ROOT).startsWith(prefixLower)) {
                 items.add(new ScriptCompletions.Item(entry.getKey(), entry.getValue()));
             }
@@ -60,7 +61,7 @@ public class JavaScriptCompletions {
      * @return The name and signature of the operator call the cursor is in, or null if it is not in one.
      */
     @Nullable
-    public static String signatureHint(String script, int cursor, Map<String, String> signatures) {
+    public static Component signatureHint(String script, int cursor, Map<String, Component> signatures) {
         int depth = 0;
         for (int i = cursor - 1; i >= 0 && i >= cursor - MAX_CALL_DISTANCE; i--) {
             char c = script.charAt(i);
@@ -81,9 +82,9 @@ public class JavaScriptCompletions {
                         start--;
                     }
                     String name = script.substring(start, end);
-                    String signature = signatures.get(name);
+                    Component signature = signatures.get(name);
                     if (signature != null && script.startsWith(OPS_PREFIX, start - OPS_PREFIX.length())) {
-                        return name + signature;
+                        return Component.literal(name).append(signature);
                     }
                     // Look further, for calls nested in arguments
                 }
