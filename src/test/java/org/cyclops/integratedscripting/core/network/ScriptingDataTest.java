@@ -1,5 +1,6 @@
 package org.cyclops.integratedscripting.core.network;
 
+import com.google.common.collect.Sets;
 import org.apache.commons.io.FileUtils;
 import org.cyclops.integratedscripting.api.network.IScriptingData;
 import org.junit.jupiter.api.Test;
@@ -7,6 +8,8 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFileAttributeView;
+import java.nio.file.attribute.PosixFilePermissions;
 
 import static org.hamcrest.CoreMatchers.equalTo;
 import static org.hamcrest.CoreMatchers.hasItem;
@@ -14,6 +17,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.nullValue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 public class ScriptingDataTest {
 
@@ -135,7 +139,7 @@ public class ScriptingDataTest {
             scriptingData.initialize();
             Path diskPath = rootPath.resolve("scripting-disks").resolve("123");
             Files.createDirectories(diskPath);
-            awaitCondition(() -> scriptingData.getDisks().contains(123));
+            awaitCondition(scriptingData, () -> scriptingData.getDisks().contains(123));
 
             Path scriptPath = Path.of("main.js");
             int observedValue = writeScriptValueUntilObserved(
@@ -171,18 +175,211 @@ public class ScriptingDataTest {
         }
     }
 
-    private static void awaitCondition(Condition condition) throws InterruptedException {
-        assertTrue(awaitCondition(condition, AWAIT_TIMEOUT_MS), "Timed out waiting for condition");
+    @Test
+    public void testFlushDoesNotExposePartialContents() throws IOException, InterruptedException {
+        Path rootPath = Files.createTempDirectory("integratedscripting-test");
+        ScriptingData scriptingData = new ScriptingData(rootPath);
+        try {
+            scriptingData.initialize();
+            Path scriptPath = Path.of("main.js");
+            String body = "x".repeat(1_000_000);
+
+            // The file watcher reloads the disk after each flush, which must never see a partially written file
+            for (int i = 0; i < 20; i++) {
+                scriptingData.setScript(789, scriptPath, body + i + "//end", IScriptingData.ChangeLocation.MEMORY);
+                scriptingData.tick();
+                long deadline = System.currentTimeMillis() + 100;
+                while (System.currentTimeMillis() < deadline) {
+                    String script = scriptingData.getScripts(789).get(scriptPath);
+                    assertTrue(script != null && script.endsWith("//end"), "Observed partial script contents");
+                }
+            }
+
+            try (var files = Files.list(rootPath)) {
+                assertTrue(files.noneMatch(f -> f.toString().endsWith(".tmp")), "Temporary files were left behind");
+            }
+        } finally {
+            scriptingData.close();
+            FileUtils.deleteDirectory(rootPath.toFile());
+        }
     }
 
-    private static boolean awaitCondition(Condition condition, int timeoutMs) throws InterruptedException {
+    @Test
+    public void testFlushKeepsFilePermissions() throws IOException {
+        Path rootPath = Files.createTempDirectory("integratedscripting-test");
+        ScriptingData scriptingData = new ScriptingData(rootPath);
+        try {
+            assumeTrue(Files.getFileStore(rootPath).supportsFileAttributeView(PosixFileAttributeView.class));
+            Path scriptPath = Path.of("main.js");
+            Path scriptPathAbsolute = rootPath.resolve("scripting-disks").resolve("321").resolve(scriptPath);
+
+            // New files are readable by others
+            scriptingData.setScript(321, scriptPath, scriptValue(1), IScriptingData.ChangeLocation.MEMORY);
+            scriptingData.tick();
+            assertThat(PosixFilePermissions.toString(Files.getPosixFilePermissions(scriptPathAbsolute)), equalTo("rw-r--r--"));
+
+            // Existing permissions are kept
+            Files.setPosixFilePermissions(scriptPathAbsolute, PosixFilePermissions.fromString("rw-rw-r--"));
+            scriptingData.setScript(321, scriptPath, scriptValue(2), IScriptingData.ChangeLocation.MEMORY);
+            scriptingData.tick();
+            assertThat(PosixFilePermissions.toString(Files.getPosixFilePermissions(scriptPathAbsolute)), equalTo("rw-rw-r--"));
+            assertThat(Files.readString(scriptPathAbsolute), equalTo(scriptValue(2)));
+        } finally {
+            scriptingData.close();
+            FileUtils.deleteDirectory(rootPath.toFile());
+        }
+    }
+
+    @Test
+    public void testDiskReloadKeepsUnflushedChanges() throws IOException {
+        Path rootPath = Files.createTempDirectory("integratedscripting-test");
+        ScriptingData scriptingData = new ScriptingData(rootPath);
+        try {
+            Path diskPath = rootPath.resolve("scripting-disks").resolve("654");
+            Files.createDirectories(diskPath);
+            Files.writeString(diskPath.resolve("old.js"), "old");
+            Files.writeString(diskPath.resolve("other.js"), "other");
+            scriptingData.initialize();
+
+            // Rename old.js to new.js in memory, without flushing it to disk yet
+            scriptingData.setScript(654, Path.of("new.js"), "old", IScriptingData.ChangeLocation.MEMORY);
+            scriptingData.setScript(654, Path.of("old.js"), null, IScriptingData.ChangeLocation.MEMORY);
+
+            // A file watcher reload, for example caused by another file, must not undo these changes
+            scriptingData.initializeDiskScripts(654);
+            assertThat(scriptingData.getScripts(654).get(Path.of("new.js")), equalTo("old"));
+            assertThat(scriptingData.getScripts(654).get(Path.of("old.js")), nullValue());
+            assertThat(scriptingData.getScripts(654).get(Path.of("other.js")), equalTo("other"));
+
+            // After flushing, the disk contents are used again
+            scriptingData.tick();
+            scriptingData.initializeDiskScripts(654);
+            assertThat(scriptingData.getScripts(654).get(Path.of("new.js")), equalTo("old"));
+            assertFalse(Files.exists(diskPath.resolve("old.js")));
+        } finally {
+            scriptingData.close();
+            FileUtils.deleteDirectory(rootPath.toFile());
+        }
+    }
+
+    @Test
+    public void testDiskReloadDuringFirstFlushKeepsScript() throws IOException {
+        Path rootPath = Files.createTempDirectory("integratedscripting-test");
+        ScriptingData scriptingData = new ScriptingData(rootPath);
+        try {
+            scriptingData.initialize();
+            scriptingData.setScript(777, Path.of("main.js"), "value", IScriptingData.ChangeLocation.MEMORY);
+
+            // The file watcher reloads the disk once its directory is created, possibly before the script is written
+            Files.createDirectories(rootPath.resolve("scripting-disks").resolve("777"));
+            scriptingData.initializeDiskScripts(777);
+
+            assertThat(scriptingData.getScripts(777).get(Path.of("main.js")), equalTo("value"));
+        } finally {
+            scriptingData.close();
+            FileUtils.deleteDirectory(rootPath.toFile());
+        }
+    }
+
+    @Test
+    public void testDiskReloadAppliesExternalChanges() throws IOException {
+        Path rootPath = Files.createTempDirectory("integratedscripting-test");
+        ScriptingData scriptingData = new ScriptingData(rootPath);
+        try {
+            Path diskPath = rootPath.resolve("scripting-disks").resolve("778");
+            Files.createDirectories(diskPath);
+            Files.writeString(diskPath.resolve("a.js"), "a1");
+            Files.writeString(diskPath.resolve("b.js"), "b1");
+            scriptingData.initialize();
+            assertThat(scriptingData.getScripts(778).get(Path.of("a.js")), equalTo("a1"));
+
+            // Externally modify one file and delete another
+            Files.writeString(diskPath.resolve("a.js"), "a2");
+            Files.delete(diskPath.resolve("b.js"));
+            scriptingData.initializeDiskScripts(778);
+
+            assertThat(scriptingData.getScripts(778).get(Path.of("a.js")), equalTo("a2"));
+            assertThat(scriptingData.getScripts(778).get(Path.of("b.js")), nullValue());
+        } finally {
+            scriptingData.close();
+            FileUtils.deleteDirectory(rootPath.toFile());
+        }
+    }
+
+    @Test
+    public void testExternalFilesCreatedAfterDeletionsSynced() throws IOException, InterruptedException {
+        Path rootPath = Files.createTempDirectory("integratedscripting-test");
+        ScriptingData scriptingData = new ScriptingData(rootPath);
+        try {
+            Path diskPath = rootPath.resolve("scripting-disks").resolve("901");
+            Files.createDirectories(diskPath);
+            for (int i = 0; i < 4; i++) {
+                Files.writeString(diskPath.resolve("old" + i + ".js"), "old");
+            }
+            scriptingData.initialize();
+
+            // Delete and create files in quick succession, as a file manager or script would
+            for (int i = 0; i < 4; i++) {
+                Files.delete(diskPath.resolve("old" + i + ".js"));
+            }
+            for (int i = 0; i < 4; i++) {
+                Files.writeString(diskPath.resolve("new" + i + ".js"), "new");
+            }
+
+            awaitCondition(scriptingData, () -> scriptingData.getScripts(901).keySet().equals(Sets.newHashSet(
+                    Path.of("new0.js"), Path.of("new1.js"), Path.of("new2.js"), Path.of("new3.js"))));
+        } finally {
+            scriptingData.close();
+            FileUtils.deleteDirectory(rootPath.toFile());
+        }
+    }
+
+    @Test
+    public void testExternalFilesInNewSubdirectoriesSynced() throws IOException, InterruptedException {
+        Path rootPath = Files.createTempDirectory("integratedscripting-test");
+        ScriptingData scriptingData = new ScriptingData(rootPath);
+        try {
+            Path diskPath = rootPath.resolve("scripting-disks").resolve("902");
+            Files.createDirectories(diskPath);
+            Files.writeString(diskPath.resolve("main.js"), "main");
+            scriptingData.initialize();
+
+            // A file in a new nested directory
+            Files.createDirectories(diskPath.resolve("lib").resolve("helpers"));
+            Files.writeString(diskPath.resolve("lib").resolve("helpers").resolve("a.js"), "a");
+            awaitCondition(scriptingData, () -> "a".equals(scriptingData.getScripts(902).get(Path.of("lib/helpers/a.js"))));
+
+            // A file in the intermediate directory, which contains no scripts yet
+            Files.writeString(diskPath.resolve("lib").resolve("b.js"), "b");
+            awaitCondition(scriptingData, () -> "b".equals(scriptingData.getScripts(902).get(Path.of("lib/b.js"))));
+
+            // A file in an empty directory that already existed
+            Files.createDirectories(diskPath.resolve("empty"));
+            Files.writeString(diskPath.resolve("main.js"), "main2");
+            awaitCondition(scriptingData, () -> "main2".equals(scriptingData.getScripts(902).get(Path.of("main.js"))));
+            Files.writeString(diskPath.resolve("empty").resolve("c.js"), "c");
+            awaitCondition(scriptingData, () -> "c".equals(scriptingData.getScripts(902).get(Path.of("empty/c.js"))));
+        } finally {
+            scriptingData.close();
+            FileUtils.deleteDirectory(rootPath.toFile());
+        }
+    }
+
+    private static void awaitCondition(ScriptingData scriptingData, Condition condition) throws InterruptedException {
+        assertTrue(awaitCondition(scriptingData, condition, AWAIT_TIMEOUT_MS), "Timed out waiting for condition");
+    }
+
+    private static boolean awaitCondition(ScriptingData scriptingData, Condition condition, int timeoutMs) throws InterruptedException {
         long deadline = System.currentTimeMillis() + timeoutMs;
         while (System.currentTimeMillis() < deadline) {
+            // External changes are applied on tick
+            scriptingData.tick();
             if (condition.matches()) {
                 return true;
             }
             Thread.sleep(POLLING_INTERVAL_MS);
         }
+        scriptingData.tick();
         return condition.matches();
     }
 
@@ -193,7 +390,7 @@ public class ScriptingDataTest {
         while (System.currentTimeMillis() < deadline) {
             String expectedScriptValue = scriptValue(value);
             Files.writeString(scriptPathAbsolute, expectedScriptValue);
-            if (awaitCondition(() -> expectedScriptValue.equals(scriptingData.getScripts(disk).get(scriptPathRelative)),
+            if (awaitCondition(scriptingData, () -> expectedScriptValue.equals(scriptingData.getScripts(disk).get(scriptPathRelative)),
                     ATTEMPT_TIMEOUT_MS)) {
                 return value;
             }

@@ -1,25 +1,36 @@
 package org.cyclops.integratedscripting.client.gui.container;
 
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectAVLTreeMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.Renderable;
+import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
+import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.network.chat.Style;
 import net.minecraft.resources.Identifier;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.util.ARGB;
+import net.minecraft.util.FormattedCharSequence;
 import net.minecraft.util.StringUtil;
+import net.minecraft.util.Util;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
+import net.neoforged.fml.ModList;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.logging.log4j.Level;
 import org.cyclops.cyclopscore.client.gui.component.WidgetScrollBar;
 import org.cyclops.cyclopscore.client.gui.component.button.ButtonText;
 import org.cyclops.cyclopscore.client.gui.component.input.WidgetArrowedListField;
@@ -32,20 +43,30 @@ import org.cyclops.integratedscripting.GeneralConfig;
 import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.Reference;
 import org.cyclops.integratedscripting.api.language.ILanguageHandler;
+import org.cyclops.integratedscripting.client.gui.component.button.ButtonIcon;
+import org.cyclops.integratedscripting.client.gui.component.input.TextEditing;
+import org.cyclops.integratedscripting.client.gui.component.input.TextHistory;
 import org.cyclops.integratedscripting.client.gui.component.input.WidgetDialog;
+import org.cyclops.integratedscripting.client.gui.component.input.WidgetSearchBar;
 import org.cyclops.integratedscripting.client.gui.component.input.WidgetTextArea;
 import org.cyclops.integratedscripting.client.gui.image.ScriptImages;
+import org.cyclops.integratedscripting.client.key.Keys;
 import org.cyclops.integratedscripting.core.language.LanguageHandlers;
 import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScripting;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingDeleteScriptPacket;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingModifiedScriptPacket;
+import org.cyclops.integratedscripting.network.packet.TerminalScriptingRenameScriptPacket;
 import org.lwjgl.glfw.GLFW;
 
 import javax.annotation.Nullable;
+import java.nio.file.InvalidPathException;
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -62,11 +83,17 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     public static int PATHS_HEIGHT = 214;
     public static int PATHS_ROW_HEIGHT = 8;
     public static int PATHS_MAX_ROWS = PATHS_HEIGHT / PATHS_ROW_HEIGHT;
+    public static int DISK_X = 30;
     public static int SCRIPT_X = 80;
     public static int SCRIPT_X_INNER = 94;
     public static int SCRIPT_Y = 18;
     public static int SCRIPT_WIDTH = 168;
     public static int SCRIPT_HEIGHT = 115;
+    // Darkens areas that are not usable yet
+    private static final int INACTIVE_OVERLAY = IModHelpers.get().getBaseHelpers().RGBAToInt(0, 0, 0, 60);
+    public static int FOCUS_MARGIN = 20;
+    // JEI keeps its bookmark and config buttons in the bottom corners, even when its overlay is hidden
+    public static int FOCUS_MARGIN_JEI = 28;
 
     private final Player player;
 
@@ -75,13 +102,27 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     private int firstRow;
     private WidgetTextArea textArea;
     private ButtonText buttonCreateFile;
-    private WidgetDialog pendingScriptRemovalDialog;
+    @Nullable
+    private ButtonIcon buttonOpenFolder;
+    private int buttonOpenFolderDisk = Integer.MIN_VALUE;
+    // The disk a script is being created on, so the new script can be opened once the server sends it
+    private int createdScriptDisk = -1;
+    private final List<ButtonIcon> toolbarEditButtons = Lists.newArrayList();
+    private ButtonIcon buttonUndo;
+    private ButtonIcon buttonRedo;
+    private int toolbarLeft;
+    private ButtonIcon buttonFocus;
+    private boolean focusMode;
+    private WidgetDialog pendingDialog;
+    @Nullable
+    private WidgetSearchBar searchBar;
     private int lastClientSyncTick;
     private final DisplayErrorsComponent displayErrors = new DisplayErrorsComponent();
 
     private final Map<Path, Integer> lastScriptCursorPos = Maps.newHashMap();
     private final Map<Path, Integer> lastScriptSelectionPos = Maps.newHashMap();
     private final Int2ObjectMap<Path> lastDiskScript = new Int2ObjectAVLTreeMap<>();
+    private final Map<Pair<Integer, Path>, TextHistory> scriptHistories = Maps.newHashMap();
 
     public ContainerScreenTerminalScripting(ContainerTerminalScripting container, Inventory inventory, Component title) {
         super(container, inventory, title);
@@ -90,17 +131,22 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         this.imageHeight = 240;
         this.titleLabelX = 88;
         this.titleLabelY = 6;
-        this.inventoryLabelX = 88;
-        this.inventoryLabelY = this.imageHeight - 94;
         this.firstRow = 0;
         this.lastClientSyncTick = 0;
     }
 
     @Override
     public void init() {
+        // This is called again when the screen is resized, which recreates all widgets
+        if (textArea != null) {
+            this.saveCursorPos();
+        }
+        pendingDialog = null;
+        searchBar = null;
+
         super.init();
 
-        fieldDisk = new WidgetArrowedListField<>(Minecraft.getInstance().font, leftPos + 30,
+        fieldDisk = new WidgetArrowedListField<>(Minecraft.getInstance().font, leftPos + DISK_X,
                 topPos + 4, 42, 15, true,
                 Component.translatable("gui.integratedscripting.disk"), true,
                 getMenu().getAvailableDisks());
@@ -109,7 +155,8 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         fieldDisk.setTextColor(ARGB.opaque(16777215));
         fieldDisk.setCanLoseFocus(true);
         fieldDisk.setEditable(true);
-        fieldDisk.setValue(String.valueOf(getMenu().getActiveDisk()));
+        // Without disks, the active disk is -1, which is not a real disk
+        fieldDisk.setValue(getMenu().getActiveDisk() >= 0 ? String.valueOf(getMenu().getActiveDisk()) : "");
 
         scrollBar = new WidgetScrollBar(leftPos + 5, topPos + 18, 162,
                 Component.translatable("gui.cyclopscore.scrollbar"), this::setFirstRow, PATHS_MAX_ROWS) {
@@ -120,26 +167,187 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             }
         };
 
-        textArea = new WidgetTextArea(Minecraft.getInstance().font, this.leftPos + SCRIPT_X + 1, this.topPos + SCRIPT_Y + 1, SCRIPT_WIDTH, SCRIPT_HEIGHT, Component.translatable("gui.integratedscripting.script"), true, true);
+        if (focusMode) {
+            // Let the editor take up most of the screen
+            int margin = getFocusMargin();
+            int height = (this.height - 2 * margin) / WidgetTextArea.ROW_HEIGHT * WidgetTextArea.ROW_HEIGHT;
+            textArea = new WidgetTextArea(Minecraft.getInstance().font, margin, margin, this.width - 2 * margin, height, Component.translatable("gui.integratedscripting.script"), true, true);
+        } else {
+            textArea = new WidgetTextArea(Minecraft.getInstance().font, this.leftPos + SCRIPT_X + 1, this.topPos + SCRIPT_Y + 1, SCRIPT_WIDTH, SCRIPT_HEIGHT, Component.translatable("gui.integratedscripting.script"), true, true);
+        }
+        textArea.setIndent(" ".repeat(GeneralConfig.terminalScriptingIndentSize));
         textArea.setListener(this::onActiveScriptModified);
+        textArea.setShortcutListener((key, scanCode, modifiers) -> {
+            boolean find = Keys.matches(Keys.FIND, key, scanCode, modifiers);
+            if (find || Keys.matches(Keys.GOTO_LINE, key, scanCode, modifiers)) {
+                openNavigate(!find);
+                return true;
+            }
+            if (Keys.matches(Keys.FOCUS_MODE, key, scanCode, modifiers)) {
+                this.toggleFocusMode();
+                // Keep typing in the recreated editor
+                this.setFocused(this.textArea);
+                this.textArea.setFocused(true);
+                return true;
+            }
+            return false;
+        });
+        getMenu().setRemoteScriptChangeListener(this::onRemoteScriptChanged);
+        getMenu().setSyntaxErrorListener((disk, path) -> {
+            if (disk == getMenu().getActiveDisk() && path.equals(getMenu().getActiveScriptPath())) {
+                this.textArea.setSyntaxError(getMenu().getSyntaxError(disk, path));
+            }
+        });
         textArea.setListenerSelection(this::onSelectionModified);
         textArea.setListenerCursor(this::onSelectionModified);
-        textArea.setMarkupProvider((style, line) -> {
+        textArea.setCompletionProvider((text, cursor) -> {
+            ILanguageHandler languageHandler = getActiveLanguageHandler();
+            return languageHandler != null ? languageHandler.getCompletions(text, cursor) : null;
+        });
+        textArea.setSignatureProvider((text, cursor) -> {
+            ILanguageHandler languageHandler = getActiveLanguageHandler();
+            return languageHandler != null ? languageHandler.getSignatureHint(text, cursor) : null;
+        });
+        textArea.setMarkupProvider(text -> {
             Path path = getMenu().getActiveScriptPath();
             ILanguageHandler languageHandler = path != null ? LanguageHandlers.REGISTRY.getProvider(path) : null;
-            return languageHandler != null ? languageHandler.markupLine(line) : Stream.of(Pair.of(style, line)).collect(Collectors.toList());
+            return languageHandler != null ? languageHandler.markupScript(text) : Stream.of(Pair.of(Style.EMPTY, text)).collect(Collectors.toList());
         });
         addRenderableWidget(textArea);
 
-        buttonCreateFile = new ButtonText(this.leftPos + 19, this.topPos + 222, 56, 10, Component.translatable("gui.integratedscripting.create_file"), Component.literal("+"),
-                (button) -> getMenu().createNewFile(), true);
-        addRenderableWidget(buttonCreateFile);
+        // The scripts folder can only be opened if this client is running the server, such as in singleplayer
+        boolean canOpenFolder = Minecraft.getInstance().hasSingleplayerServer();
+        buttonCreateFile = new ButtonText(this.leftPos + PATHS_X, this.topPos + 222, canOpenFolder ? PATHS_WIDTH - 12 : PATHS_WIDTH, 10, Component.translatable("gui.integratedscripting.create_file"), Component.literal("+"),
+                (button) -> this.createNewFile(), true);
+        buttonOpenFolder = null;
+        buttonOpenFolderDisk = Integer.MIN_VALUE;
+        // Scripts can only be created or opened on a disk
+        if (!focusMode && !getMenu().getAvailableDisks().isEmpty()) {
+            addRenderableWidget(buttonCreateFile);
+            if (canOpenFolder) {
+                buttonOpenFolder = new ButtonIcon(this.leftPos + PATHS_X + PATHS_WIDTH - 10, this.topPos + 222, 10, 10,
+                        Component.translatable("gui.integratedscripting.open_folder"), (button) -> {
+                            this.openDiskFolder();
+                            // Run after the click is handled, as that focuses the button
+                            Minecraft.getInstance().schedule(() -> this.setFocused(null));
+                        }, ScriptImages.ACTION_OPEN_FOLDER);
+                addRenderableWidget(buttonOpenFolder);
+                this.updateOpenFolderButton();
+            }
+        }
+
+        if (focusMode) {
+            this.addToolbar(this.width - getFocusMargin(), getFocusMargin() - 12);
+        } else {
+            this.addToolbar(this.leftPos + SCRIPT_X + SCRIPT_WIDTH, this.topPos + 5);
+        }
+
+        // Restore the open script in the new editor
+        if (getMenu().getActiveScriptPath() != null) {
+            this.onActiveScriptSelected();
+            this.restoreCursorPos();
+            textArea.ensureCursorVisible();
+        }
+    }
+
+    /**
+     * Add buttons for editor actions, which also show their keyboard shortcut in their tooltip.
+     * @param right The right side of the toolbar.
+     * @param y The top of the toolbar.
+     */
+    private void addToolbar(int right, int y) {
+        Component focusLabel = Component.translatable(focusMode ? "gui.integratedscripting.focus_mode.exit" : "gui.integratedscripting.focus_mode.enter");
+        buttonFocus = new ButtonIcon(right - 10, y, 10, 10, focusLabel, (button) -> this.toggleFocusMode(),
+                focusMode ? ScriptImages.ACTION_FOCUS_EXIT : ScriptImages.ACTION_FOCUS_ENTER);
+        // Escape also leaves the enlarged editor
+        MutableComponent focusKeys = focusMode ? Component.translatable("key.keyboard.escape") : null;
+        if (!Keys.FOCUS_MODE.isUnbound()) {
+            focusKeys = focusKeys == null ? Keys.FOCUS_MODE.getTranslatedKeyMessage().copy()
+                    : focusKeys.append(", ").append(Keys.FOCUS_MODE.getTranslatedKeyMessage());
+        }
+        MutableComponent focusTooltip = focusLabel.copy();
+        if (focusKeys != null) {
+            focusTooltip.append(Component.literal(" (").append(focusKeys).append(")").withStyle(ChatFormatting.GRAY));
+        }
+        buttonFocus.setTooltip(Tooltip.create(focusTooltip));
+        addRenderableWidget(buttonFocus);
+        right -= 10;
+
+        this.toolbarLeft = right - 50;
+        this.toolbarEditButtons.clear();
+        this.buttonUndo = this.addToolbarButton(right - 50, y, ScriptImages.ACTION_UNDO, Keys.UNDO, () -> this.textArea.undo());
+        this.buttonRedo = this.addToolbarButton(right - 40, y, ScriptImages.ACTION_REDO, Keys.REDO, () -> this.textArea.redo());
+        this.addToolbarButton(right - 30, y, ScriptImages.ACTION_FIND, Keys.FIND, () -> this.openNavigate(false));
+        this.addToolbarButton(right - 20, y, ScriptImages.ACTION_GOTO_LINE, Keys.GOTO_LINE, () -> this.openNavigate(true));
+        this.addToolbarButton(right - 10, y, ScriptImages.ACTION_COMMENT, Keys.COMMENT, () -> this.textArea.toggleComment());
+        this.updateToolbar();
+    }
+
+    private ButtonIcon addToolbarButton(int x, int y, IImage image, KeyMapping keyMapping, Runnable action) {
+        Component tooltip = Keys.getTooltip(keyMapping);
+        ButtonIcon button = new ButtonIcon(x, y, 10, 10, tooltip, (b) -> {
+            // Run after the click is handled, as that focuses the button
+            Minecraft.getInstance().schedule(() -> {
+                // Give focus back to the editor, unless the action focuses something else
+                this.setFocused(this.textArea);
+                this.textArea.setFocused(true);
+                action.run();
+            });
+        }, image);
+        button.setTooltip(Tooltip.create(tooltip));
+        this.toolbarEditButtons.add(button);
+        addRenderableWidget(button);
+        return button;
+    }
+
+    protected Path getDiskFolder(int disk) {
+        return IntegratedScripting._instance.scriptingData.getDiskPath(disk).toAbsolutePath().normalize();
+    }
+
+    private void updateOpenFolderButton() {
+        int disk = getMenu().getActiveDisk();
+        if (this.buttonOpenFolder != null && disk != this.buttonOpenFolderDisk) {
+            this.buttonOpenFolderDisk = disk;
+            this.buttonOpenFolder.active = disk >= 0;
+            Component tooltip = Component.translatable("gui.integratedscripting.open_folder");
+            if (disk >= 0) {
+                tooltip = tooltip.copy().append("\n").append(Component.literal(this.getDiskFolder(disk).toString()).withStyle(ChatFormatting.GRAY));
+            }
+            this.buttonOpenFolder.setTooltip(Tooltip.create(tooltip));
+        }
+    }
+
+    private void openDiskFolder() {
+        int disk = getMenu().getActiveDisk();
+        if (disk >= 0) {
+            Path path = this.getDiskFolder(disk);
+            try {
+                // The folder of a disk without scripts may not exist yet
+                Files.createDirectories(path);
+            } catch (IOException e) {
+                IntegratedScripting.clog(Level.ERROR, "Could not create the scripts folder " + path + ": " + e.getMessage());
+            }
+            Util.getPlatform().openPath(path);
+        }
+    }
+
+    private void updateToolbar() {
+        boolean scriptOpen = getMenu().getActiveScript() != null;
+        for (ButtonIcon button : this.toolbarEditButtons) {
+            button.active = scriptOpen;
+        }
+        this.buttonUndo.active = scriptOpen && this.textArea.canUndo();
+        this.buttonRedo.active = scriptOpen && this.textArea.canRedo();
     }
 
     @Override
     protected void containerTick() {
         super.containerTick();
         textArea.tick();
+        this.updateOpenFolderButton();
+        this.updateToolbar();
+        // The matches change when the script is edited while searching
+        this.updateSearchStatus();
 
         if (this.lastClientSyncTick == 0) {
             // Send modified scripts from client to server
@@ -191,8 +399,45 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         return 139;
     }
 
+    private void toggleFocusMode() {
+        this.focusMode = !this.focusMode;
+        // Recreates the widgets, which keeps the open script
+        this.rebuildWidgets();
+    }
+
+    @Override
+    protected void drawCurrentScreen(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+        if (focusMode) {
+            // Only show the editor, without the container contents
+            guiGraphics.fill(textArea.getX() - 2, textArea.getY() - 2, textArea.getX() + textArea.getWidth() + 2, textArea.getY() + textArea.getHeight() + 2, IModHelpers.get().getBaseHelpers().RGBAToInt(85, 85, 85, 255));
+            guiGraphics.fill(textArea.getX() - 1, textArea.getY() - 1, textArea.getX() + textArea.getWidth() + 1, textArea.getY() + textArea.getHeight() + 1, IModHelpers.get().getBaseHelpers().RGBAToInt(224, 224, 224, 255));
+            Path path = getMenu().getActiveScriptPath();
+            if (path != null) {
+                guiGraphics.text(font, path.toString(), getFocusMargin(), getFocusMargin() - 11, ARGB.opaque(16777215));
+            }
+            for (Renderable renderable : this.renderables) {
+                renderable.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
+            }
+        } else {
+            super.drawCurrentScreen(guiGraphics, mouseX, mouseY, partialTicks);
+        }
+    }
+
+    @Override
+    protected void extractTooltip(GuiGraphicsExtractor guiGraphics, int x, int y) {
+        // Slots are hidden in focus mode
+        if (!focusMode) {
+            super.extractTooltip(guiGraphics, x, y);
+        }
+    }
+
     @Override
     public void extractBackground(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+        // Only the editor is shown in focus mode
+        if (focusMode) {
+            this.extractTransparentBackground(guiGraphics);
+            return;
+        }
         super.extractBackground(guiGraphics, mouseX, mouseY, partialTicks);
         fieldDisk.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
         scrollBar.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
@@ -201,16 +446,35 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             this.renderScriptPaths(guiGraphics, mouseX, mouseY, partialTicks);
         } else {
             // Gray-out editor and file list
-            guiGraphics.fill(leftPos + PATHS_X, topPos + PATHS_Y, leftPos + PATHS_X + PATHS_WIDTH, topPos + PATHS_Y + PATHS_HEIGHT, IModHelpers.get().getBaseHelpers().RGBAToInt(50, 50, 50, 100));
+            guiGraphics.fill(leftPos + PATHS_X, topPos + PATHS_Y, leftPos + PATHS_X + PATHS_WIDTH, topPos + PATHS_Y + PATHS_HEIGHT, INACTIVE_OVERLAY);
         }
 
         if (this.getMenu().getActiveScript() == null) {
-            // Gray-out editor and file list
-            guiGraphics.fill(leftPos + SCRIPT_X_INNER, topPos + SCRIPT_Y, leftPos + SCRIPT_X_INNER + SCRIPT_WIDTH, topPos + SCRIPT_Y + SCRIPT_HEIGHT, IModHelpers.get().getBaseHelpers().RGBAToInt(50, 50, 50, 100));
+            // Gray-out the whole editor, but center the hint right of the line numbers
+            int editorX = leftPos + SCRIPT_X_INNER;
+            int editorY = topPos + SCRIPT_Y + 1;
+            int editorWidth = SCRIPT_X + 1 + SCRIPT_WIDTH - SCRIPT_X_INNER;
+            guiGraphics.fill(leftPos + SCRIPT_X + 1, editorY, editorX + editorWidth, editorY + SCRIPT_HEIGHT, INACTIVE_OVERLAY);
+
+            // Explain what to do to start editing, centered in the editor
+            List<FormattedCharSequence> lines = font.split(getEmptyEditorHint(), editorWidth - 8);
+            int lineY = editorY + (SCRIPT_HEIGHT - lines.size() * font.lineHeight) / 2;
+            for (FormattedCharSequence line : lines) {
+                guiGraphics.text(font, line, editorX + (editorWidth - font.width(line)) / 2, lineY, IModHelpers.get().getBaseHelpers().RGBAToInt(60, 60, 60, 255), false);
+                lineY += font.lineHeight;
+            }
         }
 
         displayErrors.drawBackground(guiGraphics, getMenu().getReadErrors(), getErrorX(), getErrorY(), getErrorX(), getErrorY(), this,
                 this.leftPos, this.topPos, getMenu().canWriteScriptToVariable());
+    }
+
+    protected Component getEmptyEditorHint() {
+        if (getMenu().getAvailableDisks().isEmpty()) {
+            return Component.translatable("gui.integratedscripting.hint.no_disks");
+        }
+        Map<Path, String> scripts = getActiveScripts();
+        return Component.translatable(scripts == null || scripts.isEmpty() ? "gui.integratedscripting.hint.no_scripts" : "gui.integratedscripting.hint.select_script");
     }
 
     @Nullable
@@ -269,8 +533,14 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
                     Font.DisplayMode.NORMAL
             );
 
-            // If hovering, render removal button
+            // If hovering, show the full path, as it may be truncated, and render removal button
             if (hovering) {
+                // Don't draw over an open dialog
+                if (pendingDialog == null) {
+                    guiGraphics.setTooltipForNextFrame(this.font, Lists.newArrayList(
+                            Component.literal(path.toString()).getVisualOrderText(),
+                            Component.translatable("gui.integratedscripting.rename_hint").withStyle(ChatFormatting.GRAY).getVisualOrderText()), mouseX, mouseY);
+                }
                 guiGraphics.pose().pushMatrix();
                 float scale = 0.4F;
                 int size = (int) (Images.ERROR.getWidth() * scale);
@@ -303,44 +573,118 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
 
     @Override
     protected void extractLabels(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY) {
-        super.extractLabels(guiGraphics, mouseX, mouseY);
+        // Shorten the title if it would overlap with the toolbar, as translations can be long
+        Component title = this.title;
+        int maxTitleWidth = this.toolbarLeft - this.leftPos - this.titleLabelX - 1;
+        if (this.font.width(title) > maxTitleWidth) {
+            title = Component.literal(this.font.plainSubstrByWidth(title.getString(), maxTitleWidth - this.font.width("\u2026")) + "\u2026");
+        }
+        // The inventory label is left out, so its row can show the card binding
+        guiGraphics.text(this.font, title, this.titleLabelX, this.titleLabelY, ARGB.opaque(4210752), false);
 
-        // Draw disk label
-        guiGraphics.text(font, IModHelpers.get().getL10NHelpers().localize("gui.integratedscripting.disk") + ":", 8, 6, ARGB.opaque(16777215));
+        // Draw disk label, scaled to the space before the disk field, which fits the English label at normal size
+        String diskLabel = IModHelpers.get().getL10NHelpers().localize("gui.integratedscripting.disk") + ":";
+        float diskLabelScale = (float) (DISK_X - 8 - 1) / font.width(diskLabel);
+        int diskLabelY = Math.round(6 + font.lineHeight * (1 - diskLabelScale) / 2);
+        IModHelpers.get().getRenderHelpers().drawScaledString(guiGraphics, font, diskLabel, 8, diskLabelY, diskLabelScale, ARGB.opaque(16777215), true, Font.DisplayMode.NORMAL);
+
+        // Draw the member the card is bound to, or will be bound to, right-aligned next to the card slot
+        Component bindingLabel = getBindingLabel();
+        if (bindingLabel != null) {
+            int right = getErrorX() - 2;
+            int left = right - font.width(bindingLabel);
+            guiGraphics.text(font, bindingLabel, left, getErrorY() + 2, ARGB.opaque(4210752), false);
+
+            // Show the last evaluation of the bound card
+            if (getMenu().getCardMember() != null && pendingDialog == null
+                    && mouseX >= this.leftPos + left && mouseX < this.leftPos + right
+                    && mouseY >= this.topPos + getErrorY() + 1 && mouseY < this.topPos + getErrorY() + 2 + font.lineHeight) {
+                List<FormattedCharSequence> lines = Lists.newArrayList();
+                for (Component line : getMenu().getCardEvaluation()) {
+                    lines.addAll(font.split(line, 200));
+                }
+                guiGraphics.setTooltipForNextFrame(this.font, lines, mouseX, mouseY);
+            }
+        }
 
         displayErrors.drawForeground(guiGraphics, getMenu().getReadErrors(), getErrorX(), getErrorY(), mouseX, mouseY, this, this.leftPos, this.topPos);
     }
 
+    @Nullable
+    protected Component getBindingLabel() {
+        if (getMenu().getActiveScriptPath() == null) {
+            return null;
+        }
+        String cardMember = getMenu().getCardMember();
+        if (cardMember != null) {
+            return Component.translatable("gui.integratedscripting.binding.card", formatBindingMember(cardMember, "gui.integratedscripting.binding.card"));
+        }
+        if (getMenu().isMemberSelected()) {
+            // Not bound yet, so shown less prominently
+            return Component.translatable("gui.integratedscripting.binding.next", formatBindingMember(getMenu().getSelectedMember(), "gui.integratedscripting.binding.next"))
+                    .withStyle(style -> style.withItalic(true).withColor(0x707070));
+        }
+        return null;
+    }
+
+    protected Component formatBindingMember(String member, String translationKey) {
+        // Truncate the member so the label fits between the editor's left border and the status icon
+        int maxWidth = getErrorX() - 2 - (SCRIPT_X_INNER - 6) - font.width(IModHelpers.get().getL10NHelpers().localize(translationKey, ""));
+        if (font.width(member) > maxWidth) {
+            member = font.plainSubstrByWidth(member, maxWidth - font.width("\u2026")) + "\u2026";
+        }
+        return Component.literal(member).withStyle(style -> style.withColor(0x1D4F91));
+    }
+
     @Override
     public boolean mouseClicked(MouseButtonEvent mouse, boolean isDoubleClick) {
+        double mouseX = mouse.x();
+        double mouseY = mouse.y();
+        int mouseButton = mouse.button();
         // Make active dialog consume all input
-        if (pendingScriptRemovalDialog != null) {
-            return pendingScriptRemovalDialog.mouseClicked(mouse, isDoubleClick);
+        if (pendingDialog != null) {
+            return pendingDialog.mouseClicked(mouse, isDoubleClick);
+        }
+
+        // Only the editor widgets are visible in focus mode, so don't let clicks reach the container
+        if (focusMode) {
+            for (GuiEventListener child : this.children()) {
+                if (child.mouseClicked(mouse, isDoubleClick)) {
+                    this.setFocused(child);
+                    return true;
+                }
+            }
+            return true;
         }
 
         // Handle script path clicks
-        Path hoveredScriptPath = getHoveredScriptPath(mouse.x(), mouse.y());
+        Path hoveredScriptPath = getHoveredScriptPath(mouseX, mouseY);
+        if (hoveredScriptPath != null && mouseButton == 1) {
+            this.fieldDisk.playDownSound(Minecraft.getInstance().getSoundManager());
+            this.openRenameDialog(hoveredScriptPath);
+            return true;
+        }
         if (hoveredScriptPath != null) {
             // Handle script removal clicks
-            if (mouse.x() >= this.leftPos + PATHS_X + PATHS_WIDTH - (int) (Images.ERROR.getWidth() * 0.4F) - 1) {
+            if (mouseX >= this.leftPos + PATHS_X + PATHS_WIDTH - (int) (Images.ERROR.getWidth() * 0.4F) - 1) {
                 this.fieldDisk.playDownSound(Minecraft.getInstance().getSoundManager());
 
                 // Show confirmation dialog
-                pendingScriptRemovalDialog = new WidgetDialog(font, leftPos + getBaseXSize() / 2 - WidgetDialog.WIDTH / 2, topPos + 50, this,
+                pendingDialog = new WidgetDialog(font, leftPos + getBaseXSize() / 2 - WidgetDialog.WIDTH / 2, topPos + 50, this,
                         Component.translatable("gui.integratedscripting.removal_dialog.title"),
                         Component.translatable("gui.integratedscripting.removal_dialog.message", hoveredScriptPath.toString()),
                         Component.translatable("gui.integratedscripting.removal_dialog.delete"),
                         Component.translatable("gui.integratedscripting.removal_dialog.keep"),
                         (b) -> {
-                            removeWidget(pendingScriptRemovalDialog);
-                            pendingScriptRemovalDialog = null;
+                            removeWidget(pendingDialog);
+                            pendingDialog = null;
                             this.removeScript(hoveredScriptPath);
                         },
                         (b) -> {
-                            removeWidget(pendingScriptRemovalDialog);
-                            pendingScriptRemovalDialog = null;
+                            removeWidget(pendingDialog);
+                            pendingDialog = null;
                         });
-                addRenderableWidget(pendingScriptRemovalDialog);
+                addRenderableWidget(pendingDialog);
 
                 return true;
             } else {
@@ -444,9 +788,51 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
         this.firstRow = firstRow;
     }
 
+    protected int getFocusMargin() {
+        return ModList.get().isLoaded("jei") ? FOCUS_MARGIN_JEI : FOCUS_MARGIN;
+    }
+
+    public boolean isFocusMode() {
+        return focusMode;
+    }
+
+    @Nullable
+    private ILanguageHandler getActiveLanguageHandler() {
+        Path path = getMenu().getActiveScriptPath();
+        return path != null ? LanguageHandlers.REGISTRY.getProvider(path) : null;
+    }
+
     private void onActiveScriptSelected() {
         String script = getMenu().getActiveScript();
         this.textArea.setValue(script == null ? "" : script);
+        Path path = getMenu().getActiveScriptPath();
+        this.textArea.setSyntaxError(path == null ? null : getMenu().getSyntaxError(getMenu().getActiveDisk(), path));
+        this.textArea.setHistory(path == null ? new TextHistory() : scriptHistories.computeIfAbsent(Pair.of(getMenu().getActiveDisk(), path), k -> new TextHistory()));
+    }
+
+    private void createNewFile() {
+        this.createdScriptDisk = getMenu().getActiveDisk();
+        getMenu().createNewFile();
+    }
+
+    private void onRemoteScriptChanged(int disk, Path path, boolean created) {
+        // Open a newly created script
+        if (created && disk == this.createdScriptDisk && disk == getMenu().getActiveDisk()) {
+            this.createdScriptDisk = -1;
+            this.saveCursorPos();
+            getMenu().setActiveScriptPath(path);
+            this.onActiveScriptSelected();
+            this.setFocused(this.textArea);
+            return;
+        }
+
+        // Show changes from outside this editor, such as external file edits, instead of overwriting them on the next edit
+        if (disk == getMenu().getActiveDisk() && path.equals(getMenu().getActiveScriptPath())) {
+            String script = getMenu().getActiveScript();
+            if (script != null && !script.equals(this.textArea.getValue())) {
+                this.textArea.replaceValue(script);
+            }
+        }
     }
 
     private void onActiveScriptModified() {
@@ -471,10 +857,67 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
                     startPos = value.length() - matcherToStart.end() + 1;
                 }
                 selected = value.substring(startPos, endPos);
+
+                // Only bind to declarations, so moving through function bodies doesn't rebind the card
+                Path path = getMenu().getActiveScriptPath();
+                ILanguageHandler languageHandler = path != null ? LanguageHandlers.REGISTRY.getProvider(path) : null;
+                Set<String> members = languageHandler != null ? languageHandler.getTopLevelMembers(value) : null;
+                if (members != null && !members.contains(selected)) {
+                    String previous = getMenu().getSelectedMember();
+                    selected = members.contains(previous) ? previous : "";
+                }
             }
         }
 
         getMenu().setSelection(selected);
+    }
+
+    private void openRenameDialog(Path path) {
+        pendingDialog = new WidgetDialog(font, leftPos + getBaseXSize() / 2 - WidgetDialog.WIDTH / 2, topPos + 50, this,
+                Component.translatable("gui.integratedscripting.rename_dialog.title"),
+                Component.translatable("gui.integratedscripting.rename_dialog.message"),
+                Component.translatable("gui.integratedscripting.rename_dialog.rename"),
+                Component.translatable("gui.integratedscripting.rename_dialog.cancel"),
+                (b) -> {
+                    String name = pendingDialog.getInput().getValue();
+                    removeWidget(pendingDialog);
+                    pendingDialog = null;
+                    this.renameScript(path, name);
+                },
+                (b) -> {
+                    removeWidget(pendingDialog);
+                    pendingDialog = null;
+                }, path.toString());
+        pendingDialog.setWarning(Component.translatable("gui.integratedscripting.rename_dialog.warning"));
+        addRenderableWidget(pendingDialog);
+    }
+
+    private void renameScript(Path from, String name) {
+        int disk = getMenu().getActiveDisk();
+        Map<Path, String> scripts = getActiveScripts();
+        Path to;
+        try {
+            to = Path.of(name.trim());
+        } catch (InvalidPathException e) {
+            return;
+        }
+        if (scripts == null || to.toString().isEmpty() || scripts.containsKey(to) || !scripts.containsKey(from)) {
+            return;
+        }
+
+        // Apply the rename locally, so an open script stays open with its editor state
+        String script = scripts.get(from);
+        boolean active = from.equals(getMenu().getActiveScriptPath());
+        getMenu().setLastScript(disk, to, script);
+        getMenu().setLastScript(disk, from, null);
+        TextHistory history = scriptHistories.remove(Pair.of(disk, from));
+        if (history != null) {
+            scriptHistories.put(Pair.of(disk, to), history);
+        }
+        if (active) {
+            getMenu().setActiveScriptPath(to);
+        }
+        IntegratedScripting._instance.getPacketHandler().sendToServer(new TerminalScriptingRenameScriptPacket(disk, from, to));
     }
 
     private void removeScript(Path path) {
@@ -493,7 +936,7 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     @Override
     public boolean mouseDragged(MouseButtonEvent mouse, double offsetX, double offsetY) {
         // Make active dialog consume all input
-        if (pendingScriptRemovalDialog != null) {
+        if (pendingDialog != null) {
             return false;
         }
 
@@ -504,26 +947,171 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     }
 
     @Override
+    public boolean mouseReleased(MouseButtonEvent mouse) {
+        // Always let the editor know, as a drag selection can be released anywhere
+        textArea.mouseReleased(mouse);
+        return super.mouseReleased(mouse);
+    }
+
+    @Override
     public boolean keyPressed(KeyEvent event) {
+        int typedChar = event.key();
         // Make active dialog consume all input
-        if (event.key() != GLFW.GLFW_KEY_ESCAPE && pendingScriptRemovalDialog != null) {
+        if (pendingDialog != null && pendingDialog.getInput() != null) {
+            if (typedChar == GLFW.GLFW_KEY_ESCAPE) {
+                pendingDialog.cancel(event);
+            } else if (typedChar == GLFW.GLFW_KEY_ENTER || typedChar == GLFW.GLFW_KEY_KP_ENTER) {
+                pendingDialog.confirm(event);
+            } else {
+                pendingDialog.getInput().keyPressed(event);
+            }
+            return true;
+        }
+        if (typedChar != GLFW.GLFW_KEY_ESCAPE && pendingDialog != null) {
             return false;
+        }
+
+        if (this.searchBar != null && this.searchBar.isFocused()) {
+            return this.searchBar.keyPressed(event);
+        }
+        // Close the search bar before closing the screen
+        if (this.searchBar != null && typedChar == GLFW.GLFW_KEY_ESCAPE) {
+            closeNavigate();
+            return true;
+        }
+
+        // Close completions before leaving focus mode or closing the screen
+        if (typedChar == GLFW.GLFW_KEY_ESCAPE && this.textArea.isFocused() && this.textArea.dismissCompletions()) {
+            return true;
+        }
+
+        // Leave focus mode instead of closing the screen
+        if (focusMode && typedChar == GLFW.GLFW_KEY_ESCAPE && pendingDialog == null) {
+            this.toggleFocusMode();
+            return true;
         }
 
         if (textArea.isFocused()) {
             boolean ret = textArea.keyPressed(event);
-            if (event.key() != GLFW.GLFW_KEY_ESCAPE) {
+            if (typedChar != GLFW.GLFW_KEY_ESCAPE) {
                 return ret;
             }
         }
         return super.keyPressed(event);
     }
 
+    /**
+     * Show a bar below the editor to find text, or to go to a line number.
+     */
+    private void openNavigate(boolean toLine) {
+        String selected = this.textArea.getSelected();
+        String initialValue = !toLine && !selected.isEmpty() && selected.indexOf('\n') < 0 ? selected : "";
+        if (this.searchBar != null && this.searchBar.isLineMode() == toLine) {
+            this.searchBar.focusAndSelect(initialValue);
+        } else {
+            closeNavigate();
+            // The editor gives up the space for the bar
+            this.textArea.setHeight(this.textArea.getHeight() - WidgetSearchBar.HEIGHT);
+            this.searchBar = new WidgetSearchBar(font, this.textArea.getX(), this.textArea.getY() + this.textArea.getHeight(), this.textArea.getWidth(),
+                    toLine, initialValue, this::onSearchChanged, this::navigate, this::closeNavigate);
+            addRenderableWidget(this.searchBar);
+        }
+        this.textArea.setFocused(false);
+        this.setFocused(this.searchBar);
+        this.onSearchChanged(this.searchBar.getValue());
+    }
+
+    private void closeNavigate() {
+        if (this.searchBar != null) {
+            removeWidget(this.searchBar);
+            this.searchBar = null;
+            this.textArea.setHeight(this.textArea.getHeight() + WidgetSearchBar.HEIGHT);
+            this.textArea.setSearchQuery(null);
+            this.setFocused(this.textArea);
+            this.textArea.setFocused(true);
+        }
+    }
+
+    private void onSearchChanged(String query) {
+        if (this.searchBar.isLineMode()) {
+            this.searchBar.setStatus("", !query.isBlank() && parseLine(query) < 0);
+            return;
+        }
+        this.textArea.setSearchQuery(query);
+        if (!query.isEmpty()) {
+            // Stay on the current match while typing, or move to the next one
+            int pos = TextEditing.findNext(this.textArea.getValue(), query, Math.min(this.textArea.getCursorPos(), this.textArea.getSelectionPos()));
+            if (pos >= 0) {
+                this.textArea.selectRange(pos, pos + query.length());
+            }
+        }
+        this.updateSearchStatus();
+    }
+
+    private void updateSearchStatus() {
+        if (this.searchBar == null || this.searchBar.isLineMode()) {
+            return;
+        }
+        String query = this.searchBar.getValue();
+        if (query.isEmpty()) {
+            this.searchBar.setStatus("", false);
+            return;
+        }
+        int[] matches = this.textArea.getSearchMatches();
+        int start = Math.min(this.textArea.getCursorPos(), this.textArea.getSelectionPos());
+        int end = Math.max(this.textArea.getCursorPos(), this.textArea.getSelectionPos());
+        int current = 0;
+        for (int i = 0; i < matches.length; i++) {
+            if (matches[i] == start && end - start == query.length()) {
+                current = i + 1;
+            }
+        }
+        this.searchBar.setStatus(current + "/" + matches.length, matches.length == 0);
+    }
+
+    private static int parseLine(String value) {
+        try {
+            int line = Integer.parseInt(value.trim());
+            return line > 0 ? line : -1;
+        } catch (NumberFormatException e) {
+            return -1;
+        }
+    }
+
+    /**
+     * @param direction 1 for the next match, -1 for the previous match.
+     */
+    private void navigate(int direction) {
+        String query = this.searchBar.getValue();
+        String value = this.textArea.getValue();
+        if (this.searchBar.isLineMode()) {
+            int line = parseLine(query);
+            if (line < 0) {
+                this.searchBar.setStatus("", true);
+                return;
+            }
+            int pos = TextEditing.lineOffset(value, line);
+            closeNavigate();
+            this.textArea.selectRange(pos, pos);
+            return;
+        }
+        int pos = direction > 0
+                ? TextEditing.findNext(value, query, Math.max(this.textArea.getCursorPos(), this.textArea.getSelectionPos()))
+                : TextEditing.findPrevious(value, query, Math.min(this.textArea.getCursorPos(), this.textArea.getSelectionPos()));
+        if (pos >= 0) {
+            this.textArea.selectRange(pos, pos + query.length());
+        }
+        this.updateSearchStatus();
+    }
+
     @Override
     public boolean charTyped(CharacterEvent event) {
         // Make active dialog consume all input
-        if (pendingScriptRemovalDialog != null) {
-            return false;
+        if (pendingDialog != null) {
+            return pendingDialog.getInput() != null && pendingDialog.getInput().charTyped(event);
+        }
+        if (this.searchBar != null && this.searchBar.isFocused()) {
+            return this.searchBar.charTyped(event);
         }
         return super.charTyped(event);
     }

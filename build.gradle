@@ -116,6 +116,10 @@ repositories {
     mavenCentral()
 	mavenLocal()
     maven {
+        name "JEI"
+        url "https://maven.blamejared.com"
+    }
+    maven {
         name "Cyclops Repo"
         url "https://maven.pkg.github.com/CyclopsMC/packages"
         credentials {
@@ -155,6 +159,9 @@ dependencies {
             transitive = false
         }
     }
+
+    // Optional, only used to hide JEI in focus mode
+    compileOnly "mezz.jei:jei-${project.minecraft_version}-neoforge-api:${project.jei_version}"
 
     modLib "com.google.re2j:re2j:1.1"
     modLib ("io.netty:netty-codec-http:4.1.77.Final") {

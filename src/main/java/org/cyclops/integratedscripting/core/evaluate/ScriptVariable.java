@@ -44,6 +44,17 @@ public class ScriptVariable extends VariableAdapter<IValue> {
 
     @Override
     public IValue getValue() throws EvaluationException {
+        try {
+            IValue value = this.evaluate();
+            ScriptEvaluationStatuses.recordValue(this.disk, this.path, this.member, value);
+            return value;
+        } catch (EvaluationException e) {
+            ScriptEvaluationStatuses.recordReadError(this.disk, this.path, this.member, e.getErrorMessage());
+            throw e;
+        }
+    }
+
+    protected IValue evaluate() throws EvaluationException {
         if (this.lastEvaluationException != null) {
             throw this.lastEvaluationException;
         }
