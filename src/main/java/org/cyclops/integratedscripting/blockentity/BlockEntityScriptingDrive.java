@@ -103,9 +103,11 @@ public class BlockEntityScriptingDrive extends BlockEntityCableConnectableInvent
             this.onDirty();
             ScriptingNetworkHelpers.getScriptingNetwork(getNetwork())
                     .ifPresent(scriptingNetwork -> {
-                        if (exposedDiskId == -1) {
+                        // Also remove the old disk when it is directly replaced by another one
+                        if (oldExposedDiskId >= 0) {
                             scriptingNetwork.removeDisk(oldExposedDiskId);
-                        } else {
+                        }
+                        if (exposedDiskId >= 0) {
                             scriptingNetwork.addDisk(exposedDiskId);
                         }
                     });

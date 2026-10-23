@@ -34,3 +34,7 @@ config
 
 # Ignore Minecraft runtime logs
 /logs
+
+# ClientDevBridge session state (golden images are intentionally kept)
+.clientdevbridge/*
+!.clientdevbridge/golden/
