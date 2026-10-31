@@ -21,6 +21,8 @@ public class GeneralConfig extends DummyConfigCommon<IModBase> {
     public static int terminalScriptingBaseConsumption = 1;
     @ConfigurablePropertyCommon(category = "general", comment = "The minimum number of ticks inbetween sending a script change packet from client to server.", minimalValue = 0, configLocation = ModConfigLocation.SERVER)
     public static int terminalScriptingClientSyncTickInterval = 20;
+    @ConfigurablePropertyCommon(category = "general", comment = "The number of spaces that tab inserts in the scripting terminal editor.", minimalValue = 1, maximalValue = 16, configLocation = ModConfigLocation.CLIENT)
+    public static int terminalScriptingIndentSize = 2;
 
     @ConfigurablePropertyCommon(category = "general", comment = "If new processes can be created from guest languages. Only enable this on private servers and if you know what you are doing.", configLocation = ModConfigLocation.SERVER)
     public static boolean graalAllowCreateProcess = false;

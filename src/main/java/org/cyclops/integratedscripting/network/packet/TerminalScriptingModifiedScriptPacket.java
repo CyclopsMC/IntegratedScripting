@@ -13,6 +13,7 @@ import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScri
 
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -40,7 +41,7 @@ public class TerminalScriptingModifiedScriptPacket extends PacketCodec<TerminalS
         super(ID);
         this.disk = disk;
         this.path = path.toString();
-        this.script = Arrays.stream(script.split("\n")).toList();
+        this.script = Arrays.stream(script.split("\n", -1)).toList();
     }
 
     public String getScript() {
@@ -55,7 +56,11 @@ public class TerminalScriptingModifiedScriptPacket extends PacketCodec<TerminalS
     @Override
     public void actionClient(Level world, Player player) {
         if(player.containerMenu instanceof ContainerTerminalScripting container) {
-            container.setLastScript(disk, Path.of(path), getScript());
+            Path scriptPath = Path.of(path);
+            // Determine this before storing the script
+            boolean created = !container.getLastScripts().getOrDefault(disk, Collections.emptyMap()).containsKey(scriptPath);
+            container.setLastScript(disk, scriptPath, getScript());
+            container.onRemoteScriptChange(disk, scriptPath, created);
         }
     }
 

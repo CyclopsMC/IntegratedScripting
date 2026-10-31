@@ -18,11 +18,14 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.commons.lang3.tuple.Triple;
 import org.cyclops.cyclopscore.helper.ValueNotifierHelpers;
 import org.cyclops.cyclopscore.inventory.SimpleInventory;
 import org.cyclops.cyclopscore.inventory.container.InventoryContainer;
 import org.cyclops.cyclopscore.persist.IDirtyMarkListener;
 import org.cyclops.integrateddynamics.IntegratedDynamics;
+import org.cyclops.integrateddynamics.api.evaluate.variable.ValueDeseralizationContext;
+import org.cyclops.integrateddynamics.api.item.IVariableFacade;
 import org.cyclops.integrateddynamics.api.item.IVariableFacadeHandlerRegistry;
 import org.cyclops.integrateddynamics.api.network.INetwork;
 import org.cyclops.integrateddynamics.api.part.IPartContainer;
@@ -33,19 +36,25 @@ import org.cyclops.integrateddynamics.core.inventory.container.slot.SlotVariable
 import org.cyclops.integratedscripting.IntegratedScripting;
 import org.cyclops.integratedscripting.RegistryEntries;
 import org.cyclops.integratedscripting.api.item.IScriptVariableFacade;
+import org.cyclops.integratedscripting.api.language.ILanguageHandler;
+import org.cyclops.integratedscripting.api.language.ScriptSyntaxError;
 import org.cyclops.integratedscripting.api.network.IScriptingData;
 import org.cyclops.integratedscripting.api.network.IScriptingNetwork;
+import org.cyclops.integratedscripting.core.evaluate.ScriptEvaluationStatuses;
 import org.cyclops.integratedscripting.core.evaluate.ScriptVariableFacadeHandler;
 import org.cyclops.integratedscripting.core.item.ScriptVariableFacade;
+import org.cyclops.integratedscripting.core.language.LanguageHandlers;
 import org.cyclops.integratedscripting.core.network.ScriptingNetworkHelpers;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingCreateNewScriptPacket;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingDeleteScriptPacket;
 import org.cyclops.integratedscripting.network.packet.TerminalScriptingModifiedScriptPacket;
+import org.cyclops.integratedscripting.network.packet.TerminalScriptingSyntaxErrorPacket;
 import org.cyclops.integratedscripting.part.PartTypeTerminalScripting;
 
 import javax.annotation.Nullable;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.function.BiConsumer;
 import java.util.regex.Pattern;
 
 /**
@@ -53,6 +62,8 @@ import java.util.regex.Pattern;
  * @author rubensworks
  */
 public class ContainerTerminalScripting extends InventoryContainer implements IDirtyMarkListener {
+
+    public static final int SYNTAX_CHECK_DELAY_TICKS = 10;
 
     public static Pattern INVALID_MEMBER_NAME = Pattern.compile("[^0-9a-zA-Z_]");
     public static Pattern VALID_MEMBER_NAME = Pattern.compile("[0-9a-zA-Z_]+");
@@ -70,6 +81,17 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
     private final int activeDiskId;
     private final int activeScriptPathId;
     private final int selectionId;
+    private final int cardEvaluationId;
+    @Nullable
+    private IRemoteScriptChangeListener remoteScriptChangeListener;
+    private final Map<Pair<Integer, Path>, ScriptSyntaxError> syntaxErrors = Maps.newHashMap();
+    @Nullable
+    private BiConsumer<Integer, Path> syntaxErrorListener;
+    @Nullable
+    private Triple<Integer, Path, String> syntaxCheckPending;
+    @Nullable
+    private Triple<Integer, Path, String> syntaxCheckDone;
+    private int syntaxCheckTicks;
 
     public ContainerTerminalScripting(int id, Inventory playerInventory, FriendlyByteBuf packetBuffer) {
         this(id, playerInventory, PartHelpers.readPartTarget((RegistryFriendlyByteBuf) packetBuffer), Optional.empty(),
@@ -99,6 +121,7 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
         setActiveDisk(this.availableDisks.isEmpty() ? -1 : this.availableDisks.getInt(0));
         this.activeScriptPathId = getNextValueId();
         this.selectionId = getNextValueId();
+        this.cardEvaluationId = getNextValueId();
     }
 
 
@@ -213,7 +236,70 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
                     }
                 }
             });
+
+            this.checkActiveScriptSyntax();
+
+            // Send the last evaluation of the bound card
+            IScriptVariableFacade cardFacade = getCardFacade();
+            ValueNotifierHelpers.setValue(this, cardEvaluationId, cardFacade == null ? Collections.emptyList()
+                    : Collections.<Component>unmodifiableList(ScriptEvaluationStatuses.describe(cardFacade.getDisk(), cardFacade.getPath(), cardFacade.getMember())));
         }
+    }
+
+    /**
+     * @return Lines describing the last evaluation of the bound card.
+     */
+    public List<Component> getCardEvaluation() {
+        return ValueNotifierHelpers.getValueTextComponentList(this, cardEvaluationId);
+    }
+
+    /**
+     * Check the active script for syntax errors once it hasn't changed for a while, and send the result to the client.
+     */
+    protected void checkActiveScriptSyntax() {
+        Path path = getActiveScriptPath();
+        int disk = getActiveDisk();
+        if (path == null || disk < 0) {
+            return;
+        }
+        String script = ScriptingNetworkHelpers.getScriptingData().getScripts(disk).get(path);
+        if (script == null) {
+            return;
+        }
+        Triple<Integer, Path, String> key = Triple.of(disk, path, script);
+        if (!key.equals(this.syntaxCheckPending)) {
+            this.syntaxCheckPending = key;
+            this.syntaxCheckTicks = 0;
+            return;
+        }
+        if (key.equals(this.syntaxCheckDone) || ++this.syntaxCheckTicks < SYNTAX_CHECK_DELAY_TICKS) {
+            return;
+        }
+        this.syntaxCheckDone = key;
+        ILanguageHandler languageHandler = LanguageHandlers.REGISTRY.getProvider(path);
+        ScriptSyntaxError error = languageHandler == null ? null : languageHandler.checkSyntax(path, script);
+        IntegratedScripting._instance.getPacketHandler()
+                .sendToPlayer(new TerminalScriptingSyntaxErrorPacket(disk, path, error), (ServerPlayer) player);
+    }
+
+    public void setSyntaxErrorListener(@Nullable BiConsumer<Integer, Path> syntaxErrorListener) {
+        this.syntaxErrorListener = syntaxErrorListener;
+    }
+
+    public void setSyntaxError(int disk, Path path, @Nullable ScriptSyntaxError error) {
+        if (error == null) {
+            this.syntaxErrors.remove(Pair.of(disk, path));
+        } else {
+            this.syntaxErrors.put(Pair.of(disk, path), error);
+        }
+        if (this.syntaxErrorListener != null) {
+            this.syntaxErrorListener.accept(disk, path);
+        }
+    }
+
+    @Nullable
+    public ScriptSyntaxError getSyntaxError(int disk, Path path) {
+        return this.syntaxErrors.get(Pair.of(disk, path));
     }
 
     @Override
@@ -241,12 +327,64 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
         }
     }
 
+    public void setRemoteScriptChangeListener(@Nullable IRemoteScriptChangeListener remoteScriptChangeListener) {
+        this.remoteScriptChangeListener = remoteScriptChangeListener;
+    }
+
+    /**
+     * Called on the client when a script was changed by the server.
+     * @param disk The disk id.
+     * @param path The script path.
+     * @param created If the script did not exist before.
+     */
+    public void onRemoteScriptChange(int disk, Path path, boolean created) {
+        if (this.remoteScriptChangeListener != null) {
+            this.remoteScriptChangeListener.onChange(disk, path, created);
+        }
+    }
+
+    public static interface IRemoteScriptChangeListener {
+        public void onChange(int disk, Path path, boolean created);
+    }
+
     public Int2ObjectMap<Map<Path, String>> getLastScripts() {
         return lastScripts;
     }
 
     public void setServerScript(int disk, Path path, @Nullable String script) {
+        // The client already has this version, so don't send it back in broadcastChanges.
+        // Otherwise, this echo could overwrite newer client changes that were not synced yet.
+        setLastScript(disk, path, script);
         ScriptingNetworkHelpers.getScriptingData().setScript(disk, path, script, IScriptingData.ChangeLocation.MEMORY);
+    }
+
+    /**
+     * Rename a script on the server.
+     * The client already applied the rename to its own state, so it is corrected if the rename fails.
+     */
+    public void renameServerScript(int disk, Path from, Path to) {
+        IScriptingData scriptingData = ScriptingNetworkHelpers.getScriptingData();
+        String script = scriptingData.getScripts(disk).get(from);
+        if (script != null && !scriptingData.getScripts(disk).containsKey(to)) {
+            scriptingData.setScript(disk, to, script, IScriptingData.ChangeLocation.MEMORY);
+            // Only remove the original if the new path was accepted
+            if (script.equals(scriptingData.getScripts(disk).get(to))) {
+                scriptingData.setScript(disk, from, null, IScriptingData.ChangeLocation.MEMORY);
+            }
+        }
+
+        // Send the actual state of both paths, which also corrects the client if the rename failed
+        for (Path path : new Path[]{from, to}) {
+            String value = scriptingData.getScripts(disk).get(path);
+            setLastScript(disk, path, value);
+            if (value != null) {
+                IntegratedScripting._instance.getPacketHandler()
+                        .sendToPlayer(new TerminalScriptingModifiedScriptPacket(disk, path, value), (ServerPlayer) player);
+            } else {
+                IntegratedScripting._instance.getPacketHandler()
+                        .sendToPlayer(new TerminalScriptingDeleteScriptPacket(disk, path), (ServerPlayer) player);
+            }
+        }
     }
 
     public void createNewServerScript(int disk) {
@@ -291,7 +429,37 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
     }
 
     public boolean isMemberSelected() {
-        return VALID_MEMBER_NAME.matcher(getSelectedMember()).matches();
+        String member = getSelectedMember();
+        return VALID_MEMBER_NAME.matcher(member).matches() && !isReservedWord(member);
+    }
+
+    /**
+     * @return If the given word is reserved in the language of the active script, such as a keyword.
+     */
+    public boolean isReservedWord(String word) {
+        Path path = getActiveScriptPath();
+        ILanguageHandler languageHandler = path == null ? null : LanguageHandlers.REGISTRY.getProvider(path);
+        return languageHandler != null && languageHandler.getReservedWords().contains(word);
+    }
+
+    /**
+     * @return The member the variable card in the slot is bound to, or null if there is no bound card.
+     */
+    @Nullable
+    public String getCardMember() {
+        IScriptVariableFacade facade = getCardFacade();
+        return facade != null ? facade.getMember() : null;
+    }
+
+    @Nullable
+    protected IScriptVariableFacade getCardFacade() {
+        ItemStack itemStack = getContainerInventory().getItem(0);
+        if (itemStack.isEmpty()) {
+            return null;
+        }
+        IVariableFacadeHandlerRegistry registry = IntegratedDynamics._instance.getRegistryManager().getRegistry(IVariableFacadeHandlerRegistry.class);
+        IVariableFacade variableFacade = registry.handle(ValueDeseralizationContext.of(getLevel()), itemStack);
+        return variableFacade instanceof IScriptVariableFacade scriptVariableFacade ? scriptVariableFacade : null;
     }
 
     @Nullable
@@ -332,8 +500,12 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
         List<Component> list = Lists.newArrayList();
         if (canWriteScriptToVariable()) {
             if (!isMemberSelected()) {
-                list.add(Component.translatable("gui.integratedscripting.error.invalid_member"));
-                list.add(Component.translatable("gui.integratedscripting.error.invalid_member.current", getSelectedMember()));
+                if (isReservedWord(getSelectedMember())) {
+                    list.add(Component.translatable("gui.integratedscripting.error.reserved_member", getSelectedMember()));
+                } else {
+                    list.add(Component.translatable("gui.integratedscripting.error.invalid_member"));
+                    list.add(Component.translatable("gui.integratedscripting.error.invalid_member.current", getSelectedMember()));
+                }
             }
         }
         return list;
