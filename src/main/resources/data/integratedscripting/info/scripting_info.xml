@@ -55,6 +55,22 @@
         <appendix type="minecraft:crafting">integratedscripting:crafting/part_terminal_scripting</appendix>
     </section>
 
+    <section name="info_book.integratedscripting.terminal_shortcuts">
+        <paragraph>info_book.integratedscripting.terminal_shortcuts.text1</paragraph>
+        <paragraph>info_book.integratedscripting.terminal_shortcuts.text2</paragraph>
+        <paragraph>info_book.integratedscripting.terminal_shortcuts.text3</paragraph>
+        <paragraph>info_book.integratedscripting.terminal_shortcuts.text4</paragraph>
+        <paragraph>info_book.integratedscripting.terminal_shortcuts.text5</paragraph>
+        <appendix type="keybinding">key.integratedscripting.undo</appendix>
+        <appendix type="keybinding">key.integratedscripting.redo</appendix>
+        <appendix type="keybinding">key.integratedscripting.find</appendix>
+        <appendix type="keybinding">key.integratedscripting.goto_line</appendix>
+        <appendix type="keybinding">key.integratedscripting.comment</appendix>
+        <appendix type="keybinding">key.integratedscripting.move_lines_up</appendix>
+        <appendix type="keybinding">key.integratedscripting.move_lines_down</appendix>
+        <appendix type="keybinding">key.integratedscripting.focus_mode</appendix>
+    </section>
+
     <section name="info_book.integratedscripting.writing">
         <section name="info_book.integratedscripting.writing.js">
             <paragraph>info_book.integratedscripting.writing.js.text1</paragraph>
@@ -72,7 +88,7 @@ let myInt = 123 + 456;
 
 let myString = "";
 for (let i = 0; i &lt; 50; i++) {
-  myString =+ ".";
+  myString += ".";
 }
 
 const myList = [ 1, 1, 2, 3, 5 ];</appendix>
@@ -95,7 +111,7 @@ const isOdd = (value) => value % 2 !== 0;</appendix>
   let n1 = 0;
   let n2 = 1;
   let nextTerm = 0;
-  for (let i = 1; i &lt;= number; i++) {
+  for (let i = 1; i &lt;= limit; i++) {
     values.push(n1);
     nextTerm = n1 + n2;
     n1 = n2;
@@ -111,7 +127,7 @@ const isOdd = (value) => value % 2 !== 0;</appendix>
             <paragraph>info_book.integratedscripting.writing.globals.text3</paragraph>
             <paragraph>info_book.integratedscripting.writing.globals.text4</paragraph>
             <appendix type="textfield" scale="0.8">function filterItem(item) {
-  return idContext.ops.itemstackStackable(item) &amp;&amp; idContext.ops.itemstackStacksize(item) >= 16;
+  return idContext.ops.itemstackIsStackable(item) &amp;&amp; idContext.ops.itemstackSize(item) >= 16;
 }</appendix>
             <appendix type="textfield" scale="0.8">const isStackable = idContext.ops.itemstackIsStackable;
 const size = idContext.ops.itemstackSize;
@@ -133,7 +149,7 @@ function filterItemCompact(item) {
   return item.strength(block) > 10;
 }</appendix>
             <appendix type="textfield" scale="0.8">function filterItemMethods3(item) {
-  return item.nbt().Damage === 0;
+  return !item.nbt()['minecraft:damage'];
 }</appendix>
         </section>
     </section>
@@ -164,6 +180,7 @@ function getRunningAvg(value) {
             <paragraph>info_book.integratedscripting.advanced.external_editing.text2</paragraph>
             <paragraph>info_book.integratedscripting.advanced.external_editing.text3</paragraph>
             <paragraph>info_book.integratedscripting.advanced.external_editing.text4</paragraph>
+            <paragraph>info_book.integratedscripting.advanced.external_editing.text5</paragraph>
         </section>
 
         <section name="info_book.integratedscripting.advanced.logging">
