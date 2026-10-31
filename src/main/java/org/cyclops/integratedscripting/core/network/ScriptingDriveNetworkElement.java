@@ -44,7 +44,10 @@ public class ScriptingDriveNetworkElement extends TileNetworkElement<BlockEntity
         if(super.onNetworkAddition(network)) {
             return ScriptingNetworkHelpers.getScriptingNetwork(network)
                     .map(scriptingNetwork -> {
-                        scriptingNetwork.addDisk(getId());
+                        // An empty drive has no disk to expose
+                        if (getId() >= 0) {
+                            scriptingNetwork.addDisk(getId());
+                        }
                         return true;
                     })
                     .orElse(false);
@@ -57,7 +60,9 @@ public class ScriptingDriveNetworkElement extends TileNetworkElement<BlockEntity
         super.onNetworkRemoval(network, blockState, blockEntity);
         ScriptingNetworkHelpers.getScriptingNetwork(network)
                 .ifPresent(scriptingNetwork -> {
-                    scriptingNetwork.removeDisk(getId());
+                    if (getId() >= 0) {
+                        scriptingNetwork.removeDisk(getId());
+                    }
                 });
     }
 

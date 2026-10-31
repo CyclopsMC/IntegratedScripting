@@ -34,6 +34,7 @@ import org.cyclops.integratedscripting.capability.ScriptingNetworkCapabilityCons
 import org.cyclops.integratedscripting.command.CommandTestScript;
 import org.cyclops.integratedscripting.component.DataComponentDiskIdConfig;
 import org.cyclops.integratedscripting.core.client.model.ScriptingVariableModelProviders;
+import org.cyclops.integratedscripting.core.evaluate.ScriptEvaluationStatuses;
 import org.cyclops.integratedscripting.core.evaluate.ScriptVariableFacadeHandler;
 import org.cyclops.integratedscripting.core.packageddependencies.PackagedDependenciesLoader;
 import org.cyclops.integratedscripting.core.language.LanguageHandlerRegistry;
@@ -43,7 +44,9 @@ import org.cyclops.integratedscripting.evaluate.EvaluationExceptionResolutionHel
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslatorRegistry;
 import org.cyclops.integratedscripting.evaluate.translation.ValueTranslators;
 import org.cyclops.integratedscripting.gametest.GameTestsAdvancements;
+import org.cyclops.integratedscripting.gametest.GameTestsScriptingDrive;
 import org.cyclops.integratedscripting.gametest.GameTestsScripts;
+import org.cyclops.integratedscripting.gametest.GameTestsTerminalScripting;
 import org.cyclops.integratedscripting.inventory.container.ContainerScriptingDriveConfig;
 import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScriptingConfig;
 import org.cyclops.integratedscripting.item.ItemScriptingDiskConfig;
@@ -127,6 +130,7 @@ public class IntegratedScripting extends ModBaseNeoForge<IntegratedScripting> {
         }
         this.scriptingData = null;
         EvaluationExceptionResolutionHelpers.reset();
+        ScriptEvaluationStatuses.reset();
     }
 
     @SubscribeEvent
@@ -187,7 +191,9 @@ public class IntegratedScripting extends ModBaseNeoForge<IntegratedScripting> {
     public Class<?>[] getGameTestClasses() {
         return new Class<?>[]{
                 GameTestsAdvancements.class,
-                GameTestsScripts.class
+                GameTestsScripts.class,
+                GameTestsScriptingDrive.class,
+                GameTestsTerminalScripting.class
         };
     }
 
