@@ -418,9 +418,19 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
             for (Renderable renderable : this.renderables) {
                 renderable.extractRenderState(guiGraphics, mouseX, mouseY, partialTicks);
             }
+            guiGraphics.nextStratum();
+            textArea.extractPopups(guiGraphics);
         } else {
             super.drawCurrentScreen(guiGraphics, mouseX, mouseY, partialTicks);
         }
+    }
+
+    @Override
+    public void extractContents(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
+        super.extractContents(guiGraphics, mouseX, mouseY, partialTicks);
+        // Above the slots and the scrollbar, which are drawn after the editor
+        guiGraphics.nextStratum();
+        textArea.extractPopups(guiGraphics);
     }
 
     @Override
