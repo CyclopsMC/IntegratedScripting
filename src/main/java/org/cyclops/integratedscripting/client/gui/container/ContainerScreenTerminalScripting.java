@@ -428,7 +428,6 @@ public class ContainerScreenTerminalScripting extends ContainerScreenExtended<Co
     @Override
     public void extractContents(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTicks) {
         super.extractContents(guiGraphics, mouseX, mouseY, partialTicks);
-        // Above the slots and the scrollbar, which are drawn after the editor
         guiGraphics.nextStratum();
         textArea.extractPopups(guiGraphics);
     }
