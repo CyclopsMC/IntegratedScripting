@@ -1,0 +1,57 @@
+As always, don't forget to backup your world before updating!
+Requires CyclopsCore version 1.30.1 or higher.
+
+Changes:
+* Improve user experience of editor
+  * Show a hint in the scripting terminal editor when no script is open
+  * Color value types in script editor completions and signatures
+  * Add a rebindable hotkey to enlarge the script editor
+  * Open new scripts after creating them in the terminal
+  * Hide JEI in the focus mode of the scripting terminal
+  * Show syntax errors when hovering their scrollbar mark
+  * Make the script editor scrollbar narrower
+  * Show syntax error tooltips below their line
+  * Add completion of idContext.ops in the script editor
+  * Show the signature of idContext.ops calls in the script editor
+  * Show the last evaluation of the bound card in the scripting terminal
+  * Only bind variable cards to top-level declarations
+  * Wrap long lines at spaces and punctuation in the script editor
+  * Add a button to open the scripts folder of a disk
+  * Add a focus mode to enlarge the script editor
+  * Allow renaming scripts in the scripting terminal
+  * Show full script paths when hovering the script list
+  * Only re-wrap and re-highlight the editor text when it changes
+  * Show syntax errors in the script editor
+  * Document the script editor shortcuts in the info book
+  * Improve syntax highlighting in the script editor
+  * Add toolbar buttons for editor actions
+  * Make the indent size of the script editor configurable
+  * Scroll the script editor while drag-selecting
+  * Add toggle comment and move lines to the script editor
+  * Add find and go to line to the script editor
+  * Highlight matching brackets in the script editor
+  * Keep indentation on enter in the script editor
+  * Indent with tab in the script editor
+  * Notice all externally created script files
+  * Only apply external changes when the file watcher reloads scripts
+  * Show external script changes in the open editor
+  * Write scripts to disk atomically
+  * Add undo and redo to the script editor
+  * Don't put the cursor on the hidden row below the script editor's last line
+  * Avoid long disk labels to overlap with disk selector (#84)
+  * Show what variable card would bind to (#83)
+  * Keep the open script when the scripting terminal is resized
+  * Make page up and page down move through the editor
+  * Don't wrap editor text below the scrollbar
+  * Start editor line numbers at 1
+  * Keep trailing newlines when syncing scripts
+  * Don't lose editor focus on unhandled keys
+  * Keep the cursor visible in the editor
+  * Don't reset the editor scroll position on every edit
+
+Fixes:
+* Fix empty scripting drives exposing a disk with ID -1
+* Fix display panels not recovering from script errors after external edits (#91)
+* Fix broken JavaScript examples in the info book
+* Fix wrong operator names in the info book
+* Fix the scripts directory path in the info book
