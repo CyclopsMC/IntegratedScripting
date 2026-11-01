@@ -85,7 +85,6 @@
   "info_book.integratedscripting.terminal.text4": "Se o disco ainda não contiver nenhum arquivo de script, você pode criá-los clicando no botão \"+\" no lado inferior esquerdo da tela.",
   "info_book.integratedscripting.terminal.text5": "A lista de arquivos de script no lado esquerdo da tela é usada para selecionar um script para edição. Ao clicar em um script, seu conteúdo editável aparecerá no lado direito da tela.",
   "info_book.integratedscripting.terminal.text6": "O campo de texto no lado direito da tela permite editar o conteúdo dos arquivos de script, que serão salvos automaticamente após cada modificação.",
-  "info_book.integratedscripting.terminal.text7": "Embora o editor realize um destaque de sintaxe limitado, ele não é capaz de detectar erros de sintaxe neste momento. Erros de sintaxe serão relatados ao executar scripts via &lCartões de Variável&r.",
   "info_book.integratedscripting.terminal.text8": "Para usar um membro do script como lógica do &lIntegrated Dynamics&r, você pode vinculá-lo a um &lCartão de Variável&r.",
   "info_book.integratedscripting.terminal.text9": "Você pode fazer isso primeiro selecionando um membro do script no editor de texto, selecionando-o com o cursor, como um nome de variável ou nome de função.",
   "info_book.integratedscripting.terminal.text10": "Depois disso, você pode inserir um &lCartão de Variável&r no slot do lado direito da tela para vinculá-lo a este membro do script.",
@@ -117,7 +116,6 @@
   "info_book.integratedscripting.writing.methods.text1": "Para combater a verbosidade das funções globais, você pode escrever código de forma mais compacta usando &lmétodos de objeto&r.",
   "info_book.integratedscripting.writing.methods.text2": "Tipos de valor de objeto como &8Blocos&0, &8Itens&0, &8Fluidos&0, ... terão &lmétodos&r anexados a eles quando usados em JavaScript.",
   "info_book.integratedscripting.writing.methods.text3": "Métodos de objeto são apenas funções simples, mas seu primeiro argumento está vinculado ao valor do objeto.",
-  "info_book.integratedscripting.writing.methods.text4": "Por exemplo, a função global &oitemstackIsStackable&r recebe um único argumento de &8Item&0 e retorna um &9Booleano&0. Esta função está disponível como um método em valores de &8Item&0 através do nome &oisStackable&r, que não recebe argumentos.",
   "info_book.integratedscripting.writing.methods.text5": "Funções globais que aceitam dois ou mais argumentos estarão disponíveis como métodos em valores de objeto, com todos os argumentos deslocados por um. Por exemplo, a função global &oitemstackStrength&r aceita um argumento de &8Item&0 e &8Bloco&0, mas também está disponível como método em &8Itens&0 com um único argumento de &8Bloco&0.",
   "info_book.integratedscripting.advanced": "Avançado",
   "info_book.integratedscripting.advanced.transient_storage": "Armazenamento Transiente",
@@ -129,7 +127,6 @@
   "info_book.integratedscripting.advanced.transient_storage.text6": "Como tal, você não pode assumir que esses valores sempre permanecerão presentes. Se precisar de armazenamento de dados persistente, é melhor usar o &lAtrasador&r.",
   "info_book.integratedscripting.advanced.external_editing": "Edição Externa",
   "info_book.integratedscripting.advanced.external_editing.text1": "Se você tiver acesso ao sistema de arquivos no qual seu jogo singleplayer ou multiplayer está sendo executado, poderá acessar os arquivos de script através de qualquer editor externo. Isso permite que você crie scripts usando seu IDE favorito (como Vi, mas definitivamente não o Emacs).",
-  "info_book.integratedscripting.advanced.external_editing.text2": "Os arquivos de script estão acessíveis através do diretório &oworld/integratedscripting/&r (veja &osaves/&r para mundos singleplayer). Aqui, você encontrará diretórios para todos os &lDiscos de Scripting&r por seu id. Dentro de cada diretório de &lDisco de Scripting&r, você encontrará todos os arquivos de script armazenados nesse disco.",
   "info_book.integratedscripting.advanced.external_editing.text3": "Você pode modificar com segurança esses arquivos de script através de um editor externo, mesmo que o jogo esteja em execução. Após salvar o arquivo externamente, eles serão atualizados automaticamente no jogo, e as variáveis dependentes também serão atualizadas.",
   "info_book.integratedscripting.advanced.external_editing.text4": "Se o seu editor externo suportar isso (IDEs modernos suportam), modificar um arquivo de script através do &lTerminal de Scripting&r também fará com que os arquivos sejam atualizados em seu editor externo.",
   "info_book.integratedscripting.advanced.logging": "Logging",
@@ -164,6 +161,5 @@
   "info_book.integratedscripting.tutorials.functions.text3": "Neste tutorial, criaremos uma função que aceita um único argumento de &8Item&0 e retorna um &9Booleano&0 como saída. Esta função atuará como um operador de filtro, que podemos usar, por exemplo, ao filtrar uma lista de itens.",
   "info_book.integratedscripting.tutorials.functions.text4": "Concretamente, leremos a lista de itens usando o &lLeitor de Inventário&r e a &lFiltraremos&r usando nossa função recém-criada. Você pode vincular a função a um &lCartão de Variável&r selecionando-a no editor e inserindo um &lCartão de Variável&r vazio, que a armazenará como um &2Operador&0.",
   "info_book.integratedscripting.tutorials.functions.text5": "Você está livre para usar qualquer implementação da função de filtro para este tutorial. A seguir, você pode encontrar um exemplo de script válido que você pode copiar.",
-  "info_book.integratedscripting.tutorials.functions.text6": "Para completar o tutorial, mostre o resultado da lista filtrada em um &lPainel de Exibição&r.",
-  "info_book.integratedscripting.tutorials.functions.text7": "Neste exemplo de script, você verá que pode invocar métodos integrados em itens, como &oisStackable()&r e &osize()&r. Mais detalhes sobre quais métodos estão disponíveis podem ser encontrados mais adiante no manual completo."
+  "info_book.integratedscripting.tutorials.functions.text6": "Para completar o tutorial, mostre o resultado da lista filtrada em um &lPainel de Exibição&r."
 }
