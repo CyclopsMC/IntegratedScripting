@@ -352,6 +352,10 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
     }
 
     public void setServerScript(int disk, Path path, @Nullable String script) {
+        // Clients may only modify disks that are available in this terminal.
+        if (!getAvailableDisks().contains(disk)) {
+            return;
+        }
         // The client already has this version, so don't send it back in broadcastChanges.
         // Otherwise, this echo could overwrite newer client changes that were not synced yet.
         setLastScript(disk, path, script);
@@ -363,6 +367,10 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
      * The client already applied the rename to its own state, so it is corrected if the rename fails.
      */
     public void renameServerScript(int disk, Path from, Path to) {
+        // Clients may only modify disks that are available in this terminal.
+        if (!getAvailableDisks().contains(disk)) {
+            return;
+        }
         IScriptingData scriptingData = ScriptingNetworkHelpers.getScriptingData();
         String script = scriptingData.getScripts(disk).get(from);
         if (script != null && !scriptingData.getScripts(disk).containsKey(to)) {
@@ -388,6 +396,11 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
     }
 
     public void createNewServerScript(int disk) {
+        // Clients may only modify disks that are available in this terminal.
+        if (!getAvailableDisks().contains(disk)) {
+            return;
+        }
+
         // Determine unique script name
         Set<Path> existingScripts = ScriptingNetworkHelpers.getScriptingData().getScripts(disk).keySet();
         Path path;
