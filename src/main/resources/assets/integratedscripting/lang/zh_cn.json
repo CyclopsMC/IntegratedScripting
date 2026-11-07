@@ -84,7 +84,6 @@
   "info_book.integratedscripting.terminal.text4": "如果磁盘中还未存有脚本文件，可以点击界面左下角的“+”按钮新建一份。",
   "info_book.integratedscripting.terminal.text5": "界面左侧的脚本文件列表用于选择脚本，以供编辑。点击脚本后，其中内容会显示于界面右侧的可编辑区域中。",
   "info_book.integratedscripting.terminal.text6": "界面右侧的文本编辑框用于编辑脚本文件的内容，每次修改后自动保存。",
-  "info_book.integratedscripting.terminal.text7": "尽管编辑器目前已在一定程度上支持语法高亮，但仍无法检测出语法错误。使用&l变量卡&r执行脚本时会产生这些错误的提示。",
   "info_book.integratedscripting.terminal.text8": "在&l动态联合&r的逻辑运算中使用脚本成员前，需先将其绑定至&l变量卡&r。",
   "info_book.integratedscripting.terminal.text9": "使用鼠标选中编辑器中的变量名、函数名等，即可令其与变量卡绑定。",
   "info_book.integratedscripting.terminal.text10": "之后，往界面右下角的槽位中放入一张&l变量卡&r，即能令其与所选中的脚本成员绑定。",
@@ -115,7 +114,6 @@
   "info_book.integratedscripting.writing.methods.text1": "全局函数的语法较为繁琐。使用更为紧凑的&l对象方法&r有时可以简化脚本。",
   "info_book.integratedscripting.writing.methods.text2": "在JavaScript中使用时，&8方块&0、&8物品s&0和&8流体s&0等对象类型均有对应&l方法&r。",
   "info_book.integratedscripting.writing.methods.text3": "对象方法与相应的普通函数一致，但在调用时会将对象绑定到首个参数上。",
-  "info_book.integratedscripting.writing.methods.text4": "例如，全局函数&oitemstackIsStackable&r接受单个&8物品&0参数，并返回一个&9布尔型&0。相应的对象方法为&oisStackable&r，不接受参数。",
   "info_book.integratedscripting.writing.methods.text5": "接受两个及以上参数的全局函数也有相应的对象方法：首个参数绑定至对象，其余参数顺延。比如，全局函数&oitemstackStrength&r接受一个&8物品&0和一个&8方块&0参数；在&8物品&0上的相应方法只接受后一&8方块&0参数。",
   "info_book.integratedscripting.advanced": "进阶",
   "info_book.integratedscripting.advanced.transient_storage": "暂态存储",
@@ -127,7 +125,6 @@
   "info_book.integratedscripting.advanced.transient_storage.text6": "因此，这些值无法保证能永久存在。如果需要持久的数据存储方式，最好还是使用&l延迟器&r。",
   "info_book.integratedscripting.advanced.external_editing": "外部编辑",
   "info_book.integratedscripting.advanced.external_editing.text1": "如你能访问单人或多人世界的存档文件，就可在任意外部编辑器中打开这些脚本。你可以用你最爱的IDE（比如Vi，但肯定不会是Emacs）编写脚本。",
-  "info_book.integratedscripting.advanced.external_editing.text2": "脚本文件位于&oworld/integratedscripting/&r目录下（单人世界见&osaves/&r目录）。各&l脚本磁盘&r分属不同的子目录，目录名称则分别是它们的ID。&l脚本磁盘&r的目录下即是该磁盘中存有的所有脚本文件。",
   "info_book.integratedscripting.advanced.external_editing.text3": "你可以在外部编辑器中随意修改这些文件，就算游戏开着也不会产生问题。在外部保存文件后，游戏内脚本和有关变量也会自动更新。",
   "info_book.integratedscripting.advanced.external_editing.text4": "如果你的外部编辑器有对应支持（现代IDE基本都有），在&l脚本终端&r内更新脚本文件后，外部编辑器中的文件也会同步更新。",
   "info_book.integratedscripting.advanced.logging": "日志",
@@ -161,6 +158,5 @@
   "info_book.integratedscripting.tutorials.functions.text3": "本教程中我们将创建接受单个&8物品&0参数，再返回一个&9布尔型&0的函数。该函数相当于一个过滤运算符，用于过滤物品列表。",
   "info_book.integratedscripting.tutorials.functions.text4": "详细说明一下，我们会通过&l物品栏读取器&r读出物品列表，再使用新建的函数&l过滤&r该列表。插入空&l变量卡&r并在编辑界面中选择函数，即可将其绑定至&l变量卡&r，此函数会存储为&2运算符&0。",
   "info_book.integratedscripting.tutorials.functions.text5": "此教程中可以使用任意方式实现过滤函数。在此给出一份有效示例脚本，以供随意复制。",
-  "info_book.integratedscripting.tutorials.functions.text6": "在&l显示器&r中展示列表的过滤结果，即可完成本教程。",
-  "info_book.integratedscripting.tutorials.functions.text7": "此示例脚本中调用了物品的内置方法，诸如&oisStackable()&r和&osize()&r。有关哪些方法可用的详细信息，后续可见完整手册。"
+  "info_book.integratedscripting.tutorials.functions.text6": "在&l显示器&r中展示列表的过滤结果，即可完成本教程。"
 }

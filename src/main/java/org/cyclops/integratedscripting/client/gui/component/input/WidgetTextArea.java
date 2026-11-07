@@ -938,19 +938,6 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
         this.renderHighlight(guiGraphics, displayCache.selection);
         if (displayCache.cursor != null) {
             this.renderCursor(guiGraphics, displayCache.cursor, displayCache.cursorAtEnd);
-
-            // Show completions while typing, or else the signature of the call at the cursor
-            if (this.isFocused()) {
-                Pos2i cursor = this.convertLocalToScreen(displayCache.cursor);
-                if (this.completions != null) {
-                    this.renderCompletions(guiGraphics, cursor);
-                } else if (this.signatureProvider != null) {
-                    Component signature = this.signatureProvider.apply(this.getValue(), this.getCursorPos());
-                    if (signature != null) {
-                        this.renderSignature(guiGraphics, cursor, signature);
-                    }
-                }
-            }
         }
 
         // Render scrollbar
@@ -970,6 +957,25 @@ public class WidgetTextArea extends EditBox implements GuiEventListener {
             }
 
             this.scrollBar.extractRenderState(guiGraphics, getX(), getY(), partialTicks);
+        }
+    }
+
+    /**
+     * Draw the completions while typing, or else the signature of the call at the cursor.
+     * The using screen must call this after drawing everything else that may overlap them, such as slots.
+     */
+    public void extractPopups(GuiGraphicsExtractor guiGraphics) {
+        DisplayCache displayCache = this.getDisplayCache();
+        if (displayCache.cursor != null && this.isFocused() && this.visible) {
+            Pos2i cursor = this.convertLocalToScreen(displayCache.cursor);
+            if (this.completions != null) {
+                this.renderCompletions(guiGraphics, cursor);
+            } else if (this.signatureProvider != null) {
+                Component signature = this.signatureProvider.apply(this.getValue(), this.getCursorPos());
+                if (signature != null) {
+                    this.renderSignature(guiGraphics, cursor, signature);
+                }
+            }
         }
     }
 
