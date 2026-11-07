@@ -1,8 +1,18 @@
 # Changelog for Minecraft 26.1.2
 All notable changes to this project will be documented in this file.
 
+<a name="26.1.2-1.1.1"></a>
+## [26.1.2-1.1.1](https://github.com/CyclopsMC/IntegratedScripting/compare/26.1.2-1.1.0...26.1.2-1.1.1) - 2026-11-07 16:26:38
+
+
+### Added
+* Add translations through Crowdin (#103)
+
+### Fixed
+* Fix scrollbar being drawn over completions dropdown (#102)
+
 <a name="26.1.2-1.1.0"></a>
-## [26.1.2-1.1.0](https://github.com/CyclopsMC/IntegratedScripting/compare/26.1.2-1.0.28...26.1.2-1.1.0) - 2026-11-01 11:31:54
+## [26.1.2-1.1.0](https://github.com/CyclopsMC/IntegratedScripting/compare/26.1.2-1.0.28...26.1.2-1.1.0) - 2026-11-01 11:31:54 +0100
 
 
 ### Changed
