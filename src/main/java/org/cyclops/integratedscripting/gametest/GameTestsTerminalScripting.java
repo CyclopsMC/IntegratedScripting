@@ -18,6 +18,7 @@ import org.cyclops.integratedscripting.inventory.container.ContainerTerminalScri
 import org.cyclops.integratedscripting.part.PartTypes;
 
 import java.nio.file.Path;
+import java.util.Map;
 
 import static org.cyclops.integratedscripting.gametest.GameTestHelpersIntegratedScripting.createBasicNetwork;
 
@@ -57,6 +58,43 @@ public class GameTestsTerminalScripting {
         // Selecting another member rebinds the card
         container.setSelection("def");
         helper.assertValueEqual(container.getCardMember(), "def", "card member");
+
+        helper.succeed();
+    }
+
+    @GameTest(template = TEMPLATE_EMPTY)
+    public void testTerminalScriptingIgnoresUnavailableDisks(GameTestHelper helper) {
+        GameTestHelpersIntegratedScripting.NetworkPositions positions = createBasicNetwork(helper, GameTestsScripts.POS);
+        IScriptingData scriptingData = ScriptingNetworkHelpers.getScriptingData();
+        Path path = Path.of("script0.js");
+        Path pathRenamed = Path.of("script1.js");
+
+        // A disk that is not part of the terminal's network
+        int otherDisk = org.cyclops.integratedscripting.RegistryEntries.ITEM_SCRIPTING_DISK.get()
+                .getOrCreateDiskId(new ItemStack(org.cyclops.integratedscripting.RegistryEntries.ITEM_SCRIPTING_DISK));
+        scriptingData.setScript(otherDisk, path, "original", IScriptingData.ChangeLocation.MEMORY);
+
+        ContainerTerminalScripting container = new ContainerTerminalScripting(0, helper.makeMockPlayer(GameType.CREATIVE).getInventory(),
+                PartTarget.fromCenter(positions.terminal()), PartHelpers.getPartContainer(positions.terminal().getPos(), positions.terminal().getSide()),
+                PartTypes.TERMINAL_SCRIPTING, new ContainerTerminalScripting.InitData(IntList.of(positions.diskId()))) {
+            // Handle values as if they were sent by the client, as the mock player has no connection
+            @Override
+            public void setValue(int valueId, CompoundTag value) {
+                onUpdate(valueId, value);
+            }
+        };
+
+        // Changes to the other disk are ignored
+        container.setServerScript(otherDisk, path, "modified");
+        container.setServerScript(otherDisk, pathRenamed, "new");
+        container.createNewServerScript(otherDisk);
+        helper.assertValueEqual(scriptingData.getScripts(otherDisk), Map.of(path, "original"), "scripts of the other disk");
+        container.renameServerScript(otherDisk, path, pathRenamed);
+        helper.assertValueEqual(scriptingData.getScripts(otherDisk), Map.of(path, "original"), "scripts of the other disk after rename");
+
+        // Changes to the terminal's own disk are applied
+        container.setServerScript(positions.diskId(), path, "modified");
+        helper.assertValueEqual(scriptingData.getScripts(positions.diskId()).get(path), "modified", "script of the own disk");
 
         helper.succeed();
     }
