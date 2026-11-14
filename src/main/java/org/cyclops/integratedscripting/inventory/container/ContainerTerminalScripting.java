@@ -245,10 +245,19 @@ public class ContainerTerminalScripting extends InventoryContainer implements ID
     }
 
     public void setServerScript(int disk, Path path, @Nullable String script) {
+        // Clients may only modify disks that are available in this terminal.
+        if (!getAvailableDisks().contains(disk)) {
+            return;
+        }
         ScriptingNetworkHelpers.getScriptingData().setScript(disk, path, script, IScriptingData.ChangeLocation.MEMORY);
     }
 
     public void createNewServerScript(int disk) {
+        // Clients may only modify disks that are available in this terminal.
+        if (!getAvailableDisks().contains(disk)) {
+            return;
+        }
+
         // Determine unique script name
         Set<Path> existingScripts = ScriptingNetworkHelpers.getScriptingData().getScripts(disk).keySet();
         Path path;
