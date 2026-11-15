@@ -1,8 +1,15 @@
 # Changelog for Minecraft 1.20.1
 All notable changes to this project will be documented in this file.
 
+<a name="1.20.1-1.0.20"></a>
+## [1.20.1-1.0.20](/compare/1.20.1-1.0.19...1.20.1-1.0.20) - 2026-11-15 11:14:35
+
+
+### Fixed
+* Validate disk ownership in scripting terminal change packets (#105), Closes GHSA-mpph-9cpc-3hfq
+
 <a name="1.20.1-1.0.19"></a>
-## [1.20.1-1.0.19](/compare/1.20.1-1.0.18...1.20.1-1.0.19) - 2026-09-05 12:59:51
+## [1.20.1-1.0.19](/compare/1.20.1-1.0.18...1.20.1-1.0.19) - 2026-09-05 12:59:51 +0200
 
 
 ### Fixed
