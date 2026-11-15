@@ -1,8 +1,15 @@
 # Changelog for Minecraft 1.21.1
 All notable changes to this project will be documented in this file.
 
+<a name="1.21.1-1.1.1"></a>
+## [1.21.1-1.1.1](https://github.com/CyclopsMC/IntegratedScripting/compare/1.21.1-1.1.0...1.21.1-1.1.1) - 2026-11-15 11:17:15
+
+
+### Fixed
+* Validate disk ownership in scripting terminal change packets (#105), Closes GHSA-mpph-9cpc-3hfq
+
 <a name="1.21.1-1.1.0"></a>
-## [1.21.1-1.1.0](https://github.com/CyclopsMC/IntegratedScripting/compare/1.21.1-1.0.27...1.21.1-1.1.0) - 2026-11-01 11:31:19
+## [1.21.1-1.1.0](https://github.com/CyclopsMC/IntegratedScripting/compare/1.21.1-1.0.27...1.21.1-1.1.0) - 2026-11-01 11:31:19 +0100
 
 
 ### Changed
