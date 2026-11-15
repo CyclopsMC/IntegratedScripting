@@ -1,8 +1,15 @@
 # Changelog for Minecraft 26.1.2
 All notable changes to this project will be documented in this file.
 
+<a name="26.1.2-1.1.2"></a>
+## [26.1.2-1.1.2](https://github.com/CyclopsMC/IntegratedScripting/compare/26.1.2-1.1.1...26.1.2-1.1.2) - 2026-11-15 11:19:48
+
+
+### Fixed
+* Validate disk ownership in scripting terminal change packets (#105), Closes GHSA-mpph-9cpc-3hfq
+
 <a name="26.1.2-1.1.1"></a>
-## [26.1.2-1.1.1](https://github.com/CyclopsMC/IntegratedScripting/compare/26.1.2-1.1.0...26.1.2-1.1.1) - 2026-11-07 16:26:38
+## [26.1.2-1.1.1](https://github.com/CyclopsMC/IntegratedScripting/compare/26.1.2-1.1.0...26.1.2-1.1.1) - 2026-11-07 16:26:38 +0100
 
 
 ### Added
